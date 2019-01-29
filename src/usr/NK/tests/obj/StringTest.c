@@ -44,7 +44,7 @@ private void stringifyShouldStringifyObject(void) {
 
     x = new Random();
 
-    expectEqual(TEST_LINE, "</usr/NK/@@@/statistics/Random#-1>", stringify->evaluate(x));
+    expectEqual(TEST_LINE, "</@@@/statistics/Random#-1>", stringify->evaluate(x));
 }
 
 private void stringifyShouldStringifyInteger(void) {

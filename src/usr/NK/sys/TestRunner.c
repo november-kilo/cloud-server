@@ -60,6 +60,7 @@ static void reportDone(void) {
     }
 
     reportTo->message("\nDone.\n");
+    reportTo->showPrompt();
 }
 
 static void afterTests(string *str) {
