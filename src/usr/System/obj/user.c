@@ -475,8 +475,8 @@ private void fetch_local_wiztool() {
     }
 }
 
-static void cmd_wiztool(object user, string cmd, string str) {
-    fetch_local_wiztool();
+void showPrompt(void) {
+    message(local_wiztool->getPrompt(this_object()));
 }
 
 /*
@@ -526,7 +526,6 @@ static int command(string str)
     case "mkdir":
     case "rmdir":
     case "ed":
-    case "wiztool":
 
     case "access":
     case "grant":
