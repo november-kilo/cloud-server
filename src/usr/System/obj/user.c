@@ -709,6 +709,7 @@ int receive_message(string str)
 			message("Usage: say <text>\n");
 		    } else {
 			tell_audience(Name + " says: " + str + "\n");
+			message("You say: " + str + "\n");
 		    }
 		    str = nil;
 		    break;
@@ -718,6 +719,7 @@ int receive_message(string str)
 			message("Usage: emote <text>\n");
 		    } else {
 			tell_audience(Name + " " + str + "\n");
+			message("You emote: " + Name + " " + str + "\n");
 		    }
 		    str = nil;
 		    break;
@@ -728,6 +730,7 @@ int receive_message(string str)
 			message("Usage: tell <user> <text>\n");
 		    } else {
 			user->message(Name + " tells you: " + str + "\n");
+			message("You tell: " + str + "\n");
 		    }
 		    str = nil;
 		    break;
