@@ -451,7 +451,7 @@ string generate_leaf(string path)
 	str = object_name(previous_object());
 	if (sscanf(str, WIZTOOL + "#%*d") == 0 &&
 	    !access(str, path, READ_ACCESS)) {
-	    error("Access denied");
+	    error("Access denied 1");
 	}
 	sscanf(path, "%s/lib/%s", str, tail);
 	str += "/@@@/" + tail;
