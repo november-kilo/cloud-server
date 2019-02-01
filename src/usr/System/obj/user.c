@@ -3,6 +3,7 @@
 # include <kernel/user.h>
 # include <status.h>
 # include <type.h>
+# include <NKlib.h>
 
 inherit auto	"~/lib/auto";
 inherit user	LIB_USER;
@@ -538,6 +539,10 @@ static int command(string str)
     case "quota":
     case "rsrc":
 
+    case "poly":
+    case "rational":
+    case "time":
+
     case "people":
     case "status":
     case "swapout":
@@ -847,4 +852,28 @@ int receive_message(string str)
 
 mixed *queryIdle(void) {
     return idle;
+}
+
+void cmd_poly(object user, string cmd, string arg) {
+    user->message("poly eval|integrate polynomial at/from...to\n");
+}
+
+void cmd_rational(object user, string cmd, string arg) {
+    Rational rational;
+    int n, d;
+    float f;
+
+    if (sscanf(arg, "%d/%d", n, d) == 2) {
+        rational = new Rational(n, d);
+        user->message(rational->toString() + " = " + rational->toFloat() + "\n");
+    } else if (sscanf(arg, "%f", f) == 1) {
+        rational = new Rational(f);
+        user->message(rational->toString() + "\n");
+    } else {
+        user->message("Usage: rational number\n");
+    }
+}
+
+void cmd_time(object user, string cmd, string arg) {
+    user->message(ctime(time()) + "\n");
 }
