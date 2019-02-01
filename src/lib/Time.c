@@ -8,20 +8,12 @@ private float millis;
 /*
  * initialize Time
  */
-static void create(varargs mixed time, float mtime)
+static void create(mixed time, varargs float mtime)
 {
     millis = 0.;
 
     if (!time && !mtime) {
         ({ ::time, ::mtime }) = millitime();
-    } else if (typeof(time) == T_ARRAY) {
-        if (typeof(time[0]) != T_INT) {
-            error("Time: invalid time");
-        }
-        if (typeof(time[1]) != T_FLOAT) {
-            error("Time: invalid mtime");
-        }
-        ({ ::time, ::mtime }) = time;
     } else if (typeof(time) == T_FLOAT) {
         millis = time;
         ::time = (int) floor(time / 1000.);

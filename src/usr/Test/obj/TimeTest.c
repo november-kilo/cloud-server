@@ -24,40 +24,11 @@ private void timeFromTimeMtime(void) {
     expectEqual(TEST_LINE, 42420., time->millis());
 }
 
-private void timeFromMillitime(void) {
-    time = new Time(millitime());
-
-    expectEqual(TEST_LINE, 50000, time->time());
-    expectEqual(TEST_LINE, 0.5, time->mtime());
-    expectEqual(TEST_LINE, 50000500., time->millis());
-}
-
-private void timeFromMillis(void) {
-    time = new Time(50000500.);
-
-    expectEqual(TEST_LINE, 50000, time->time());
-    expectEqual(TEST_LINE, 0.5, time->mtime());
-    expectEqual(TEST_LINE, 50000500., time->millis());
-}
-
-private void timeFromSeconds(void) {
-    time = new Time(50000);
-
-    expectEqual(TEST_LINE, 50000, time->time());
-    expectEqual(TEST_LINE, 0.0, time->mtime());
-    expectEqual(TEST_LINE, 50000000., time->millis());
-}
-
 private void timeFromInvalid(void) {
-    expectEqual(TEST_LINE, "Time: time must not be negative", catch(new Time(-1)));
     expectEqual(TEST_LINE, "Time: time must not be negative", catch(new Time(-1, 1.)));
     expectEqual(TEST_LINE, "Time: mtime must not be negative", catch(new Time(1, -1.)));
     expectEqual(TEST_LINE, "Bad argument 2 (int) for function create", catch(new Time(1, 1)));
-    expectEqual(TEST_LINE, "Time: invalid time", catch(new Time(({ 1., 1. }))));
-    expectEqual(TEST_LINE, "Time: invalid mtime", catch(new Time(({ 1, 1 }))));
-    expectEqual(TEST_LINE, "Time: invalid mtime", catch(new Time(({ 1, 1 }))));
-    expectEqual(TEST_LINE, "Time: time must not be negative", catch(new Time(({ -1, 1. }))));
-    expectEqual(TEST_LINE, "Time: mtime must not be negative", catch(new Time(({ 1, -1. }))));
+    expectEqual(TEST_LINE, "Value is not an int", catch(new Time("string", 1.)));
 }
 
 private void timeComparisons(void) {
@@ -137,9 +108,6 @@ void runBeforeTests(void) {
 void runTests(void) {
     timeFromNoArg();
     timeFromTimeMtime();
-    timeFromMillitime();
-    timeFromMillis();
-    timeFromSeconds();
     timeFromInvalid();
     timeComparisons();
     timeGmtime();
