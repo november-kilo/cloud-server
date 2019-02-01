@@ -210,7 +210,7 @@ static object compile_object(string path, string source...)
 					 ((lib || !uid) &&
 					  sizeof(source) == 0 && !kernel) ?
 					  READ_ACCESS : WRITE_ACCESS))) {
-	error("Access denied 14");
+	error("Access denied");
     }
 
     /*
@@ -270,7 +270,7 @@ static object clone_object(string path, varargs string uid)
 	 * kernel objects can only be cloned by kernel objects, and cloning
 	 * in general requires read access
 	 */
-	error("Access denied 2");
+	error("Access denied");
     }
 
     /*
@@ -345,7 +345,7 @@ static object new_object(mixed obj, varargs string uid)
 	    (creator != "System" &&
 	     !::find_object(ACCESSD)->access(object_name(this_object()), str,
 					     READ_ACCESS))) {
-	    error("Access denied 3");
+	    error("Access denied");
 	}
 
 	/*
@@ -779,7 +779,7 @@ static string read_file(string path, varargs int offset, int size)
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
-	error("Access denied 4");
+	error("Access denied");
     }
 
     return ::read_file(path, offset, size);
@@ -808,7 +808,7 @@ static int write_file(string path, string str, varargs int offset)
 	(creator != "System" &&
 	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
 					 WRITE_ACCESS))) {
-	error("Access denied 5");
+	error("Access denied");
     }
 
     fcreator = driver->creator(path);
@@ -853,7 +853,7 @@ static int remove_file(string path)
 	(creator != "System" &&
 	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
 					 WRITE_ACCESS))) {
-	error("Access denied 6");
+	error("Access denied");
     }
 
     size = driver->file_size(path);
@@ -897,7 +897,7 @@ static int rename_file(string from, string to)
 	(creator != "System" &&
 	 (!accessd->access(oname, from, WRITE_ACCESS) ||
 	  !accessd->access(oname, to, WRITE_ACCESS)))) {
-	error("Access denied 7");
+	error("Access denied");
     }
 
     fcreator = driver->creator(from);
@@ -941,7 +941,7 @@ static mixed **get_dir(string path)
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
-	error("Access denied 8");
+	error("Access denied");
     }
 
     list = ::get_dir(path);
@@ -993,7 +993,7 @@ static mixed *file_info(string path)
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
-	error("Access denied 9");
+	error("Access denied");
     }
 
     info = ::get_dir(obj->escape_path(path));
@@ -1030,7 +1030,7 @@ static int make_dir(string path)
 	(creator != "System" &&
 	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
 					 WRITE_ACCESS))) {
-	error("Access denied 10");
+	error("Access denied");
     }
 
     fcreator = driver->creator(path + "/");
@@ -1073,7 +1073,7 @@ static int remove_dir(string path)
 	(creator != "System" &&
 	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
 					 WRITE_ACCESS))) {
-	error("Access denied 11");
+	error("Access denied");
     }
 
     catch {
@@ -1103,7 +1103,7 @@ static int restore_object(string path)
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
-	error("Access denied 12");
+	error("Access denied");
     }
 
     return ::restore_object(path);
@@ -1132,7 +1132,7 @@ static void save_object(string path)
 	sscanf(path, "/include/kernel/%*s") != 0 ||
 	(creator != "System" &&
 	 !::find_object(ACCESSD)->access(oname, path, WRITE_ACCESS))) {
-	error("Access denied 13");
+	error("Access denied");
     }
 
     fcreator = driver->creator(path);
