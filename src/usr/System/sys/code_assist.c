@@ -27,10 +27,9 @@ inherit jsonEncoder JSON_ENCODER_LIB;
 
 #define PROXY_VERSION 11
 #define OWNER "admin"
-#define ADMIN()    sscanf(previous_program(), USR_DIR + "/" + OWNER + "/%*s")
+#define ADMIN()	sscanf(previous_program(), USR_DIR + "/" + OWNER + "/%*s")
 
 private int result_id;
-
 
 static void create(void) {
     result_id = 0;
