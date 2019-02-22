@@ -118,5 +118,3 @@ void runTests(object reportTo, varargs string specOverride) {
     continuation += new Continuation("reportDone");
     continuation->runNext();
 }
-
-string toString(void) { return "testing"; }
