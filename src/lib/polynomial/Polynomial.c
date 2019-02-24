@@ -21,6 +21,52 @@ float *coefficients(void) {
     return coeffs;
 }
 
+Matrix companion(void) {
+    int i, j, n;
+    Matrix matrix;
+    float **m;
+
+    n = degree();
+    matrix = new Matrix(n, n);
+    m = matrix->getArray();
+
+    for (i = 0; i < n; i++) {
+        m[i][n - 1] = -coeffs[i];
+    }
+
+    for (i = 1; i < n; i++) {
+        m[i][i - 1] = 1.;
+    }
+
+    matrix->setMatrix(m);
+    return matrix;
+}
+
+private float fixFloat(float f) {
+    return fabs(f) < FLT_EPSILON ? 0. : f;
+}
+
+Complex *roots(void) {
+    Complex *theRoots;
+    Matrix m;
+    EigenvalueDecomposition eig;
+    float *r, *i;
+    int j;
+
+    m = companion();
+    m->balance();
+    eig = m->eig();
+    r = eig->getRealEigenvalues();
+    i = eig->getImagEigenvalues();
+    theRoots = allocate(sizeof(r));
+
+    for (j = 0; j < sizeof(r); j++) {
+        theRoots[j] = new Complex(fixFloat(r[j]), fixFloat(i[j]));
+    }
+
+    return theRoots;
+}
+
 float evaluate(float at) {
     int i;
     float total;

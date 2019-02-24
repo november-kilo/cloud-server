@@ -95,6 +95,15 @@ private void colors256ShouldThrowExpectedError(void) {
     expectEqual(TEST_LINE, "Terminal: Invalid color.", catch(terminal->color256(256, "foo")));
 }
 
+private void hypotShouldReturnExpectedValue(void) {
+    expectEqual(TEST_LINE, 5., hypot(4., 3.));
+    expectEqual(TEST_LINE, 5., hypot(3., 4.));
+    expectEqual(TEST_LINE, 5.65685425, hypot(4., 4.));
+    expectEqual(TEST_LINE, 0., hypot(0., 0.));
+    expectEqual(TEST_LINE, 3., hypot(3., 0.));
+    expectEqual(TEST_LINE, 3., hypot(0., 3.));
+}
+
 void runBeforeTests(void) {
     checkEquals = new CheckEquals();
     random = new Random();
@@ -108,4 +117,5 @@ void runTests(void) {
     checkEqualsShouldIndicateWhetherOneEqualsAnother();
     checkNumberReturnsExpectedValue();
     colors256ShouldThrowExpectedError();
+    hypotShouldReturnExpectedValue();
 }

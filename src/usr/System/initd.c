@@ -67,6 +67,7 @@ static void create(void)
     compile_object(ARRAY_TO_MARKED_LIST_REDUCER);
     compile_object(ARRAY_TABULATE_REDUCER);
     compile_object(BOXIFY_STRING_FUNCTION);
+    compile_object(COMPLEX_NUMBER_LIB);
     compile_object(CORRELATION_FUNCTION);
     compile_object(COVARIANCE_FUNCTION);
     compile_object(DATA_VISITOR_FUNCTION);
@@ -74,11 +75,13 @@ static void create(void)
     compile_object(DICE_LIB);
     compile_object(DICE_ROLLER_LIB);
     compile_object(DICE_PROBABILITY_LIB);
+    compile_object(EIGENVALUE_DECOMPOSITION_LIB);
     compile_object(EXPONENTIAL_PROBABILITY_DENSITY_FUNCTION);
     compile_object(GEOMETRIC_MEAN_FUNCTION);
     compile_object(JSON_ENCODER_LIB);
     compile_object(JSON_PARSER_LIB);
     compile_object(LONGEST_STRING_FUNCTION);
+    compile_object(MATRIX_LIB);
     compile_object(MEDIAN_FUNCTION);
     compile_object(NUMBER_LIB);
     compile_object(POLYNOMIAL_DERIVATIVE_ITERATOR);
