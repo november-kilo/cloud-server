@@ -62,7 +62,12 @@
 #define ToBoxReducer object ARRAY_TO_BOX_REDUCER
 
 
-#define LIB_COMMANDS "~System/lib/commands"
+#define CHECK_EQUALS_LIB "/lib/CheckEquals"
+#define CheckEquals object CHECK_EQUALS_LIB
+
+
+#define COMPLEX_NUMBER_LIB "/lib/Complex"
+#define Complex object COMPLEX_NUMBER_LIB
 
 
 #define DICE_LIB "/lib/dice/Dice"
@@ -76,10 +81,6 @@
 
 #define DICE_DATA_GENERATOR "/lib/dice/DiceDataGenerator"
 #define DiceDataGenerator object DICE_DATA_GENERATOR
-
-
-#define CHECK_EQUALS_LIB "/lib/CheckEquals"
-#define CheckEquals object CHECK_EQUALS_LIB
 
 
 #define FUNCTION_LIB "/lib/Function"
@@ -98,6 +99,13 @@
 
 #define JSON_PARSER_LIB "/lib/JsonParser"
 #define JsonParser object JSON_PARSER_LIB
+
+
+#define MATRIX_LIB "/lib/matrix/Matrix"
+#define Matrix object MATRIX_LIB
+
+#define EIGENVALUE_DECOMPOSITION_LIB "/lib/matrix/EigenvalueDecomposition"
+#define EigenvalueDecomposition object EIGENVALUE_DECOMPOSITION_LIB
 
 
 #define NUMBER_LIB "/lib/Number"
