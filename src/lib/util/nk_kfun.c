@@ -187,3 +187,18 @@ int gcd(int a, int b) {
 float pi(void) {
     return atan(1.) * 4.;
 }
+
+float hypot(float a, float b) {
+    float r;
+    
+    if (fabs(a) > fabs(b)) {
+        r = b / a;
+        r = fabs(a) * sqrt(1. + r * r);
+    } else if (b != 0.) {
+        r = a / b;
+        r = fabs(b) * sqrt(1. + r * r);
+    } else {
+        r = 0.;
+    }
+    return r;
+}

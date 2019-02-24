@@ -326,9 +326,55 @@ private void verifyTestPolynomial(void) {
     reducer = new ProbabilityReducer(e, 6, 4);
 
     expectEqual(TEST_LINE,
-                "x^3 + 4x^4 + 10x^5 + 21x^6 + 38x^7 + 62x^8 + 91x^9 + 122x^10 + 148x^11 + 167x^12 + 172x^13 + 160x^14 " +
-                "+ 131x^15 + 94x^16 + 54x^17 + 21x^18",
-                e->toString());
+        "x^3 + 4x^4 + 10x^5 + 21x^6 + 38x^7 + 62x^8 + 91x^9 + 122x^10 + 148x^11 + 167x^12 + 172x^13 + 160x^14 " +
+        "+ 131x^15 + 94x^16 + 54x^17 + 21x^18",
+        e->toString());
+}
+
+private void companionMatrix(void) {
+    Polynomial e;
+    Matrix m;
+
+    e = new Polynomial(({ -1., 0., 0., 0., 1. }));
+    m = e->companion();
+    expectEqual(TEST_LINE,
+        "({ ({ 0.0, 0.0, 0.0, 1.0 }), " +
+        "({ 1.0, 0.0, 0.0, 0.0 }), " +
+        "({ 0.0, 1.0, 0.0, 0.0 }), " +
+        "({ 0.0, 0.0, 1.0, 0.0 }) })",
+        m->toString());
+
+    e = new Polynomial(({ 5., 4., 3., 2., 1. }));
+    m = e->companion();
+    expectEqual(TEST_LINE,
+        "({ ({ 0.0, 0.0, 0.0, -5.0 }), " +
+        "({ 1.0, 0.0, 0.0, -4.0 }), " +
+        "({ 0.0, 1.0, 0.0, -3.0 }), " +
+        "({ 0.0, 0.0, 1.0, -2.0 }) })",
+        m->toString());
+}
+
+private void findPolynomialRoots(void) {
+    Polynomial e;
+    Complex *r;
+
+    e = new Polynomial(({ -1., 0., 0., 0., 1. }));
+    r = e->roots();
+
+    expectEqual(TEST_LINE, 4, sizeof(r));
+    expectEqual(TEST_LINE, "(-1 + 0 i)", r[0]->toString());
+    expectEqual(TEST_LINE, "(0 + 1 i)", r[1]->toString());
+    expectEqual(TEST_LINE, "(0 + -1 i)", r[2]->toString());
+    expectEqual(TEST_LINE, "(1 + 0 i)", r[3]->toString());
+
+    e = new Polynomial(({ 5., 4., 3., 2., 1. }));
+    r = e->roots();
+
+    expectEqual(TEST_LINE, 4, sizeof(r));
+    expectEqual(TEST_LINE, "(0.28781548 + 1.41609308 i)", r[0]->toString());
+    expectEqual(TEST_LINE, "(0.28781548 + -1.41609308 i)", r[1]->toString());
+    expectEqual(TEST_LINE, "(-1.28781548 + 0.857896758 i)", r[2]->toString());
+    expectEqual(TEST_LINE, "(-1.28781548 + -0.857896758 i)", r[3]->toString());
 }
 
 static void runBeforeTests(void) {
@@ -358,4 +404,6 @@ void runTests(void) {
     applyMinEdgeCase();
     applyTen();
     applyMaxEdgeCase();
+    companionMatrix();
+    findPolynomialRoots();
 }
