@@ -237,6 +237,23 @@ private void reciprocalWorksAsExpected(void) {
     expectTrue(TEST_LINE, r->equals(new Rational(9, 3)));
 }
 
+private void constructFromFloatShouldSetOriginalFloat() {
+    Rational r;
+
+    r = new Rational(3.14);
+
+    expectEqual(TEST_LINE, 3.14, r->getOriginalFloat());
+}
+
+private void fromFloatShouldSetOriginalFloat() {
+    Rational r;
+    r = new Rational(3.14);
+
+    r->fromFloat(0.5772156649);
+
+    expectEqual(TEST_LINE, 0.5772156649, r->getOriginalFloat());
+}
+
 void runBeforeTests(void) {
     p = new Rational(2, 3);
     q = new Rational(4, 5);
@@ -262,4 +279,6 @@ void runTests(void) {
     createGivesExpectedResults();
     powerErrorsAsExpected();
     reciprocalWorksAsExpected();
+    constructFromFloatShouldSetOriginalFloat();
+    fromFloatShouldSetOriginalFloat();
 }

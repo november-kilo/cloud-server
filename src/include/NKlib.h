@@ -66,7 +66,7 @@
 #define CheckEquals object CHECK_EQUALS_LIB
 
 
-#define COMPLEX_NUMBER_LIB "/lib/Complex"
+#define COMPLEX_NUMBER_LIB "/lib/number/Complex"
 #define Complex object COMPLEX_NUMBER_LIB
 
 
@@ -108,7 +108,7 @@
 #define EigenvalueDecomposition object EIGENVALUE_DECOMPOSITION_LIB
 
 
-#define NUMBER_LIB "/lib/Number"
+#define NUMBER_LIB "/lib/number/Number"
 #define Number object NUMBER_LIB
 
 
@@ -125,7 +125,7 @@
 #define ProbabilityReducer object POLYNOMIAL_PROBABILITY_REDUCER
 
 
-#define RATIONAL_LIB "/lib/rational/Rational"
+#define RATIONAL_LIB "/lib/number/Rational"
 #define Rational object RATIONAL_LIB
 
 
