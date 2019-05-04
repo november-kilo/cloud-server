@@ -8,6 +8,10 @@
 # define OBJECT_SERVER		"/usr/System/sys/objectd"
 # define UPGRADE_SERVER		"/usr/System/sys/upgraded"
 # define CONTINUATION		"/lib/Continuation"
+# define CHAINED_CONTINUATION	"/lib/ChainedContinuation"
+# define DELAYED_CONTINUATION	"/lib/DelayedContinuation"
+# define ITERATIVE_CONTINUATION	"/lib/IterativeContinuation"
+# define DIST_CONTINUATION	"/lib/DistContinuation"
 # define CONTINUATION_TOKEN	"/lib/ContinuationToken"
 
 
@@ -66,10 +70,26 @@ nomask void _F_copy(void)
  */
 static object new_object(string path, mixed args...)
 {
+    string uid;
+
     if (path) {
 	path = DRIVER->normalize_path(path);
-	if (sscanf(path, "%*s/obj/") != 0 || sscanf(path, "%*s/sys/") != 0) {
-	    error("Invalid path");
+	switch (path) {
+	case CONTINUATION:
+	case CHAINED_CONTINUATION:
+	case DELAYED_CONTINUATION:
+	case ITERATIVE_CONTINUATION:
+	case DIST_CONTINUATION:
+	case CONTINUATION_TOKEN:
+	    uid = "System";
+	    break;
+
+	default:
+	    if (sscanf(path, "%*s/obj/") != 0 || sscanf(path, "%*s/sys/") != 0)
+	    {
+		error("Invalid path");
+	    }
+	    break;
 	}
 	if (sscanf(path, "%*s/lib/") != 0 && status(path, O_INDEX) != nil) {
 	    /* let upgrade server generate a leaf object */
@@ -77,7 +97,7 @@ static object new_object(string path, mixed args...)
 	}
     }
     ::tls_set(TLS_ARGUMENTS, args);
-    return ::new_object(path);
+    return ::new_object(path, uid);
 }
 
 /*
@@ -200,39 +220,23 @@ nomask int _F_touch(void)
 # define TLS_CONT	"cont::"
 
 # define REF_CONT	0	/* continuation */
-# define REF_ORIGIN	1	/* originating object */
-# define REF_COUNT	2	/* callback countdown */
-# define REF_TIMEOUT	3	/* timeout handle */
+# define REF_COUNT	1	/* callback countdown */
+# define REF_TIMEOUT	2	/* timeout handle */
 
-# define CONT_VAL	4	/* previous return value */
-# define CONT_SIZE	5	/* size of continuation */
+# define CONT_VAL	5	/* previous return value */
+# define CONT_SIZE	6	/* size of continuation */
 
 /*
  * NAME:	startContinuation()
  * DESCRIPTION:	runNext a continuation, start first callout if none running yet
  */
-static void startContinuation(object origin, mixed *continuations, int parallel)
+static void startContinuation(mixed *continuations, int parallel)
 {
     if (previous_program() == CONTINUATION) {
-	mixed *ref, *continued, *continuation, objs;
-	int sz, i, ssz, j;
+	mixed *continued, *continuation, objs, *ref;
+	int sz, i, j;
 	string func;
 
-	if (parallel || !(ref=::tls_get(TLS_CONT))) {
-	    /*
-	     * schedule first continuation
-	     */
-	    ref = ({ ({ }), origin, 0, 0 });
-	    if (!parallel) {
-		::tls_set(TLS_CONT, ref);
-	    }
-	    ::call_out_other(origin, "_F_continued", ref);
-	} else if (origin != ref[REF_ORIGIN]) {
-	    /*
-	     * should use a distributed continuation
-	     */
-	    error("Continuation not in same object");
-	}
 	continued = ({ });
 
 	for (sz = sizeof(continuations), i = 0; i < sz; i++) {
@@ -243,7 +247,7 @@ static void startContinuation(object origin, mixed *continuations, int parallel)
 		 * disallow calling external static functions via continuations
 		 */
 		func = continuation[CONT_FUNC];
-		for (ssz = sizeof(objs), j = 0; j < ssz; j++) {
+		for (j = sizeof(objs); --j >= 0; ) {
 		    if (!function_object(func, objs[j])) {
 			error("Uncallable external function in continuation");
 		    }
@@ -251,6 +255,17 @@ static void startContinuation(object origin, mixed *continuations, int parallel)
 	    }
 
 	    continued += continuation + ({ nil });
+	}
+
+	if (parallel || !(ref=::tls_get(TLS_CONT))) {
+	    /*
+	     * schedule first continuation
+	     */
+	    ref = ({ ({ }), 0, 0 });
+	    if (!parallel) {
+		::tls_set(TLS_CONT, ref);
+	    }
+	    ::call_out_other(continued[CONT_ORIGIN], "_F_continued", 0, ref);
 	}
 
 	/*
@@ -262,7 +277,7 @@ static void startContinuation(object origin, mixed *continuations, int parallel)
 
 /*
  * NAME:	suspendContinuation()
- * DESCRIPTION:	suspend continuation in current object
+ * DESCRIPTION:	suspend current continuation
  */
 static object suspendContinuation(void)
 {
@@ -270,13 +285,14 @@ static object suspendContinuation(void)
     object token;
 
     ref = ::tls_get(TLS_CONT);
-    if (!ref || sizeof(continued=ref[REF_CONT]) == 0 || !ref[REF_ORIGIN]) {
+    if (!ref || sizeof(continued=ref[REF_CONT]) == 0 || !continued[CONT_ORIGIN])
+    {
 	error("No continuation");
     }
     ref[REF_CONT] = ({ });
 
     token = new ContinuationToken;
-    token->saveContinuation(continued, ref[REF_ORIGIN]);
+    token->saveContinuation(continued);
     return token;
 }
 
@@ -289,11 +305,20 @@ private void continued(mixed *ref)
     mixed *continued;
     int type, token, sz, i;
     mixed val, objs, delay, args;
+    object origin;
     string func;
 
-    ::tls_set(TLS_CONT, ref);
     continued = ref[REF_CONT];
-    ({ objs, delay, func, args, val }) = continued[.. CONT_SIZE - 1];
+    if (sizeof(continued) == 0) {
+	return;
+    }
+
+    ({ objs, delay, origin, func, args, val }) = continued[.. CONT_SIZE - 1];
+    if (origin != this_object()) {
+	::call_out_other(origin, "_F_continued", 0, ref);
+	return;
+    }
+    ::tls_set(TLS_CONT, ref);
 
     switch (typeof(objs)) {
     case T_INT:
@@ -340,12 +365,12 @@ private void continued(mixed *ref)
 	    continued[CONT_VAL] = allocate(sz);
 	}
 	for (i = 0; i < sz; i++) {
-	    ::call_out_other(objs[i], "_F_continued", ({
+	    ::call_out_other(objs[i], "_F_continued", 0, ({
 		({
-		    0, 0, func, args, nil,			/* extern */
-		    this_object(), 0, nil, ({ token, i }), nil	/* callback */
+		    0, 0, objs[i], func, args, nil,		/* extern */
+		    this_object(), 0, objs[i], nil, ({ token, i }), nil
+								/* callback */
 		}),
-		objs[i],
 		0,
 		0
 	    }));
@@ -377,13 +402,13 @@ private void continued(mixed *ref)
 		}
 	    } else {
 		/* callback */
-		::call_out_other(objs, "_F_doneContinuation", val,
+		::call_out_other(objs, "_F_doneContinuation", 0, val,
 				 continued[CONT_ARGS]...);
 		return;
 	    }
 	    break;
 	}
-	::call_out_other(this_object(), "_F_continued", delay, ref);
+	::call_out_other(continued[CONT_ORIGIN], "_F_continued", delay, ref);
 	break;
     }
 }
@@ -409,15 +434,15 @@ nomask void _F_continued(mixed *ref)
 }
 
 /*
- * NAME:	_F_wake()
- * DESCRIPTION:	wake up a suspended continuation
+ * NAME:	_F_resume()
+ * DESCRIPTION:	resume a suspended continuation
  */
-nomask void _F_wake(mixed *continued, mixed arg)
+nomask void _F_resume(mixed *continued, mixed arg)
 {
     if (previous_program() == CONTINUATION_TOKEN) {
 	continued[CONT_VAL] = arg;
 	::call_out_other(this_object(), "_F_continued", 0,
-			 ({ continued, this_object(), 0, 0 }));
+			 ({ continued, 0, 0 }));
     }
 }
 
@@ -440,9 +465,7 @@ nomask void _F_doneContinuation(mixed result, int token, int index)
 	    if (--ref[REF_COUNT] == 0) {
 		storage[token] = nil;
 		::remove_call_out(ref[REF_TIMEOUT]);
-		if (sizeof(continued) != 0) {
-		    continued(ref);
-		}
+		continued(ref);
 	    }
 	}
     }
@@ -460,9 +483,7 @@ nomask void _F_timeoutContinuation(int token)
 	ref = storage[token];
 	if (ref) {
 	    storage[token] = nil;
-	    if (sizeof(ref[REF_CONT]) != 0) {
-		continued(ref);
-	    }
+	    continued(ref);
 	}
     }
 }
@@ -471,12 +492,12 @@ nomask void _F_timeoutContinuation(int token)
  * NAME:	call_out()
  * DESCRIPTION: prevent System auto functions from being called by callout
  */
-static int call_out(string func, mixed delay, mixed args...)
+static int call_out(string func, mixed args...)
 {
     if (function_object(func, this_object()) == SYSTEM_AUTO) {
 	error("Illegal callout");
     }
-    return ::call_out(func, delay, args...);
+    return ::call_out(func, args...);
 }
 
 /*
