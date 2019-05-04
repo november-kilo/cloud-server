@@ -4,27 +4,28 @@
 
 
 private mixed *continued;	/* saved continuation */
-private object origin;		/* origin of continuation */
 
 /*
  * save suspended continuation in this token
  */
-void saveContinuation(mixed *continued, object origin)
+void saveContinuation(mixed *continued)
 {
     if (previous_program() == SYSTEM_AUTO) {
 	::continued = continued;
-	::origin = origin;
     }
 }
 
 /*
- * wake up continuation saved in this token
+ * resume continuation saved in this token
  */
-void wakeContinuation(varargs mixed arg)
+void resumeContinuation(varargs mixed arg)
 {
     if (!continued) {
 	error("No continuation");
     }
-    origin->_F_wake(continued, arg);
+    if (!continued[CONT_ORIGIN]) {
+	error("No environment for Continuation");
+    }
+    continued[CONT_ORIGIN]->_F_resume(continued, arg);
     continued = nil;
 }
