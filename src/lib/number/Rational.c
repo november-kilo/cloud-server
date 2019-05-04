@@ -5,6 +5,7 @@ inherit NK_KFUN;
 
 private int numerator;
 private int denominator;
+private float originalFloat;
 
 private void fixSign(void) {
     if (denominator < 0) {
@@ -28,6 +29,10 @@ int denominator(void) {
     return denominator;
 }
 
+float originalFloat() {
+    return originalFloat;
+}
+
 void fromRatio(int numerator, int denominator) {
     ::numerator = numerator;
     ::denominator = denominator;
@@ -44,6 +49,8 @@ void fromFloat(float f) {
     float fCopy, fCopyFloor, n0, n1, n2, d0, d1, d2;
     float oneOver, oneOverFloor;
     int n;
+
+    originalFloat = f;
 
     if (f == 1.) {
         numerator = 1;
