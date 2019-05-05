@@ -27,17 +27,19 @@ static void processFails(void) {
     Iterator iterator;
     string *indices;
     string index;
+    int indicesSize;
 
     indices = map_indices(allTestResults);
+    indicesSize = sizeof(indices);
     reducer = new ArrayToListReducer();
-    iterator = new IntIterator(0, sizeof(indices) - 1);
+    iterator = new IntIterator(0, indicesSize - 1);
     reportTo->message("\n");
 
     if (suites) {
         reportTo->message("Failed test suites: " + suites + " / " + suitesExpected + "\n");
     }
 
-    while (!iterator->end()) {
+    while (!iterator->end() && indicesSize) {
         index = indices[iterator->next()];
         array = new Array(allTestResults[index]);
         if (array->size()) {
