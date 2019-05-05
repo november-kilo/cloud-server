@@ -87,8 +87,8 @@ nomask void _runTests(object reportTo, object collector) {
     pass = 0;
     fail = 0;
     testResults = ([ ]);
-    testResults["pass"] = allocate(1000);
-    testResults["fail"] = allocate(1000);
+    testResults["pass"] = allocate(2000);
+    testResults["fail"] = allocate(2000);
 
     report("\nRunning tests in " + object_name(this_object()) + "\n");
     runBeforeTests();

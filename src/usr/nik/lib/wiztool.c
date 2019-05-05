@@ -3,8 +3,35 @@
 inherit Terminal;
 inherit NK_KFUN;
 
+static void println(object user, string str) {
+    user->message(str + "\n");
+}
+
 string getPrompt(object user) {
     return magenta(user->query_name() + "> ", TRUE);
+}
+
+void cmd_colors(object user, string cmd, string str) {
+    Terminal t;
+    Iterator iterator;
+    int *heatMap;
+
+    heatMap = allocate_int(7);
+    heatMap[0] = 46;
+    heatMap[1] = 226;
+    heatMap[2] = 220;
+    heatMap[3] = 214;
+    heatMap[4] = 208;
+    heatMap[5] = 202;
+    heatMap[6] = 196;
+    iterator = new IntIterator(0, 6);
+    t = new Terminal();
+
+    while (!iterator->end()) {
+        user->message(t->color256(heatMap[iterator->next()], "AaBbCc  "));
+    }
+
+    println(user, "Done.");
 }
 
 void cmd_de(object user, string cmd, string str) {

@@ -242,7 +242,7 @@ private void constructFromFloatShouldSetOriginalFloat() {
 
     r = new Rational(3.14);
 
-    expectEqual(TEST_LINE, 3.14, r->getOriginalFloat());
+    expectEqual(TEST_LINE, 3.14, r->originalFloat());
 }
 
 private void fromFloatShouldSetOriginalFloat() {
@@ -251,7 +251,7 @@ private void fromFloatShouldSetOriginalFloat() {
 
     r->fromFloat(0.5772156649);
 
-    expectEqual(TEST_LINE, 0.5772156649, r->getOriginalFloat());
+    expectEqual(TEST_LINE, 0.5772156649, r->originalFloat());
 }
 
 void runBeforeTests(void) {
