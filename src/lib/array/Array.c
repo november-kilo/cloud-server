@@ -29,11 +29,15 @@ int equals(Array that) {
         return FALSE;
     }
 
+    if (!size() && !that->size()) {
+        return TRUE;
+    }
+
     iterator = new IntIterator(0, size() - 1);
     while (!iterator->end()) {
         i = iterator->next();
         thisValue = get(i);
-        thatValue = array->get(i);
+        thatValue = that->get(i);
         if (!checkEquals(thisValue, thatValue)) {
             return FALSE;
         }
@@ -48,10 +52,15 @@ int contains(mixed value) {
     int s;
     string err;
 
+    if (!size()) {
+        return FALSE;
+    }
+
     iterator = new Iterator(this_object(), 0, size() - 1);
     while (!iterator->end()) {
         x = iterator->next();
 
+        /* XXX checkEquals ? */
         if (T_OBJECT == typeof(x) && function_object("equals", (mixed) x)) {
             err = catch(s = x->equals(value));
             if (!err && s) {
@@ -63,6 +72,7 @@ int contains(mixed value) {
             }
         }
     }
+
     return FALSE;
 }
 

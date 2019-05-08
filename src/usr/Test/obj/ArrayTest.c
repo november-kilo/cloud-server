@@ -871,6 +871,13 @@ private void toBoxReducerRound(void) {
                            "╰────────╯", new Array(explode(str, "\n"))->box(toBoxReducer));
 }
 
+private void equalsShouldIndicateExpectedValue(void) {
+    expectFalse(TEST_LINE, c->equals(d));
+    expectFalse(TEST_LINE, d->equals(c));
+    expectTrue(TEST_LINE, d->equals(d));
+    expectTrue(TEST_LINE, empty->equals(empty));
+}
+
 static void runBeforeTests(void) {
     array = new Array(({ -1., 0., 1. }));
     one = new Array(({ 42. }));
@@ -914,4 +921,5 @@ void runTests(void) {
     toBoxReducerDouble();
     toBoxReducerDoubleHorizontal();
     toBoxReducerRound();
+    equalsShouldIndicateExpectedValue();
 }
