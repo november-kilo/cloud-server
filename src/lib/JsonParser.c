@@ -1,79 +1,79 @@
 #include <type.h>
 
-#define JSON_PARSER_GRAMMAR "whitespace=/[\n ]*/ " + \
-        "colon=/:/ " + \
-        "comma=/,/ " + \
-        "string=/\"([^\\\\\"\n]*(\\\\.)*)*\"/ " + \
+#define JSON_PARSER_GRAMMAR "whitespace = /[\n ]*/ " + \
+        "colon = /:/ " + \
+        "comma = /,/ " + \
+        "string = /\"([^\\\\\"\n]*(\\\\.)*)*\"/ " + \
         "float = /[0-9]+\\.[0-9]+([eE][-+]?[0-9]+)?/ " + \
         "float = /\\.[0-9]+([eE][-+]?[0-9]+)?/ " + \
         "float = /[0-9]+[eE][-+]?[0-9]+/ " + \
-        "integer=/[-+]?[0-9]+/ " + \
-        "special=/(true|false|null)/ " + \
-        "S : json_value " + \
-        "jsonobject : '{' jsonobject_pairs '}' ? handle_jsonobject " + \
-        "jsonobject_pairs : jsonobject_pair " + \
-        "jsonobject_pairs : jsonobject_pairs comma jsonobject_pair " + \
-        "jsonobject_pair : json_key colon json_value ? make_key_value_pair " + \
-        "jsonarray : '[' jsonarray_elements ']' ? handle_jsonarray " + \
-        "jsonarray : '[]' ? handle_empty_jsonarray " + \
-        "jsonarray_elements : jsonobject " + \
-        "jsonarray_elements : json_value " + \
-        "jsonarray_elements : jsonarray_elements comma json_value " + \
-        "json_key : string ? handle_string " + \
-        "json_value: jsonobject " + \
-        "json_value: jsonarray " + \
-        "json_value: string ? handle_string " + \
-        "json_value: number " + \
-        "json_value: special ? handle_string " + \
-        "number: integer ? handle_integer " + \
-        "number: float ? handle_float "
+        "integer = /[-+]?[0-9]+/ " + \
+        "special = /(true|false|null)/ " + \
+        "S : jsonValue " + \
+        "jsonObject : '{' jsonObjectPairs '}' ? handleJsonObject " + \
+        "jsonObjectPairs : jsonObjectPair " + \
+        "jsonObjectPairs : jsonObjectPairs comma jsonObjectPair " + \
+        "jsonObjectPair : jsonKey colon jsonValue ? makeKeyValuePair " + \
+        "jsonArray : '[' jsonArrayElements ']' ? handleJsonArray " + \
+        "jsonArray : '[]' ? handleEmptyJsonArray " + \
+        "jsonArrayElements : jsonObject " + \
+        "jsonArrayElements : jsonValue " + \
+        "jsonArrayElements : jsonArrayElements comma jsonValue " + \
+        "jsonKey : string ? handleString " + \
+        "jsonValue: jsonObject " + \
+        "jsonValue: jsonArray " + \
+        "jsonValue: string ? handleString " + \
+        "jsonValue: number " + \
+        "jsonValue: special ? handleString " + \
+        "number: integer ? handleInteger " + \
+        "number: float ? handleFloat "
 
-mapping *make_key_value_pair(mixed *kv) {
+mapping *makeKeyValuePair(mixed *kv) {
     return ({ ([kv[0] : kv[2]]) });
 }
 
-mixed *handle_empty_jsonarray(mixed *json_array) {
+mixed *handleEmptyJsonArray(mixed *jsonArray) {
     return ({ ({}) });
 }
 
-mixed *handle_jsonarray(mixed *json_array) {
+mixed *handleJsonArray(mixed *jsonArray) {
     int i;
     int j;
     int sz;
-    mixed *json_results;
+    mixed *jsonResults;
 
-    sz = sizeof(json_array);
-    json_results = ({});
+    sz = sizeof(jsonArray);
+    jsonResults = ({});
     for (i = 1, j = 0; i < sz; i += 2, j++) {
-        json_results += ({ json_array[i] });
+        jsonResults += ({ jsonArray[i] });
     }
-    return ({ json_results });
+    return ({ jsonResults });
 }
 
-mapping *handle_jsonobject(mixed *json_obj) {
+mapping *handleJsonObject(mixed *jsonObj) {
     int i;
     int sz;
-    mapping json_results;
+    mapping jsonResults;
 
-    json_results = ([]);
-    for (i = 0, sz = sizeof(json_obj); i < sz; i++) {
-        if (typeof(json_obj[i]) == T_MAPPING) {
-            json_results += json_obj[i];
+    jsonResults = ([]);
+    for (i = 0, sz = sizeof(jsonObj); i < sz; i++) {
+        if (typeof(jsonObj[i]) == T_MAPPING) {
+            jsonResults += jsonObj[i];
         }
     }
-    return ({ json_results });
+    return ({ jsonResults });
 }
 
-string *handle_string(mixed *value) {
+string *handleString(mixed *value) {
     return ({ implode(explode(value[0], "\""), "") });
 }
 
-int *handle_integer(mixed *value) {
+int *handleInteger(mixed *value) {
     int i;
     return sscanf(value[0], "%d", i) == 1 ? ({ i }) : ({});
 }
 
-float *handle_float(mixed *value) {
+float *handleFloat(mixed *value) {
     float f;
     return sscanf(implode(value, ""), "%f", f) == 1 ? ({ f }) : ({});
 }
