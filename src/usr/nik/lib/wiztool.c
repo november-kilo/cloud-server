@@ -3,6 +3,8 @@
 inherit Terminal;
 inherit NK_KFUN;
 
+private Queue queue;
+
 static void println(object user, string str) {
     user->message(str + "\n");
 }
@@ -75,4 +77,31 @@ void cmd_dex(object user, string cmd, string str) {
     }
     experiment = clone_object(DICE_EXPERIMENT_CHECKS_OBJ);
     experiment->run(user, target, sampleSize, filename);
+}
+
+static void process(mixed value, object user) {
+    user->println("dequeued: " + dump_value(value, ([ ])));
+}
+
+private void initQueue() {
+    if (!find_object(QUEUE_OBJ)) {
+        compile_object(QUEUE_OBJ);
+    }
+    if (!queue) {
+        queue = clone_object(QUEUE_OBJ);
+    }
+}
+
+void cmd_enq(object user, string cmd, string str) {
+    if (!str) {
+        str = "Your significant mind notices the fabric of space.";
+    }
+
+    initQueue();
+    (new DelayedContinuation(4) + queue->enqueueCont(str))->runNext();
+}
+
+void cmd_deq(object user, string cmd, string str) {
+    initQueue();
+    (queue->dequeueCont() >> new ChainedContinuation("process", user))->runNext();
 }
