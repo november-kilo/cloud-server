@@ -92,13 +92,16 @@ private void initQueue() {
     }
 }
 
-void cmd_enq(object user, string cmd, string str) {
+static mixed enqueueValue(object user, string cmd, string str) {
     if (!str) {
         str = "Your significant mind notices the fabric of space.";
     }
+    return str;
+}
 
+void cmd_enq(object user, string cmd, string str) {
     initQueue();
-    (new DelayedContinuation(4) + queue->enqueueCont(str))->runNext();
+    (new Continuation("enqueueValue", user, cmd, str) >> queue->enqueueCont())->runNext();
 }
 
 void cmd_deq(object user, string cmd, string str) {

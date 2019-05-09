@@ -9,22 +9,29 @@ static void create(void) {
 }
 
 mapping state(void) {
-    return ([ "queue": sizeof(queue), "suspended": sizeof(suspended) ]);
+    return ([
+        "meta": ([
+            "queue": sizeof(queue),
+            "suspended": sizeof(suspended)
+        ]),
+        "queue": queue,
+        "suspended": suspended
+    ]);
 }
 
-Continuation enqueueCont(mixed obj) {
-    return new Continuation("enqueue", obj);
+Continuation enqueueCont(void) {
+    return new ChainedContinuation("enqueue");
 }
 
-static void enqueue(mixed obj) {
+static void enqueue(mixed value) {
     ContinuationToken token;
 
     if (sizeof(suspended) != 0) {
         token = suspended[0];
         suspended = suspended[1 ..];
-        token->resumeContinuation(obj);
+        token->resumeContinuation(value);
     } else {
-        queue += ({ obj });
+        queue += ({ value });
     }
 }
 
@@ -33,12 +40,12 @@ Continuation dequeueCont(void) {
 }
 
 static mixed dequeue() {
-    mixed obj;
+    mixed value;
 
     if (sizeof(queue) != 0) {
-        obj = queue[0];
+        value = queue[0];
         queue = queue[1 ..];
-        return obj;
+        return value;
     }
     suspended += ({ suspendContinuation() });
     return nil;
