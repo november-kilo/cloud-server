@@ -125,6 +125,11 @@
 #define ProbabilityReducer object POLYNOMIAL_PROBABILITY_REDUCER
 
 
+#define QUEUE_OBJ "/obj/Queue"
+#define QUEUE_LIB "/lib/Queue"
+#define Queue object QUEUE_LIB
+
+
 #define RATIONAL_LIB "/lib/number/Rational"
 #define Rational object RATIONAL_LIB
 

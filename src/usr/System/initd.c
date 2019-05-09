@@ -87,6 +87,7 @@ static void create(void)
     compile_object(POLYNOMIAL_DERIVATIVE_ITERATOR);
     compile_object(POLYNOMIAL_STRING_REDUCER);
     compile_object(POLYNOMIAL_PROBABILITY_REDUCER);
+    compile_object(QUEUE_LIB);
     compile_object(RATIONAL_LIB);
     compile_object(SEARCH_LIB);
     compile_object(SIMPSONS_RULE_INTEGRATOR_LIB);
