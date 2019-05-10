@@ -7,10 +7,6 @@ private Queue queue;
 #define EMPTY_QUEUE "([ \"meta\":([ \"queue\":0, \"suspended\":0 ]), \"queue\":({ }), \"suspended\":({ }) ])"
 #define ONE_VALUE_ENQUEUED "Jabberwocky"
 
-static int enqueueValue(int value) {
-    return value;
-}
-
 private void queryQueueState(string testLine, string expected) {
     expectEqual(testLine, expected, dump_value(queue->state(), ([ ])));
 }
@@ -24,22 +20,7 @@ private void dequeueContShouldReturnContinuation(void) {
 }
 
 private void stateShouldIndicateQueueIsEmpty(void) {
-    mapping state;
-
-    state = queue->state();
-
     queryQueueState(TEST_LINE, EMPTY_QUEUE);
-}
-
-private void enqueueShouldAddToQueueWhenSuspendedIsEmpty(void) {
-    Continuation continuation;
-    int value;
-
-    value = 42;
-    continuation = new Continuation("enqueueValue", value);
-    continuation >>= queue->enqueueCont();
-    continuation += new Continuation("queryQueueState", TEST_LINE, ONE_VALUE_ENQUEUED);
-    continuation->runNext();
 }
 
 void runBeforeTests(void) {
@@ -55,5 +36,4 @@ void runTests(void) {
     enqueueContShouldReturnChainedContinuation();
     dequeueContShouldReturnContinuation();
     stateShouldIndicateQueueIsEmpty();
-    enqueueShouldAddToQueueWhenSuspendedIsEmpty();
 }
