@@ -140,16 +140,9 @@ private Rational mixedToRational(mixed x) {
             if (x <- NUMBER_LIB) {
                 return x->toRational();
             }
-            break;
         default:
             instanceOfBadType(x);
     }
-
-    if (catch(x <- RATIONAL_LIB)) {
-        instanceOfBadType(x);
-    }
-
-    return x;
 }
 
 private int *makeCommon(Rational r) {

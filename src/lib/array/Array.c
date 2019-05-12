@@ -46,55 +46,6 @@ int equals(Array that) {
     return TRUE;
 }
 
-int contains(mixed value) {
-    Iterator iterator;
-    mixed x;
-    int s;
-    string err;
-
-    if (!size()) {
-        return FALSE;
-    }
-
-    iterator = new Iterator(this_object(), 0, size() - 1);
-    while (!iterator->end()) {
-        x = iterator->next();
-
-        /* XXX checkEquals ? */
-        if (T_OBJECT == typeof(x) && function_object("equals", (mixed) x)) {
-            err = catch(s = x->equals(value));
-            if (!err && s) {
-                return TRUE;
-            }
-        } else {
-            if (x == value) {
-                return TRUE;
-            }
-        }
-    }
-
-    return FALSE;
-}
-
-mixed *copy(void) {
-    mixed *copy;
-    Iterator iterator;
-    int i;
-
-    if (!size()) {
-        return ({ });
-    }
-
-    copy = allocate(size());
-    iterator = new IntIterator(0, size() - 1);
-    while (!iterator->end()) {
-        i = iterator->next();
-        copy[i] = get(i);
-    }
-
-    return copy;
-}
-
 mixed *toArray(void) {
     return array;
 }
@@ -199,7 +150,7 @@ Array filter(Function filterer, varargs int from, int to) {
     while (!iterator->end()) {
         element = iterator->next();
         if (filterer->evaluate(element)) {
-            fCount ++;
+            fCount++;
         }
     }
 
@@ -263,35 +214,8 @@ string tabulate(void) {
     return tabulator->evaluate(toArray());
 }
 
-string box(Function reducer) {
-    return reducer->evaluate(toArray());
-}
-
-Array unique(void) {
-    Iterator iterator;
-    mixed *u;
-
-    if (!size()) {
-        return new Array(({ }));
-    }
-
-    if (size() == 1) {
-        if (get(0) == nil) {
-            return new Array(({ }));
-        }
-        return new Array(toArray());
-    }
-
-    u = allocate(size());
-    iterator = new IntIterator(0, size() - 1);
-    while (!iterator->end()) {
-        u -= ({ get(iterator->next()) });
-        u += ({ get(iterator->current()) });
-    }
-
-    u -= ({ nil });
-
-    return new Array(u);
+mixed evaluateWith(Function f) {
+    return f->evaluate(toArray());
 }
 
 mixed iteratorStart(mixed from, mixed to) {
