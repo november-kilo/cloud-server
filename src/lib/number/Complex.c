@@ -21,6 +21,39 @@ Complex conjugate(void) {
     return new Complex(re, -im);
 }
 
+static Complex operator+ (Complex y) {
+    float xr, xi, yr, yi;
+
+    xr = re();
+    xi = im();
+    yr = y->re();
+    yi = y->im();
+
+    return new Complex(xr + yr, xi + yi);
+}
+
+static Complex operator- (Complex y) {
+    float xr, xi, yr, yi;
+
+    xr = re();
+    xi = im();
+    yr = y->re();
+    yi = y->im();
+
+    return new Complex(xr - yr, xi - yi);
+}
+
+static Complex operator* (Complex y) {
+    float xr, xi, yr, yi;
+
+    xr = re();
+    xi = im();
+    yr = y->re();
+    yi = y->im();
+
+    return new Complex(xr * yr - xi * yi, xr * yi + xi * yr);
+}
+
 static Complex operator/ (Complex y) {
     float xr, xi, yr, yi, r, d;
 
@@ -64,6 +97,15 @@ Complex sin() {
 
 Complex tan() {
     return sin() / cos();
+}
+
+float abs() {
+    float r, i;
+
+    r = re();
+    i = im();
+
+    return hypot(r, i);
 }
 
 static void create(float x, float y, varargs int fromPolar) {

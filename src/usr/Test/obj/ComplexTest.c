@@ -69,6 +69,55 @@ private void trigonometry(void) {
     expectEqual(TEST_LINE, "(-2.53686778e-5 + 0.99991282 i)", a->tan()->toString());
 }
 
+private void absShouldReturnExpectedValue(void) {
+    Complex a;
+    a = new Complex(3., 5.);
+
+    expectEqual(TEST_LINE, 5.83095189, a->abs());
+}
+
+private void multiplication(void) {
+    Complex a, b;
+    a = new Complex(3., 5.);
+    b = new Complex(5., 3.);
+
+    z = a * b;
+
+    expectEqual(TEST_LINE, "(0 + 34 i)", z->toString());
+
+    z = b * a;
+
+    expectEqual(TEST_LINE, "(0 + 34 i)", z->toString());
+}
+
+private void addition(void) {
+    Complex a, b;
+    a = new Complex(3., 5.);
+    b = new Complex(5., 3.);
+
+    z = a + b;
+
+    expectEqual(TEST_LINE, "(8 + 8 i)", z->toString());
+
+    z = b + a;
+
+    expectEqual(TEST_LINE, "(8 + 8 i)", z->toString());
+}
+
+private void subtraction(void) {
+    Complex a, b;
+    a = new Complex(3., 5.);
+    b = new Complex(5., 3.);
+
+    z = a - b;
+
+    expectEqual(TEST_LINE, "(-2 + 2 i)", z->toString());
+
+    z = b - a;
+
+    expectEqual(TEST_LINE, "(2 + -2 i)", z->toString());
+}
+
 void runTests(void) {
     createFromCartesian();
     createFromPolarWhenRLessThanZero();
@@ -77,4 +126,8 @@ void runTests(void) {
     division();
     divisionByZero();
     trigonometry();
+    absShouldReturnExpectedValue();
+    multiplication();
+    addition();
+    subtraction();
 }
