@@ -7,7 +7,7 @@ private int *margins;
 private int *padding;
 
 string evaluate(string str) {
-    return new Array(explode(str, "\n"))->box(new ToBoxReducer(margins, padding, boxType));
+    return new Array(explode(str, "\n"))->evaluateWith(new ToBoxReducer(margins, padding, boxType));
 }
 
 static void create(varargs int boxType, int *margins, int *padding) {

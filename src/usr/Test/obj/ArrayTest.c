@@ -4,7 +4,7 @@ inherit Test;
 inherit NK_KFUN;
 
 private Function testFunction;
-private Function toBoxReducer;
+private Function evaluateWithBoxReducer;
 private Array array;
 private Array c;
 private Array d;
@@ -443,14 +443,8 @@ private void toMarkedListReducerCreateUnorderedList(void) {
 
     reducer = new ArrayToMarkedListReducer();
 
-    expectEqual(TEST_LINE, "› 2\n" +
-                                        "› 4\n" +
-                                        "› 5\n" +
-                                        "› 6\n" +
-                                        "› 8\n", c->reduce(reducer, 0, c->size() - 1, 1));
-    expectEqual(TEST_LINE, "› 1\n" +
-                                        "› 1/2\n" +
-                                        "› 2\n", x->reduce(reducer, 0, x->size() - 1, 1));
+    expectEqual(TEST_LINE, "› 2\n› 4\n› 5\n› 6\n› 8\n", c->reduce(reducer, 0, c->size() - 1, 1));
+    expectEqual(TEST_LINE, "› 1\n› 1/2\n› 2\n", x->reduce(reducer, 0, x->size() - 1, 1));
 }
 
 private void toMarkedListReducerCreateOrderedList(void) {
@@ -463,31 +457,10 @@ private void toMarkedListReducerCreateOrderedList(void) {
 
     reducer = new ArrayToMarkedListReducer(2);
 
-    expectEqual(TEST_LINE, "2) 2\n" +
-                                      "3) 4\n" +
-                                      "4) 5\n" +
-                                      "5) 6\n" +
-                                      "6) 8\n", c->reduce(reducer, 0, c->size() - 1, 1));
+    expectEqual(TEST_LINE, "2) 2\n3) 4\n4) 5\n5) 6\n6) 8\n", c->reduce(reducer, 0, c->size() - 1, 1));
 
     reducer->apply(2);
-    expectEqual(TEST_LINE, "2) 1\n" +
-                                "3) 1/2\n" +
-                                "4) 2\n", x->reduce(reducer, 0, x->size() - 1, 1));
-}
-
-private void containsShouldIndicateIfArrayContainsValue(void) {
-    Rational r;
-    Array x;
-
-    r = new Rational(0.5);
-    x = new Array(({ 1., r, 2. }));
-
-    expectTrue(TEST_LINE, c->contains(6.));
-    expectFalse(TEST_LINE, c->contains(42.));
-    expectTrue(TEST_LINE, x->contains(r));
-    expectTrue(TEST_LINE, x->contains(new Rational(0.5)));
-    expectFalse(TEST_LINE, x->contains(new Rational(0.55)));
-    expectFalse(TEST_LINE, x->contains(new Random()));
+    expectEqual(TEST_LINE, "2) 1\n3) 1/2\n4) 2\n", x->reduce(reducer, 0, x->size() - 1, 1));
 }
 
 private void tabulateShouldCreateTabulatedOutput(void) {
@@ -521,27 +494,6 @@ private void tabulateShouldCreateTabulatedOutput(void) {
     expectEqual(TEST_LINE,
             "teneleventwelve  ",
             actual[4]);
-}
-
-private void uniqueShouldCreateUniqueArray(void) {
-    Array b0, b1, b2, b3, b4, b5, b6, b7;
-
-    b0 = a0->unique();
-    b1 = a1->unique();
-    b2 = a2->unique();
-    b3 = a3->unique();
-    b4 = a4->unique();
-    b5 = a5->unique();
-    b6 = a6->unique();
-    b7 = a7->unique();
-
-    expectEqual(TEST_LINE, 0, b0->size());
-    expectEqual(TEST_LINE, "({ 1, 2 })", dump_value(b2->toArray(), ([])));
-    expectEqual(TEST_LINE, "({ 1 })", dump_value(b3->toArray(), ([])));
-    expectEqual(TEST_LINE, "({ 1, 2, 3, 4, 5, 6, 7 })", dump_value(b4->toArray(), ([])));
-    expectEqual(TEST_LINE, "({ 1, 2, 3, 4, 5, 6, 7 })", dump_value(b5->toArray(), ([])));
-    expectEqual(TEST_LINE, 0, b6->size());
-    expectEqual(TEST_LINE, 0, b7->size());
 }
 
 private void eachCallsFunctionWithEachElement(void) {
@@ -581,17 +533,17 @@ private void eachCallsFunctionWithSubsetOfElements(void) {
     expectEqual(TEST_LINE, "({ 5, 6 })", dump_value(calledWith[3], ([ ])));
 }
 
-private void toBoxReducerDefault(void) {
+private void evaluateWithBoxReducerDefault(void) {
     string str;
     string *items;
 
-    toBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }));
+    evaluateWithBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }));
 
     str = "one long str two";
     items = explode(str, "\n");
     expectEqual(TEST_LINE, "+----------------+\n" +
                            "|one long str two|\n" +
-                           "+----------------+", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "+----------------+", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo";
     items = explode(str, "\n");
@@ -599,7 +551,7 @@ private void toBoxReducerDefault(void) {
                            "|one     |\n" +
                            "|long str|\n" +
                            "|two     |\n" +
-                           "+--------+", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "+--------+", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo";
     items = explode(str, "\n");
@@ -607,7 +559,7 @@ private void toBoxReducerDefault(void) {
                            "|one     |\n" +
                            "|long str|\n" +
                            "|two     |\n" +
-                           "+--------+", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "+--------+", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -615,7 +567,7 @@ private void toBoxReducerDefault(void) {
                            "|one     |\n" +
                            "|long str|\n" +
                            "|two     |\n" +
-                           "+--------+", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "+--------+", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -623,9 +575,9 @@ private void toBoxReducerDefault(void) {
                            "|one     |\n" +
                            "|long str|\n" +
                            "|two     |\n" +
-                           "+--------+", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "+--------+", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
-    toBoxReducer = new ToBoxReducer(({ 2, 2, 2, 2 }), ({ 2, 2, 2, 2 }));
+    evaluateWithBoxReducer = new ToBoxReducer(({ 2, 2, 2, 2 }), ({ 2, 2, 2, 2 }));
 
     str = "one long str two";
     items = explode(str, "\n");
@@ -636,7 +588,7 @@ private void toBoxReducerDefault(void) {
                            "  |  one long str two  |  \n" +
                            "  |                    |  \n" +
                            "  |                    |  \n" +
-                           "  +--------------------+  \n\n", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "  +--------------------+  \n\n", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo";
     items = explode(str, "\n");
@@ -649,7 +601,7 @@ private void toBoxReducerDefault(void) {
                            "  |  two       |  \n" +
                            "  |            |  \n" +
                            "  |            |  \n" +
-                           "  +------------+  \n\n", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "  +------------+  \n\n", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo";
     items = explode(str, "\n");
@@ -662,7 +614,7 @@ private void toBoxReducerDefault(void) {
                            "  |  two       |  \n" +
                            "  |            |  \n" +
                            "  |            |  \n" +
-                           "  +------------+  \n\n", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "  +------------+  \n\n", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -675,7 +627,7 @@ private void toBoxReducerDefault(void) {
                            "  |  two       |  \n" +
                            "  |            |  \n" +
                            "  |            |  \n" +
-                           "  +------------+  \n\n", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "  +------------+  \n\n", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -688,20 +640,20 @@ private void toBoxReducerDefault(void) {
                            "  |  two       |  \n" +
                            "  |            |  \n" +
                            "  |            |  \n" +
-                           "  +------------+  \n\n", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "  +------------+  \n\n", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 }
 
-private void toBoxReducerSingle(void) {
+private void evaluateWithBoxReducerSingle(void) {
     string str;
     string *items;
 
-    toBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_SINGLE);
+    evaluateWithBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_SINGLE);
 
     str = "one long str two";
     items = explode(str, "\n");
     expectEqual(TEST_LINE, "┌────────────────┐\n" +
                            "│one long str two│\n" +
-                           "└────────────────┘", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "└────────────────┘", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo";
     items = explode(str, "\n");
@@ -709,7 +661,7 @@ private void toBoxReducerSingle(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "└────────┘", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "└────────┘", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo";
     items = explode(str, "\n");
@@ -717,7 +669,7 @@ private void toBoxReducerSingle(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "└────────┘", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "└────────┘", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -725,7 +677,7 @@ private void toBoxReducerSingle(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "└────────┘", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "└────────┘", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -733,20 +685,20 @@ private void toBoxReducerSingle(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "└────────┘", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "└────────┘", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 }
 
-private void toBoxReducerDouble(void) {
+private void evaluateWithBoxReducerDouble(void) {
     string str;
     string *items;
 
-    toBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_DOUBLE);
+    evaluateWithBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_DOUBLE);
 
     str = "one long str two";
     items = explode(str, "\n");
     expectEqual(TEST_LINE, "╔════════════════╗\n" +
                            "║one long str two║\n" +
-                           "╚════════════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo";
     items = explode(str, "\n");
@@ -754,7 +706,7 @@ private void toBoxReducerDouble(void) {
                            "║one     ║\n" +
                            "║long str║\n" +
                            "║two     ║\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo";
     items = explode(str, "\n");
@@ -762,7 +714,7 @@ private void toBoxReducerDouble(void) {
                            "║one     ║\n" +
                            "║long str║\n" +
                            "║two     ║\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -770,7 +722,7 @@ private void toBoxReducerDouble(void) {
                            "║one     ║\n" +
                            "║long str║\n" +
                            "║two     ║\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -778,20 +730,20 @@ private void toBoxReducerDouble(void) {
                            "║one     ║\n" +
                            "║long str║\n" +
                            "║two     ║\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 }
 
-private void toBoxReducerDoubleHorizontal(void) {
+private void evaluateWithBoxReducerDoubleHorizontal(void) {
     string str;
     string *items;
 
-    toBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_DOUBLE_HORIZONTAL);
+    evaluateWithBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_DOUBLE_HORIZONTAL);
 
     str = "one long str two";
     items = explode(str, "\n");
     expectEqual(TEST_LINE, "╔════════════════╗\n" +
                            "│one long str two│\n" +
-                           "╚════════════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo";
     items = explode(str, "\n");
@@ -799,7 +751,7 @@ private void toBoxReducerDoubleHorizontal(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo";
     items = explode(str, "\n");
@@ -807,7 +759,7 @@ private void toBoxReducerDoubleHorizontal(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -815,7 +767,7 @@ private void toBoxReducerDoubleHorizontal(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -823,20 +775,20 @@ private void toBoxReducerDoubleHorizontal(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╚════════╝", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╚════════╝", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 }
 
-private void toBoxReducerRound(void) {
+private void evaluateWithBoxReducerRound(void) {
     string str;
     string *items;
 
-    toBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_ROUND);
+    evaluateWithBoxReducer = new ToBoxReducer(({ 0, 0, 0, 0 }), ({ 0, 0, 0, 0 }), BOX_STRING_ROUND);
 
     str = "one long str two";
     items = explode(str, "\n");
     expectEqual(TEST_LINE, "╭────────────────╮\n" +
                            "│one long str two│\n" +
-                           "╰────────────────╯", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╰────────────────╯", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo";
     items = explode(str, "\n");
@@ -844,7 +796,7 @@ private void toBoxReducerRound(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╰────────╯", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╰────────╯", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo";
     items = explode(str, "\n");
@@ -852,7 +804,7 @@ private void toBoxReducerRound(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╰────────╯", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╰────────╯", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "one\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -860,7 +812,7 @@ private void toBoxReducerRound(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╰────────╯", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╰────────╯", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 
     str = "\none\nlong str\ntwo\n";
     items = explode(str, "\n");
@@ -868,7 +820,7 @@ private void toBoxReducerRound(void) {
                            "│one     │\n" +
                            "│long str│\n" +
                            "│two     │\n" +
-                           "╰────────╯", new Array(explode(str, "\n"))->box(toBoxReducer));
+                           "╰────────╯", new Array(explode(str, "\n"))->evaluateWith(evaluateWithBoxReducer));
 }
 
 private void equalsShouldIndicateExpectedValue(void) {
@@ -911,15 +863,13 @@ void runTests(void) {
     getOutOfRangeShouldThrowExpectedError();
     toMarkedListReducerCreateUnorderedList();
     toMarkedListReducerCreateOrderedList();
-    containsShouldIndicateIfArrayContainsValue();
     tabulateShouldCreateTabulatedOutput();
-    uniqueShouldCreateUniqueArray();
     eachCallsFunctionWithEachElement();
     eachCallsFunctionWithSubsetOfElements();
-    toBoxReducerDefault();
-    toBoxReducerSingle();
-    toBoxReducerDouble();
-    toBoxReducerDoubleHorizontal();
-    toBoxReducerRound();
+    evaluateWithBoxReducerDefault();
+    evaluateWithBoxReducerSingle();
+    evaluateWithBoxReducerDouble();
+    evaluateWithBoxReducerDoubleHorizontal();
+    evaluateWithBoxReducerRound();
     equalsShouldIndicateExpectedValue();
 }
