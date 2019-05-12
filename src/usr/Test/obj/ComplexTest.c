@@ -60,6 +60,15 @@ private void divisionByZero(void) {
     expectEqual(TEST_LINE, "Complex: division by zero.", catch(a / b));
 }
 
+private void trigonometry(void) {
+    Complex a;
+    a = new Complex(3., 5.);
+
+    expectEqual(TEST_LINE, "(-73.4672922 + -10.4715577 i)", a->cos()->toString());
+    expectEqual(TEST_LINE, "(10.4725085 + -73.4606217 i)", a->sin()->toString());
+    expectEqual(TEST_LINE, "(-2.53686778e-5 + 0.99991282 i)", a->tan()->toString());
+}
+
 void runTests(void) {
     createFromCartesian();
     createFromPolarWhenRLessThanZero();
@@ -67,4 +76,5 @@ void runTests(void) {
     complexConjugate();
     division();
     divisionByZero();
+    trigonometry();
 }

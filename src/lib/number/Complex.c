@@ -44,13 +44,35 @@ static Complex operator/ (Complex y) {
     return new Complex((r * xr + xi) / d, (r * xi - xr) / d);
 }
 
+Complex cos() {
+    float r, i;
+
+    r = re();
+    i = im();
+
+    return new Complex(::cos(r) * ::cosh(i), -::sin(r) * ::sinh(i));
+}
+
+Complex sin() {
+    float r, i;
+
+    r = re();
+    i = im();
+
+    return new Complex(::sin(r) * ::cosh(i), ::cos(r) * ::sinh(i));
+}
+
+Complex tan() {
+    return sin() / cos();
+}
+
 static void create(float x, float y, varargs int fromPolar) {
     if (fromPolar) {
         if (x < 0.) {
             x = -x;
             y += pi();
         }
-        create(x * cos(y), x * sin(fmod(y, 2. * pi())));
+        create(x * ::cos(y), x * ::sin(fmod(y, 2. * pi())));
     } else {
         re = x;
         im = y;
