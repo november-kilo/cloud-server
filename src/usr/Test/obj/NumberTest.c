@@ -5,8 +5,6 @@ inherit Test;
 private Number number;
 
 private void checkNumberReturnsExpectedValue(void) {
-    number = new Number(0.8);
-
     expectEqual(TEST_LINE, "0.8", number->toString());
     expectEqual(TEST_LINE, 1, number->toInt());
     expectEqual(TEST_LINE, 0, new Number(0.2)->toInt());
@@ -55,6 +53,26 @@ private void castsToString(void) {
     expectEqual(TEST_LINE, "3.14159265", new Number(pi())->toString());
 }
 
+private void equalsShouldIndicateEquality() {
+    expectTrue(TEST_LINE, number->equals(new Number(0.8)));
+    expectTrue(TEST_LINE, number->equals(number));
+    expectTrue(TEST_LINE, number->equals(0.8));
+    expectFalse(TEST_LINE, number->equals(0.79));
+    expectFalse(TEST_LINE, number->equals(0.81));
+    expectFalse(TEST_LINE, number->equals(0.801));
+
+    expectTrue(TEST_LINE, number->equals(new Number("0.8")));
+    expectTrue(TEST_LINE, number->equals(number));
+    expectTrue(TEST_LINE, number->equals("0.8"));
+    expectFalse(TEST_LINE, number->equals("0.79"));
+    expectFalse(TEST_LINE, number->equals("0.81"));
+    expectFalse(TEST_LINE, number->equals("0.801"));
+}
+
+void runBeforeTests(void) {
+    number = new Number(0.8);
+}
+
 void runTests(void) {
     checkNumberReturnsExpectedValue();
     intIsNumber();
@@ -62,4 +80,5 @@ void runTests(void) {
     rationalIsNumber();
     otherIsNotNumber();
     castsToString();
+    equalsShouldIndicateEquality();
 }

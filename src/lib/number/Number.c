@@ -33,6 +33,37 @@ int isNan() {
     return TRUE;
 }
 
+int equals(mixed that, varargs float tolerance) {
+    int thatType;
+    float f1, f2, d;
+
+    if (number == that) {
+        return TRUE;
+    }
+
+    thatType = typeof(that);
+    if (thatType == T_OBJECT) {
+        if (this_object() == that) {
+            return TRUE;
+        }
+
+        if (!(that <- NUMBER_LIB)) {
+            return FALSE;
+        }
+
+        f2 = that->toFloat();
+    } else {
+        if (catch(f2 = (float) that)) {
+            return FALSE;
+        }
+    }
+
+    f1 = toFloat();
+    d = fabs(f1 - f2);
+
+    return d == 0. || d < tolerance;
+}
+
 static void create(mixed number) {
     ::number = number;
 }
