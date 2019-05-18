@@ -18,7 +18,7 @@ mixed *binary(mixed target) {
         d++;
         c = a + (b - a) / 2;
 
-        if (checkEquals(array[c], target)) {
+        if (array[c] == target || objectEquals(array[c], target) == TRUE) {
             e = c;
             break;
         }

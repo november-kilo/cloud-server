@@ -51,6 +51,10 @@ nomask static void expectFalse(string str, mixed actual) {
     expectTrue(str, !actual);
 }
 
+nomask static void expectNil(string str, mixed actual) {
+    expectTrue(str, typeof(actual) == T_NIL);
+}
+
 nomask static void expectEqual(string str, mixed expected, mixed actual) {
     int x;
 

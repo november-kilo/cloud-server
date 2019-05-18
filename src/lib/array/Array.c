@@ -23,7 +23,11 @@ mixed get(int index) {
 int equals(Array that) {
     Iterator iterator;
     int i;
-    mixed thisValue, thatValue;
+    mixed thisValue, thatValue, e;
+
+    if (this_object() == that) {
+        return TRUE;
+    }
 
     if (size() != that->size()) {
         return FALSE;
@@ -38,7 +42,8 @@ int equals(Array that) {
         i = iterator->next();
         thisValue = get(i);
         thatValue = that->get(i);
-        if (!checkEquals(thisValue, thatValue)) {
+        e = objectEquals(thisValue, thatValue);
+        if (e == nil && thisValue != thatValue) {
             return FALSE;
         }
     }
