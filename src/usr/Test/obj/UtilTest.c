@@ -3,9 +3,6 @@
 inherit Test;
 inherit NK_KFUN;
 
-private CheckEquals checkEquals;
-private Number number;
-private Random random;
 private Terminal terminal;
 
 private void piShouldReturnExpectedValue(void) {
@@ -44,52 +41,6 @@ private void maxShouldReturnMaximumValue(void) {
     expectTrue(TEST_LINE, r2->equals(max(r2, r1)));
 }
 
-private void checkEqualsShouldIndicateWhetherOneEqualsAnother(void) {
-    string str;
-    int i;
-    float f;
-
-    str = random->randomString(42);
-    i = random->randomInt() % 42;
-    number = new Number(i);
-
-    expectTrue(TEST_LINE, checkEquals->checkEquals(number, number));
-    expectTrue(TEST_LINE, checkEquals->checkEquals(i, i));
-    expectTrue(TEST_LINE, checkEquals->checkEquals((float) i, (float) i));
-    expectTrue(TEST_LINE, checkEquals->checkEquals(str, str));
-
-    expectFalse(TEST_LINE, checkEquals->checkEquals(number, new Number(1)));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(i, i + 1));
-    expectFalse(TEST_LINE, checkEquals->checkEquals((float) i, (float) i + 0.5));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(str, "not " + str));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(str, i));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(str, (float) i));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(str, number));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(i, (float) i));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(number, str));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(number, i));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(number, (float) i));
-
-    expectFalse(TEST_LINE, checkEquals->checkEquals(number, ({ })));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(number, ([ ])));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(i, ({ })));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(i, ([ ])));
-    expectFalse(TEST_LINE, checkEquals->checkEquals((float) i, ({ })));
-    expectFalse(TEST_LINE, checkEquals->checkEquals((float) i, ([ ])));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(str, ({ })));
-    expectFalse(TEST_LINE, checkEquals->checkEquals(str, ([ ])));
-}
-
-private void checkNumberReturnsExpectedValue(void) {
-    number = new Number(0.8);
-
-    expectEqual(TEST_LINE, "0.8", number->toString());
-    expectEqual(TEST_LINE, 1, number->toInt());
-    expectEqual(TEST_LINE, 0, new Number(0.2)->toInt());
-    expectEqual(TEST_LINE, 0.8, number->toFloat());
-    expectTrue(TEST_LINE, new Rational(4, 5)->equals(number->toRational()));
-}
-
 private void colors256ShouldThrowExpectedError(void) {
     expectEqual(TEST_LINE, "Terminal: Invalid color.", catch(terminal->color256(-1, "foo")));
     expectEqual(TEST_LINE, "Terminal: Invalid color.", catch(terminal->color256(256, "foo")));
@@ -105,8 +56,6 @@ private void hypotShouldReturnExpectedValue(void) {
 }
 
 void runBeforeTests(void) {
-    checkEquals = new CheckEquals();
-    random = new Random();
     terminal = new Terminal();
 }
 
@@ -114,8 +63,6 @@ void runTests(void) {
     piShouldReturnExpectedValue();
     minShouldReturnMinimumValue();
     maxShouldReturnMaximumValue();
-    checkEqualsShouldIndicateWhetherOneEqualsAnother();
-    checkNumberReturnsExpectedValue();
     colors256ShouldThrowExpectedError();
     hypotShouldReturnExpectedValue();
 }

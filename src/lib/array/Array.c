@@ -1,7 +1,7 @@
 #include <NKlib.h>
 
 inherit Iterable;
-inherit CheckEquals;
+inherit Checks;
 inherit Sort;
 inherit NK_KFUN;
 
