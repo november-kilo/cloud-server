@@ -1,6 +1,6 @@
 #include <NKlib.h>
 
-inherit CheckEquals;
+inherit Checks;
 inherit Sort;
 
 private mixed *array;

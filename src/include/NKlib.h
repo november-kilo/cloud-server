@@ -62,8 +62,8 @@
 #define ToBoxReducer object ARRAY_TO_BOX_REDUCER
 
 
-#define CHECK_EQUALS_LIB "/lib/CheckEquals"
-#define CheckEquals object CHECK_EQUALS_LIB
+#define CHECKS_LIB "/lib/Checks"
+#define Checks object CHECKS_LIB
 
 
 #define COMPLEX_NUMBER_LIB "/lib/number/Complex"
