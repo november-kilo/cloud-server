@@ -108,6 +108,10 @@ private void operators(void) {
     expectEqual(TEST_LINE, "Number: invalid operand.", catch(number <= ([])));
 }
 
+private void negation(void) {
+    expectEqual(TEST_LINE, -0.8, (-number)->toFloat());
+}
+
 void runBeforeTests(void) {
     number = new Number(0.8);
 }
@@ -121,4 +125,5 @@ void runTests(void) {
     castsToString();
     equalsShouldIndicateEquality();
     operators();
+    negation();
 }
