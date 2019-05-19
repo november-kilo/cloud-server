@@ -1,15 +1,19 @@
 #include <NKlib.h>
 
-int randomInt(void) {
-    return random(0);
-}
-
-float randomFloat(varargs float f) {
-    if (!f) {
-        f = 1.;
+int randomInt(varargs int p, int q) {
+    if (p == 0 && q == 0) {
+        return random(0);
     }
 
-    return f * ((float)random(0) / (float)INT_MAX);
+    return random(0) % (q - p + 1) + p;
+}
+
+float randomFloat(varargs float p, float q) {
+    if (p == 0.  && q == 0.) {
+        return (float) random(0);
+    }
+
+    return ((float) random(0) / (float) INT_MAX) * (q - p) + p;
 }
 
 string randomString(int length) {
