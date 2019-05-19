@@ -29,7 +29,7 @@ int denominator(void) {
     return denominator;
 }
 
-float originalFloat() {
+float originalFloat(void) {
     return originalFloat;
 }
 
@@ -137,7 +137,7 @@ private Rational mixedToRational(mixed x) {
             }
             return new Rational(f);
         case T_OBJECT:
-            if (x <- NUMBER_LIB) {
+            if (x <- Number) {
                 return x->toRational();
             }
         default:
@@ -180,7 +180,7 @@ static Rational operator^ (mixed p) {
 
     switch (typeof(p)) {
         case T_OBJECT:
-            if (p <- NUMBER_LIB) {
+            if (p <- Number) {
                 i = p->toInt();
                 break;
             }
@@ -294,7 +294,7 @@ static void create(mixed args...) {
                 fromRational(args[0]);
                 return;
             }
-            if (args[0] <- NUMBER_LIB) {
+            if (args[0] <- Number) {
                 fromRational(args[0]->toRational());
                 return;
             }
