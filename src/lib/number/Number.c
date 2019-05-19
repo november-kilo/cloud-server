@@ -82,7 +82,11 @@ static Number operator+ (mixed that) {
     return new Number(number + makeFloatFrom(that));
 }
 
-static Number operator- (mixed that) {
+static Number operator- (varargs mixed that) {
+    if (that == nil) {
+        return new Number(-number);
+    }
+
     return new Number(number - makeFloatFrom(that));
 }
 
