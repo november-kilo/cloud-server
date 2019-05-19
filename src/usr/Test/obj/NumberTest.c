@@ -69,6 +69,45 @@ private void equalsShouldIndicateEquality() {
     expectFalse(TEST_LINE, number->equals("0.801"));
 }
 
+private void operators(void) {
+    expectEqual(TEST_LINE, 1.2, (number + 0.4)->toFloat());
+    expectEqual(TEST_LINE, 1.2, (number + new Number(0.4))->toFloat());
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number + ([])));
+
+    expectEqual(TEST_LINE, 0.6, (number - 0.2)->toFloat());
+    expectEqual(TEST_LINE, 0.6, (number - new Number(0.2))->toFloat());
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number - ([])));
+
+    expectEqual(TEST_LINE, 0.32, (number * 0.4)->toFloat());
+    expectEqual(TEST_LINE, 0.32, (number * new Number(0.4))->toFloat());
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number * ([])));
+
+    expectEqual(TEST_LINE, 2., (number / 0.4)->toFloat());
+    expectEqual(TEST_LINE, 2., (number / new Number(0.4))->toFloat());
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number / ([])));
+
+    expectEqual(TEST_LINE, "Division by zero", catch(number / 0.));
+    expectEqual(TEST_LINE, "Division by zero", catch(number / new Number(0.)));
+
+    expectTrue(TEST_LINE, number > 0.79);
+    expectFalse(TEST_LINE, number > 0.81);
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number > ([])));
+
+    expectTrue(TEST_LINE, number >= 0.79);
+    expectTrue(TEST_LINE, number >= 0.8);
+    expectFalse(TEST_LINE, number >= 0.81);
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number >= ([])));
+
+    expectFalse(TEST_LINE, number < 0.79);
+    expectTrue(TEST_LINE, number < 0.81);
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number < ([])));
+
+    expectFalse(TEST_LINE, number <= 0.79);
+    expectTrue(TEST_LINE, number <= 0.8);
+    expectTrue(TEST_LINE, number <= 0.81);
+    expectEqual(TEST_LINE, "Number: invalid operand.", catch(number <= ([])));
+}
+
 void runBeforeTests(void) {
     number = new Number(0.8);
 }
@@ -81,4 +120,5 @@ void runTests(void) {
     otherIsNotNumber();
     castsToString();
     equalsShouldIndicateEquality();
+    operators();
 }
