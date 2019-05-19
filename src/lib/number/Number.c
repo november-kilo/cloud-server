@@ -64,6 +64,52 @@ int equals(mixed that, varargs float tolerance) {
     return d == 0. || d < tolerance;
 }
 
+private float makeFloatFrom(mixed value) {
+    float f;
+
+    if (typeof(value) == T_OBJECT && value <- NUMBER_LIB) {
+        return value->toFloat();
+    }
+
+    if (catch(f = (float) value)) {
+        error("Number: invalid operand.");
+    }
+
+    return f;
+}
+
+static Number operator+ (mixed that) {
+    return new Number(number + makeFloatFrom(that));
+}
+
+static Number operator- (mixed that) {
+    return new Number(number - makeFloatFrom(that));
+}
+
+static Number operator* (mixed that) {
+    return new Number(number * makeFloatFrom(that));
+}
+
+static Number operator/ (mixed that) {
+    return new Number(number / makeFloatFrom(that));
+}
+
+static int operator< (mixed that) {
+    return number < makeFloatFrom(that);
+}
+
+static int operator<= (mixed that) {
+    return number <= makeFloatFrom(that);
+}
+
+static int operator> (mixed that) {
+    return number > makeFloatFrom(that);
+}
+
+static int operator>= (mixed that) {
+    return number >= makeFloatFrom(that);
+}
+
 static void create(mixed number) {
     ::number = number;
 }
