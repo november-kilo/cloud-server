@@ -39,7 +39,7 @@ Continuation dequeueCont(void) {
     return new Continuation("dequeue");
 }
 
-static mixed dequeue() {
+static mixed dequeue(void) {
     mixed value;
 
     if (sizeof(queue) != 0) {

@@ -70,6 +70,8 @@ private void equalsShouldIndicateEquality() {
 }
 
 private void operators(void) {
+    expectEqual(TEST_LINE, 2.8, (number + 2)->toFloat());
+
     expectEqual(TEST_LINE, 1.2, (number + 0.4)->toFloat());
     expectEqual(TEST_LINE, 1.2, (number + new Number(0.4))->toFloat());
     expectEqual(TEST_LINE, "Number: invalid operand.", catch(number + ([])));
@@ -112,6 +114,14 @@ private void negation(void) {
     expectEqual(TEST_LINE, -0.8, (-number)->toFloat());
 }
 
+private void absoluteValue(void) {
+    expectEqual(TEST_LINE, 0.8, number->abs()->toFloat());
+
+    number = -number;
+
+    expectEqual(TEST_LINE, 0.8, number->abs()->toFloat());
+}
+
 void runBeforeTests(void) {
     number = new Number(0.8);
 }
@@ -126,4 +136,5 @@ void runTests(void) {
     equalsShouldIndicateEquality();
     operators();
     negation();
+    absoluteValue();
 }

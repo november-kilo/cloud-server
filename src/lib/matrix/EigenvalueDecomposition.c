@@ -830,7 +830,7 @@ float *getImagEigenvalues(void) {
     return e;
 }
 
-Matrix getD () {
+Matrix getD (void) {
     Matrix X;
     float **D;
     int i, j;

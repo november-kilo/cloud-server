@@ -18,13 +18,13 @@ string toString(void) {
     return (string) number;
 }
 
-int isNan() {
+int isNan(void) {
     int t;
 
     t = typeof(number);
     switch (t) {
         case T_OBJECT:
-            return number <- NUMBER_LIB ? FALSE : TRUE;
+            return number <- Number ? FALSE : TRUE;
         case T_INT:
         case T_FLOAT:
             return FALSE;
@@ -47,7 +47,7 @@ int equals(mixed that, varargs float tolerance) {
             return TRUE;
         }
 
-        if (!(that <- NUMBER_LIB)) {
+        if (!(that <- Number)) {
             return FALSE;
         }
 
@@ -64,10 +64,14 @@ int equals(mixed that, varargs float tolerance) {
     return d == 0. || d < tolerance;
 }
 
+Number abs(void) {
+    return new Number(fabs(number));
+}
+
 private float makeFloatFrom(mixed value) {
     float f;
 
-    if (typeof(value) == T_OBJECT && value <- NUMBER_LIB) {
+    if (typeof(value) == T_OBJECT && value <- Number) {
         return value->toFloat();
     }
 
@@ -115,5 +119,8 @@ static int operator>= (mixed that) {
 }
 
 static void create(mixed number) {
+    if (typeof(number) == T_INT) {
+        number = (float) number;
+    }
     ::number = number;
 }

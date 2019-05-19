@@ -11,6 +11,8 @@
 #include <trace.h>
 #include <type.h>
 
+#define DEBUG(str) ("/usr/System/sys/userd")->find_user("nik")->message(str)
+
 #define DATA_DIR "/data"
 #define NK_KFUN "/lib/util/nk_kfun"
 
@@ -191,5 +193,9 @@
 
 #define TERMINAL_LIB "/lib/Terminal"
 #define Terminal object TERMINAL_LIB
+
+
+#define VECTOR_LIB "/lib/Vector"
+#define Vector object VECTOR_LIB
 
 #endif

@@ -95,6 +95,7 @@ static void create(void)
     compile_object(STRINGIFY_FUNCTION);
     compile_object(TRIM_STRING_FUNCTION);
     compile_object(VARIANCE_FUNCTION);
+    compile_object(VECTOR_LIB);
 
     /* Domain stuff */
     rsrc_incr(nil, "fileblocks",

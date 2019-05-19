@@ -77,7 +77,7 @@ static Complex operator/ (Complex y) {
     return new Complex((r * xr + xi) / d, (r * xi - xr) / d);
 }
 
-Complex cos() {
+Complex cos(void) {
     float r, i;
 
     r = re();
@@ -86,7 +86,7 @@ Complex cos() {
     return new Complex(::cos(r) * ::cosh(i), -::sin(r) * ::sinh(i));
 }
 
-Complex sin() {
+Complex sin(void) {
     float r, i;
 
     r = re();
@@ -95,11 +95,11 @@ Complex sin() {
     return new Complex(::sin(r) * ::cosh(i), ::cos(r) * ::sinh(i));
 }
 
-Complex tan() {
+Complex tan(void) {
     return sin() / cos();
 }
 
-float abs() {
+float abs(void) {
     float r, i;
 
     r = re();
