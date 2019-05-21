@@ -8,7 +8,7 @@ private object rsrcd;		/* resource manager */
  * NAME:	create()
  * DESCRIPTION:	initialize API
  */
-static void create(void)
+static void create()
 {
     rsrcd = find_object(RSRCD);
 }
@@ -35,7 +35,7 @@ static void remove_owner(string owner)
  * NAME:	query_owners()
  * DESCRIPTION:	return a list of resource owners
  */
-static string *query_owners(void)
+static string *query_owners()
 {
     return rsrcd->query_owners();
 }
@@ -83,7 +83,7 @@ static mixed *query_rsrc(string name)
  * NAME:	query_resources()
  * DESCRIPTION:	return a list of resources
  */
-static string *query_resources(void)
+static string *query_resources()
 {
     return rsrcd->query_resources();
 }

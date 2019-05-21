@@ -8,7 +8,7 @@ private object connection;	/* associated connection object */
  * NAME:	query_conn()
  * DESCRIPTION:	query the associated connection
  */
-nomask object query_conn(void)
+nomask object query_conn()
 {
     return connection;
 }
@@ -17,7 +17,7 @@ nomask object query_conn(void)
  * NAME:	disconnect()
  * DESCRIPTION:	terminate the connection
  */
-static void disconnect(void)
+static void disconnect()
 {
     if (connection) {
 	connection->disconnect();
@@ -122,7 +122,7 @@ int message(string str)
  * NAME:	message_done()
  * DESCRIPTION:	placeholder function which does no buffering
  */
-int message_done(void)
+int message_done()
 {
     return MODE_NOCHANGE;
 }

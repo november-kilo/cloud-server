@@ -6,7 +6,7 @@ inherit LPCStatement;
 /*
  * emit code for return statement
  */
-void code(void)
+void code()
 {
     emit("return;", line());
 }

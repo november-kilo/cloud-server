@@ -6,7 +6,7 @@ inherit LPCStatement;
 /*
  * emit code for continue statement
  */
-void code(void)
+void code()
 {
     emit("continue;", line());
 }

@@ -17,7 +17,7 @@ static void create(LPCStatement stmt, varargs int line)
 /*
  * emit code for default statement
  */
-void code(void)
+void code()
 {
     emit("default:", line());
     statement->code();

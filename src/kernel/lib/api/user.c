@@ -7,7 +7,7 @@ private object userd;		/* user manager */
  * NAME:	create()
  * DESCRIPTION:	initialize API
  */
-static void create(void)
+static void create()
 {
     userd = find_object(USERD);
 }
@@ -16,7 +16,7 @@ static void create(void)
  * NAME:	query_connections()
  * DESCRIPTION:	return the current active connections
  */
-static object *query_connections(void)
+static object *query_connections()
 {
     return userd->query_connections();
 }

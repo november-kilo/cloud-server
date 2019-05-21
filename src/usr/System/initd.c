@@ -2,7 +2,6 @@
 # include <kernel/access.h>
 # include <kernel/user.h>
 # include <kernel/rsrc.h>
-# include <NKlib.h>
 
 inherit access API_ACCESS;
 inherit rsrc API_RSRC;
@@ -25,7 +24,7 @@ private void load(string path)
  * NAME:	create()
  * DESCRIPTION:	initialize the system
  */
-static void create(void)
+static void create()
 {
     string *domains;
     string domain;
@@ -60,42 +59,6 @@ static void create(void)
     compile_object("/lib/IterativeContinuation");
     compile_object("/lib/DistContinuation");
     compile_object("/lib/ContinuationToken");
-    compile_object(ARRAY_LIB);
-    compile_object(ARRAY_ARITHMETIC_REDUCER);
-    compile_object(ARRAY_TO_BOX_REDUCER);
-    compile_object(ARRAY_TO_LIST_REDUCER);
-    compile_object(ARRAY_TO_MARKED_LIST_REDUCER);
-    compile_object(ARRAY_TABULATE_REDUCER);
-    compile_object(BOXIFY_STRING_FUNCTION);
-    compile_object(COMPLEX_NUMBER_LIB);
-    compile_object(CORRELATION_FUNCTION);
-    compile_object(COVARIANCE_FUNCTION);
-    compile_object(DATA_VISITOR_FUNCTION);
-    compile_object(DICE_DATA_GENERATOR);
-    compile_object(DICE_LIB);
-    compile_object(DICE_ROLLER_LIB);
-    compile_object(DICE_PROBABILITY_LIB);
-    compile_object(EIGENVALUE_DECOMPOSITION_LIB);
-    compile_object(EXPONENTIAL_PROBABILITY_DENSITY_FUNCTION);
-    compile_object(GEOMETRIC_MEAN_FUNCTION);
-    compile_object(JSON_ENCODER_LIB);
-    compile_object(JSON_PARSER_LIB);
-    compile_object(LONGEST_STRING_FUNCTION);
-    compile_object(MATRIX_LIB);
-    compile_object(MEDIAN_FUNCTION);
-    compile_object(NUMBER_LIB);
-    compile_object(POLYNOMIAL_DERIVATIVE_ITERATOR);
-    compile_object(POLYNOMIAL_STRING_REDUCER);
-    compile_object(POLYNOMIAL_PROBABILITY_REDUCER);
-    compile_object(QUEUE_LIB);
-    compile_object(RATIONAL_LIB);
-    compile_object(SEARCH_LIB);
-    compile_object(SIMPSONS_RULE_INTEGRATOR_LIB);
-    compile_object(STANDARD_DEVIATION_FUNCTION);
-    compile_object(STRINGIFY_FUNCTION);
-    compile_object(TRIM_STRING_FUNCTION);
-    compile_object(VARIANCE_FUNCTION);
-    compile_object(VECTOR_LIB);
 
     /* Domain stuff */
     rsrc_incr(nil, "fileblocks",
@@ -119,7 +82,7 @@ static void create(void)
  * NAME:	prepare_reboot()
  * DESCRIPTION:	called from the driver object before a snapshot is made
  */
-void prepare_reboot(void)
+void prepare_reboot()
 {
     if (previous_program() == DRIVER) {
     }
@@ -129,7 +92,7 @@ void prepare_reboot(void)
  * NAME:	reboot()
  * DESCRIPTION:	get file quotas right after a reboot
  */
-void reboot(void)
+void reboot()
 {
     if (previous_program() == DRIVER) {
 	string *owners;

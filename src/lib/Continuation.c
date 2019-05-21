@@ -152,7 +152,7 @@ static Continuation operator>> (Continuation cont)
 /*
  * start the continuation
  */
-atomic void runNext(void)
+atomic void runNext()
 {
     if (started) {
 	error("Continuation already started");
@@ -168,7 +168,7 @@ atomic void runNext(void)
 /*
  * start the continuation concurrently
  */
-atomic void runParallel(void)
+atomic void runParallel()
 {
     if (started) {
 	error("Continuation already started");
@@ -182,7 +182,7 @@ atomic void runParallel(void)
 }
 
 
-mixed *continued(void)
+mixed *continued()
 {
     if (previous_program() == OBJECT_PATH(Continuation)) {
 	return continued;

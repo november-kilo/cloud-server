@@ -16,7 +16,7 @@ int maxticks;		/* maximum number of ticks currently allowed */
  * NAME:	create()
  * DESCRIPTION:	initialize resource mapping
  */
-static void create(void)
+static void create()
 {
     resources = ([
       "stack" :		({   0, -1, 0 }),

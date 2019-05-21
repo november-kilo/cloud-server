@@ -53,7 +53,7 @@ static void set_mode(int newmode)
  * NAME:	query_mode()
  * DESCRIPTION:	return the current connection mode
  */
-int query_mode(void)
+int query_mode()
 {
     return (blocked) ? MODE_BLOCK : mode;
 }
@@ -123,7 +123,7 @@ static void close(mapping tls, int dest)
  * NAME:	disconnect()
  * DESCRIPTION:	break connection
  */
-void disconnect(void)
+void disconnect()
 {
     if (previous_program() == LIB_USER) {
 	destruct_object(this_object());
@@ -134,7 +134,7 @@ void disconnect(void)
  * NAME:	reboot()
  * DESCRIPTION:	destruct connection object after a reboot
  */
-void reboot(void)
+void reboot()
 {
     if (previous_object() == userd || SYSTEM()) {
 	if (user) {
@@ -161,7 +161,7 @@ void set_port(int num)
  * NAME:	query_port()
  * DESCRIPTION:	return the port number
  */
-int query_port(void)
+int query_port()
 {
     return port;
 }
@@ -182,7 +182,7 @@ void set_user(object obj, string str)
  * NAME:	query_user()
  * DESCRIPTION:	return the associated user object
  */
-nomask object query_user(void)
+nomask object query_user()
 {
     return user;
 }

@@ -16,7 +16,7 @@ void setNext(LPCStatement stmt)
 /*
  * return the next statement in the list
  */
-LPCStatement next(void)
+LPCStatement next()
 {
     return next;
 }
@@ -24,7 +24,7 @@ LPCStatement next(void)
 /*
  * emit code for empty statement
  */
-void code(void)
+void code()
 {
     emit(";", line());
 }

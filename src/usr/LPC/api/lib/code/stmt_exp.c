@@ -17,7 +17,7 @@ static void create(LPCExpression exp, varargs int line)
 /*
  * emit code for expression statement
  */
-void code(void)
+void code()
 {
     expression->code();
     emit(";");

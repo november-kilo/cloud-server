@@ -4,7 +4,7 @@
 /*
  * initialize LPC compiler
  */
-static void create(void)
+static void create()
 {
     compile_object(OBJECT_PATH(LPCStmtBlock));
     compile_object(OBJECT_PATH(LPCStmtBreak));

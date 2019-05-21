@@ -18,7 +18,7 @@ static void create(int operand, LPCExpression exp, varargs int line)
 /*
  * emit code for monadic expression
  */
-void code(void)
+void code()
 {
     switch ((int) value()) {
     case LPC_EXP_CATCH:

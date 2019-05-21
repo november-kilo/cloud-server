@@ -7,7 +7,7 @@ private object accessd;		/* access manager */
  * NAME:	create()
  * DESCRIPTION:	initialize API
  */
-static void create(void)
+static void create()
 {
     accessd = find_object(ACCESSD);
 }
@@ -52,7 +52,7 @@ static void remove_user(string user)
  * NAME:	query_users()
  * DESCRIPTION:	return list of users
  */
-static string *query_users(void)
+static string *query_users()
 {
     return accessd->query_users();
 }
@@ -61,7 +61,7 @@ static string *query_users(void)
  * NAME:	save_access()
  * DESCRIPTION:	save access state to file
  */
-static void save_access(void)
+static void save_access()
 {
     accessd->save();
 }
@@ -119,7 +119,7 @@ static void set_global_access(string dir, int flag)
  * DESCRIPTION:	return the directories under /usr where everyone has read
  *		access
  */
-static string *query_global_access(void)
+static string *query_global_access()
 {
     return accessd->query_global_access();
 }
