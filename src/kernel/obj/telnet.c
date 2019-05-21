@@ -10,7 +10,7 @@ object driver;		/* driver object */
  * NAME:	create()
  * DESCRIPTION:	initialize
  */
-static void create(void)
+static void create()
 {
     ::create("telnet");
     driver = find_object(DRIVER);
@@ -20,7 +20,7 @@ static void create(void)
  * NAME:	open()
  * DESCRIPTION:	open the connection
  */
-static int open(void)
+static int open()
 {
     ::open(([ ]));
     return FALSE;
@@ -39,7 +39,7 @@ static void close(int dest)
  * NAME:	timeout()
  * DESCRIPTION:	connection timed out
  */
-static void timeout(void)
+static void timeout()
 {
     ::timeout(([ ]));
 }
@@ -75,7 +75,7 @@ void set_mode(int newmode)
  * NAME:	message_done()
  * DESCRIPTION:	called when output is completed
  */
-static void message_done(void)
+static void message_done()
 {
     ::message_done(([ ]));
 }

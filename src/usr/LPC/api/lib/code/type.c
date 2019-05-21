@@ -22,7 +22,7 @@ static void create(string typeStr, LPCExpression typeName, int ind,
 /*
  * emit code for declaration
  */
-void code(void)
+void code()
 {
     emit(classType + " ", line());
     if (objType) {

@@ -19,7 +19,7 @@ static void create(LPCStmtBlock stmt1, LPCStatement stmt2, varargs int line)
 /*
  * emit code for catch statement
  */
-void code(void)
+void code()
 {
     emit("catch");
     caught->code();

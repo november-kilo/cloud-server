@@ -19,7 +19,7 @@ int factor;			/* 2nd level divisor */
  * NAME:	create()
  * DESCRIPTION:	initialize object
  */
-static void create(void)
+static void create()
 {
     ::create();
 
@@ -176,7 +176,7 @@ private mixed touch_clones(string master)
  * NAME:	next()
  * DESCRIPTION:	find the next object to patch
  */
-private object next(void)
+private object next()
 {
     mapping map;
     string name;
@@ -451,7 +451,7 @@ string generate_leaf(string path)
 	str = object_name(previous_object());
 	if (sscanf(str, WIZTOOL + "#%*d") == 0 &&
 	    !access(str, path, READ_ACCESS)) {
-	    error("Access denied in generate_leaf()");
+	    error("Access denied");
 	}
 	sscanf(path, "%s/lib/%s", str, tail);
 	str += "/@@@/" + tail;

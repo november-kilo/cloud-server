@@ -6,7 +6,7 @@ inherit LPCDeclaration;
 /*
  * emit code for variable declaration
  */
-void code(void)
+void code()
 {
     ::code();
     emit(";");

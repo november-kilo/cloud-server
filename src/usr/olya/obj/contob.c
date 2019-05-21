@@ -1,1 +1,0 @@
-inherit "~olya/lib/contob";

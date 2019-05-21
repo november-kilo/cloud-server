@@ -1,2 +1,0 @@
-inherit "~olya/lib/wiztool";
-

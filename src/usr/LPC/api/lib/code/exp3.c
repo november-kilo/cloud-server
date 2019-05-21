@@ -21,7 +21,7 @@ static void create(int operand, LPCExpression exp1, LPCExpression exp2,
 /*
  * emit code for ternary expression
  */
-void code(void)
+void code()
 {
     emit("(");
     sub1->code();

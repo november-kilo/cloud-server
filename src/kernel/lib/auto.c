@@ -45,40 +45,40 @@ int CREATOR() { return FALSE; }	/* default System-level creator function */
 nomask void _F_create()
 {
     if (!creator) {
-        string oname;
-        object driver;
-        int clone;
+	string oname;
+	object driver;
+	int clone;
 
-        rlimits (-1; -1) {
-            /*
-             * set creator and owner
-             */
-            oname = object_name(this_object());
-            driver = ::find_object(DRIVER);
-            creator = driver->creator(oname);
-            if (sscanf(oname, "%s#%d", oname, clone) != 0) {
-                owner = TLSVAR(TLS(), TLS_ARGUMENT);
-                if (clone >= 0) {
-                    /*
-                     * register object
-                     */
-                    driver->clone(this_object(), owner);
-                }
-            } else {
-                owner = creator;
-            }
-            if (!creator) {
-                creator = "";
-            }
-        }
+	rlimits (-1; -1) {
+	    /*
+	     * set creator and owner
+	     */
+	    oname = object_name(this_object());
+	    driver = ::find_object(DRIVER);
+	    creator = driver->creator(oname);
+	    if (sscanf(oname, "%s#%d", oname, clone) != 0) {
+		owner = TLSVAR(TLS(), TLS_ARGUMENT);
+		if (clone >= 0) {
+		    /*
+		     * register object
+		     */
+		    driver->clone(this_object(), owner);
+		}
+	    } else {
+		owner = creator;
+	    }
+	    if (!creator) {
+		creator = "";
+	    }
+	}
 
 # ifdef CREATOR
-        /* call System-level creator function */
+	/* call System-level creator function */
 	if (CREATOR()) {
 	    return;
 	}
 # endif
-        create();
+	create();
     }
 }
 
@@ -91,16 +91,16 @@ static object find_object(string path)
 {
     CHECKARG(path, 1, "find_object");
     if (!this_object()) {
-        return nil;
+	return nil;
     }
 
     path = ::find_object(DRIVER)->normalize_path(path, nil);
     if (sscanf(path, "%*s/lib/") != 0) {
-        /*
-         * It is not possible to find a class object by name, or to call a
-         * function in it.
-         */
-        return nil;
+	/*
+	 * It is not possible to find a class object by name, or to call a
+	 * function in it.
+	 */
+	return nil;
     }
     return ::find_object(path);
 }
@@ -118,18 +118,18 @@ static int destruct_object(mixed obj)
     /* check and translate argument */
     driver = ::find_object(DRIVER);
     if (typeof(obj) == T_STRING) {
-        if (!this_object()) {
-            return FALSE;
-        }
-        obj = ::find_object(driver->normalize_path(obj, nil, creator));
-        if (!obj) {
-            return FALSE;
-        }
+	if (!this_object()) {
+	    return FALSE;
+	}
+	obj = ::find_object(driver->normalize_path(obj, nil, creator));
+	if (!obj) {
+	    return FALSE;
+	}
     } else {
-        CHECKARG(typeof(obj) == T_OBJECT, 1, "destruct_object");
-        if (!this_object()) {
-            return FALSE;
-        }
+	CHECKARG(typeof(obj) == T_OBJECT, 1, "destruct_object");
+	if (!this_object()) {
+	    return FALSE;
+	}
     }
 
     /*
@@ -138,26 +138,26 @@ static int destruct_object(mixed obj)
     oname = object_name(obj);
     clone = sscanf(oname, "%s#%d", oname, lib);
     if (clone && lib < 0) {
-        error("Cannot destruct non-persistent object");
+	error("Cannot destruct non-persistent object");
     }
     lib = sscanf(oname, "%*s/lib/");
     oowner = (lib || sscanf(oname, "%*s#") == 0) ?
-             driver->creator(oname) : obj->query_owner();
+	      driver->creator(oname) : obj->query_owner();
     if ((sscanf(oname, "/kernel/%*s") != 0 && !lib && !KERNEL()) ||
-        (creator != "System" && owner != oowner)) {
-        error("Cannot destruct object: not owner");
+	(creator != "System" && owner != oowner)) {
+	error("Cannot destruct object: not owner");
     }
 
     rlimits (-1; -1) {
-        if (clone) {
-            /*
-             * non-clones are handled by driver->remove_program()
-             */
-            ::find_object(RSRCD)->rsrc_incr(oowner, "objects", -1);
-        } else {
-            driver->destruct(object_name(obj), oowner);
-        }
-        ::destruct_object(obj);
+	if (clone) {
+	    /*
+	     * non-clones are handled by driver->remove_program()
+	     */
+	    ::find_object(RSRCD)->rsrc_incr(oowner, "objects", -1);
+	} else {
+	    driver->destruct(object_name(obj), oowner);
+	}
+	::destruct_object(obj);
     }
     return TRUE;
 }
@@ -167,7 +167,7 @@ static int destruct_object(mixed obj)
  * DESCRIPTION:	reversible low-level compile
  */
 private atomic object _compile(object driver, string path, string uid,
-                               string *source)
+			       string *source)
 {
     int add;
     object obj;
@@ -176,7 +176,7 @@ private atomic object _compile(object driver, string path, string uid,
     add = !::find_object(path);
     obj = ::compile_object(path, source...);
     if (add) {
-        ::find_object(RSRCD)->rsrc_incr(uid, "objects", 1);
+	::find_object(RSRCD)->rsrc_incr(uid, "objects", 1);
     }
     driver->compile(path, uid, source);
     return obj;
@@ -194,7 +194,7 @@ static object compile_object(string path, string source...)
 
     CHECKARG(path, 1, "compile_object");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     /*
@@ -206,23 +206,23 @@ static object compile_object(string path, string source...)
     kernel = sscanf(path, "/kernel/%*s");
     uid = driver->creator(path);
     if ((sizeof(source) != 0 && kernel) ||
-        (creator != "System" &&
-         !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                         ((lib || !uid) &&
-                                          sizeof(source) == 0 && !kernel) ?
-                                         READ_ACCESS : WRITE_ACCESS))) {
-        error("Access denied");
+	(creator != "System" &&
+	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
+					 ((lib || !uid) &&
+					  sizeof(source) == 0 && !kernel) ?
+					  READ_ACCESS : WRITE_ACCESS))) {
+	error("Access denied");
     }
 
     /*
      * do the compiling
      */
     rlimits (-1; -1) {
-        err = catch(obj = _compile(driver, path, uid, source));
-        if (err) {
-            driver->compile_failed(path, uid);
-            error(err);
-        }
+	err = catch(obj = _compile(driver, path, uid, source));
+	if (err) {
+	    driver->compile_failed(path, uid);
+	    error(err);
+	}
     }
 
     return (lib) ? nil : obj;
@@ -235,7 +235,7 @@ static object compile_object(string path, string source...)
 private atomic object _clone(string path, string uid, object obj)
 {
     if (path != RSRCOBJ) {
-        ::find_object(RSRCD)->rsrc_incr(uid, "objects", 1);
+	::find_object(RSRCD)->rsrc_incr(uid, "objects", 1);
     }
     TLSVAR(TLS(), TLS_ARGUMENT) = uid;
     return ::clone_object(obj);
@@ -252,12 +252,12 @@ static object clone_object(string path, varargs string uid)
 
     CHECKARG(path, 1, "clone_object");
     if (uid) {
-        CHECKARG(KERNEL() || SYSTEM(), 1, "clone_object");
+	CHECKARG(KERNEL() || SYSTEM(), 1, "clone_object");
     } else {
-        uid = owner;
+	uid = owner;
     }
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     /*
@@ -267,25 +267,25 @@ static object clone_object(string path, varargs string uid)
     creator = obj->creator(object_name(this_object()));
     path = obj->normalize_path(path, nil, creator);
     if ((sscanf(path, "/kernel/%*s") != 0 && !KERNEL()) ||
-        (creator != "System" &&
-         !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                         READ_ACCESS))) {
-        /*
-         * kernel objects can only be cloned by kernel objects, and cloning
-         * in general requires read access
-         */
-        error("Access denied");
+	(creator != "System" &&
+	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
+					 READ_ACCESS))) {
+	/*
+	 * kernel objects can only be cloned by kernel objects, and cloning
+	 * in general requires read access
+	 */
+	error("Access denied");
     }
 
     /*
      * check if object can be cloned
      */
     if (!owner || !(obj=::find_object(path)) || sscanf(path, "%*s#") != 0 ||
-        sscanf(path, "%*s/lib/") != 0) {
-        /*
-         * no owner for clone, master object not compiled, or not clonable
-         */
-        error("Cannot clone " + path);
+	sscanf(path, "%*s/lib/") != 0) {
+	/*
+	 * no owner for clone, master object not compiled, or not clonable
+	 */
+	error("Cannot clone " + path);
     }
 
     /*
@@ -313,59 +313,59 @@ static object new_object(mixed obj, varargs string uid)
     int create;
 
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
     switch (typeof(obj)) {
-        case T_STRING:
-            str = obj;
-        obj = ::find_object(DRIVER);
-        creator = obj->creator(object_name(this_object()));
-        str = obj->normalize_path(str, nil, creator);
-        obj = ::find_object(str);
-        create = TRUE;
-        break;
+    case T_STRING:
+	str = obj;
+	obj = ::find_object(DRIVER);
+	creator = obj->creator(object_name(this_object()));
+	str = obj->normalize_path(str, nil, creator);
+	obj = ::find_object(str);
+	create = TRUE;
+	break;
 
-        case T_OBJECT:
-            str = object_name(obj);
-        if (sscanf(str, "%*s#-1") != 0) {
-            create = FALSE;
-            break;
-        }
-        /* fall through */
-        default:
-            badarg(1, "new_object");
+    case T_OBJECT:
+	str = object_name(obj);
+	if (sscanf(str, "%*s#-1") != 0) {
+	    create = FALSE;
+	    break;
+	}
+	/* fall through */
+    default:
+	badarg(1, "new_object");
     }
     if (uid) {
-        CHECKARG(create && SYSTEM(), 1, "new_object");
+	CHECKARG(create && SYSTEM(), 1, "new_object");
     } else {
-        uid = owner;
+	uid = owner;
     }
 
     /*
      * create the object
      */
     if (create) {
-        /*
-         * check access
-         */
-        if (sscanf(str, "/kernel/%*s") != 0 ||
-            (creator != "System" &&
-             !::find_object(ACCESSD)->access(object_name(this_object()), str,
-                                             READ_ACCESS))) {
-            error("Access denied");
-        }
+	/*
+	 * check access
+	 */
+	if (sscanf(str, "/kernel/%*s") != 0 ||
+	    (creator != "System" &&
+	     !::find_object(ACCESSD)->access(object_name(this_object()), str,
+					     READ_ACCESS))) {
+	    error("Access denied");
+	}
 
-        /*
-         * check if object can be created
-         */
-        if (!obj || sscanf(str, "%*s/lib/") != 0) {
-            /*
-             * master object not compiled, or not suitable
-             */
-            error("Cannot create new instance of " + str);
-        }
+	/*
+	 * check if object can be created
+	 */
+	if (!obj || sscanf(str, "%*s/lib/") != 0) {
+	    /*
+	     * master object not compiled, or not suitable
+	     */
+	    error("Cannot create new instance of " + str);
+	}
 
-        TLSVAR(TLS(), TLS_ARGUMENT) = uid;
+	TLSVAR(TLS(), TLS_ARGUMENT) = uid;
     }
     return _new(obj);
 }
@@ -376,12 +376,12 @@ static object new_object(mixed obj, varargs string uid)
  */
 private mixed *process_trace(mixed *trace, string creator, object driver)
 {
-if (sizeof(trace) > TRACE_FIRSTARG &&
-creator != driver->creator(trace[TRACE_PROGNAME])) {
-/* remove arguments */
-return trace[.. TRACE_FIRSTARG - 1];
-}
-return trace;
+    if (sizeof(trace) > TRACE_FIRSTARG &&
+	creator != driver->creator(trace[TRACE_PROGNAME])) {
+	/* remove arguments */
+	return trace[.. TRACE_FIRSTARG - 1];
+    }
+    return trace;
 }
 
 /*
@@ -397,25 +397,25 @@ static mixed *call_trace(varargs mixed index)
     driver = ::find_object(DRIVER);
     creator = driver->creator(object_name(this_object()));
     if (index == nil) {
-        trace = ::call_trace();
-        if (previous_program() != RSRCOBJ) {
-            trace[1][TRACE_FIRSTARG] = nil;
-        }
-        if (creator != "System") {
-            int i;
+	trace = ::call_trace();
+	if (previous_program() != RSRCOBJ) {
+	    trace[1][TRACE_FIRSTARG] = nil;
+	}
+	if (creator != "System") {
+	    int i;
 
-            for (i = sizeof(trace) - 1; --i >= 0; ) {
-                trace[i] = process_trace(trace[i], creator, driver);
-            }
-        }
+	    for (i = sizeof(trace) - 1; --i >= 0; ) {
+		trace[i] = process_trace(trace[i], creator, driver);
+	    }
+	}
     } else {
-        trace = ::call_trace()[index];
-        if (index == 1 && previous_program() != RSRCOBJ) {
-            trace[TRACE_FIRSTARG] = nil;
-        }
-        if (creator != "System") {
-            trace = process_trace(trace, creator, driver);
-        }
+	trace = ::call_trace()[index];
+	if (index == 1 && previous_program() != RSRCOBJ) {
+	    trace[TRACE_FIRSTARG] = nil;
+	}
+	if (creator != "System") {
+	    trace = process_trace(trace, creator, driver);
+	}
     }
 
     return trace;
@@ -427,36 +427,36 @@ static mixed *call_trace(varargs mixed index)
  */
 private mixed **process_callouts(object obj, mixed **callouts)
 {
-int i;
-string oname;
-mixed *co;
+    int i;
+    string oname;
+    mixed *co;
 
-if (callouts && (i=sizeof(callouts)) != 0) {
-oname = object_name(obj);
-if (sscanf(oname, "/kernel/%*s") != 0) {
-/* can't see callouts in kernel objects */
-return ({ });
-} else if (obj != this_object() && creator != "System" &&
-(!owner || owner != obj->query_owner())) {
-/* remove arguments from callouts */
-do {
---i;
-co = callouts[i];
-callouts[i] = ({ co[CO_HANDLE], co[CO_FIRSTXARG],
-co[CO_DELAY] });
-} while (i != 0);
-} else {
-do {
---i;
-co = callouts[i];
-callouts[i] = ({ co[CO_HANDLE], co[CO_FIRSTXARG],
-co[CO_DELAY] }) +
-co[CO_FIRSTXARG + 2];
-} while (i != 0);
-}
-}
+    if (callouts && (i=sizeof(callouts)) != 0) {
+	oname = object_name(obj);
+	if (sscanf(oname, "/kernel/%*s") != 0) {
+	    /* can't see callouts in kernel objects */
+	    return ({ });
+	} else if (obj != this_object() && creator != "System" &&
+		   (!owner || owner != obj->query_owner())) {
+	    /* remove arguments from callouts */
+	    do {
+		--i;
+		co = callouts[i];
+		callouts[i] = ({ co[CO_HANDLE], co[CO_FIRSTXARG],
+				 co[CO_DELAY] });
+	    } while (i != 0);
+	} else {
+	    do {
+		--i;
+		co = callouts[i];
+		callouts[i] = ({ co[CO_HANDLE], co[CO_FIRSTXARG],
+				 co[CO_DELAY] }) +
+			      co[CO_FIRSTXARG + 2];
+	    } while (i != 0);
+	}
+    }
 
-return callouts;
+    return callouts;
 }
 
 /*
@@ -469,56 +469,56 @@ static mixed status(varargs mixed obj, mixed index)
     object driver;
 
     if (!this_object()) {
-        return nil;
+	return nil;
     }
 
     switch (typeof(obj)) {
-        case T_NIL:
-            CHECKARG(index == nil, 1, "status");
-        status = ::status();
-        if (status[ST_STACKDEPTH] >= 0) {
-            status[ST_STACKDEPTH]++;
-        }
-        break;
+    case T_NIL:
+	CHECKARG(index == nil, 1, "status");
+	status = ::status();
+	if (status[ST_STACKDEPTH] >= 0) {
+	    status[ST_STACKDEPTH]++;
+	}
+	break;
 
-        case T_INT:
-            if (obj == -1) {
-                return (index == nil) ? ::status(1) : ::status(1)[index];
-            } else {
-                CHECKARG(index == nil, 1, "status");
-                status = ::status()[obj];
-                if (obj == ST_STACKDEPTH && status >= 0) {
-                    status++;
-                }
-            }
-        break;
+    case T_INT:
+	if (obj == -1) {
+	    return (index == nil) ? ::status(1) : ::status(1)[index];
+	} else {
+	    CHECKARG(index == nil, 1, "status");
+	    status = ::status()[obj];
+	    if (obj == ST_STACKDEPTH && status >= 0) {
+		status++;
+	    }
+	}
+	break;
 
-        case T_STRING:
-            /* get corresponding object */
-            driver = ::find_object(DRIVER);
-        obj = ::find_object(driver->normalize_path(obj, nil));
-        if (!obj) {
-            return nil;
-        }
-        /* fall through */
-        case T_OBJECT:
-            switch (typeof(index)) {
-            case T_NIL:
-                status = ::status(obj);
-            status[O_CALLOUTS] = process_callouts(obj, status[O_CALLOUTS]);
-            break;
+    case T_STRING:
+	/* get corresponding object */
+	driver = ::find_object(DRIVER);
+	obj = ::find_object(driver->normalize_path(obj, nil));
+	if (!obj) {
+	    return nil;
+	}
+	/* fall through */
+    case T_OBJECT:
+	switch (typeof(index)) {
+	case T_NIL:
+	    status = ::status(obj);
+	    status[O_CALLOUTS] = process_callouts(obj, status[O_CALLOUTS]);
+	    break;
 
-            case T_INT:
-                status = ::status(obj)[index];
-            if (index == O_CALLOUTS) {
-                status = process_callouts(obj, status);
-            }
-            break;
+	case T_INT:
+	    status = ::status(obj)[index];
+	    if (index == O_CALLOUTS) {
+		status = process_callouts(obj, status);
+	    }
+	    break;
 
-            default:
-                badarg(2, "status");
-        }
-        break;
+	default:
+	    badarg(2, "status");
+	}
+	break;
     }
 
     return status;
@@ -534,10 +534,10 @@ static object this_user()
 
     user = ::this_user();
     if (!user) {
-        user = TLSVAR(TLS(), TLS_USER);
+	user = TLSVAR(TLS(), TLS_USER);
     }
     if (user) {
-        user = user->query_user();
+	user = user->query_user();
     }
     return user;
 }
@@ -549,12 +549,12 @@ static object this_user()
 static object *users()
 {
     if (!this_object()) {
-        return nil;
+	return nil;
     } else if (object_name(this_object()) == USERD) {
-        /* connection objects */
-        return ::users();
+	/* connection objects */
+	return ::users();
     } else {
-        return ::find_object(USERD)->query_users();
+	return ::find_object(USERD)->query_users();
     }
 }
 
@@ -565,7 +565,7 @@ static object *users()
 static void connect(string address, int port)
 {
     if (previous_program() != BINARY_CONN) {
-        error("Permission denied");
+	error("Permission denied");
     }
     ::connect(address, port);
 }
@@ -577,7 +577,7 @@ static void connect(string address, int port)
 static void connect_datagram(int dgram, string address, int port)
 {
     if (previous_program() != DATAGRAM_CONN) {
-        error("Permission denied");
+	error("Permission denied");
     }
 # ifdef KF_CONNECT_DATAGRAM
     ::connect_datagram(dgram, address, port);
@@ -593,7 +593,7 @@ static void connect_datagram(int dgram, string address, int port)
 static void swapout()
 {
     if (creator != "System") {
-        error("Permission denied");
+	error("Permission denied");
     }
     ::swapout();
 }
@@ -605,11 +605,11 @@ static void swapout()
 static void dump_state(varargs int incr)
 {
     if (creator != "System" || !this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
     rlimits (-1; -1) {
-        ::find_object(DRIVER)->prepare_reboot();
-        ::dump_state(incr);
+	::find_object(DRIVER)->prepare_reboot();
+	::dump_state(incr);
     }
 }
 
@@ -620,11 +620,11 @@ static void dump_state(varargs int incr)
 static void shutdown(varargs int hotboot)
 {
     if (creator != "System" || !this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
     rlimits (-1; -1) {
-        ::shutdown(hotboot);
-        ::find_object(DRIVER)->message("System halted.\n");
+	::shutdown(hotboot);
+	::find_object(DRIVER)->message("System halted.\n");
     }
 }
 
@@ -635,7 +635,7 @@ static void shutdown(varargs int hotboot)
 static int call_touch(object obj)
 {
     if (creator != "System") {
-        error("Permission denied");
+	error("Permission denied");
     }
     return ::call_touch(obj);
 }
@@ -647,36 +647,36 @@ static int call_touch(object obj)
  */
 private mixed _F_call_limited(mixed arg1, string oowner, mixed *args)
 {
-object rsrcd;
-int stack, ticks;
-string func;
-mixed tls, *limits, result;
+    object rsrcd;
+    int stack, ticks;
+    string func;
+    mixed tls, *limits, result;
 
-rsrcd = ::find_object(RSRCD);
-func = arg1;
-stack = ::status()[ST_STACKDEPTH];
-ticks = ::status()[ST_TICKS];
-rlimits (-1; -1) {
-tls = TLS();
-if (tls == arg1) {
-tls = arg1 = ([ ]);
-}
-limits = TLSVAR(tls, TLS_LIMIT) =
-                 rsrcd->call_limits(TLSVAR(tls, TLS_LIMIT), oowner, stack,
-                                    ticks);
-}
+    rsrcd = ::find_object(RSRCD);
+    func = arg1;
+    stack = ::status()[ST_STACKDEPTH];
+    ticks = ::status()[ST_TICKS];
+    rlimits (-1; -1) {
+	tls = TLS();
+	if (tls == arg1) {
+	    tls = arg1 = ([ ]);
+	}
+	limits = TLSVAR(tls, TLS_LIMIT) =
+		 rsrcd->call_limits(TLSVAR(tls, TLS_LIMIT), oowner, stack,
+				    ticks);
+    }
 
-rlimits (limits[LIM_MAXSTACK]; limits[LIM_MAXTICKS]) {
-result = call_other(this_object(), func, args...);
+    rlimits (limits[LIM_MAXSTACK]; limits[LIM_MAXTICKS]) {
+	result = call_other(this_object(), func, args...);
 
-ticks = ::status()[ST_TICKS];
-rlimits (-1; -1) {
-rsrcd->update_ticks(limits, ticks);
-TLSVAR(tls, TLS_LIMIT) = limits[LIM_NEXT];
+	ticks = ::status()[ST_TICKS];
+	rlimits (-1; -1) {
+	    rsrcd->update_ticks(limits, ticks);
+	    TLSVAR(tls, TLS_LIMIT) = limits[LIM_NEXT];
 
-return result;
-}
-}
+	    return result;
+	}
+    }
 }
 
 /*
@@ -687,10 +687,10 @@ static mixed call_limited(string func, mixed args...)
 {
     CHECKARG(func, 1, "call_limited");
     if (!this_object()) {
-        return nil;
+	return nil;
     }
     CHECKARG(function_object(func, this_object()) != AUTO || func == "create",
-             1, "call_limited");
+	     1, "call_limited");
 
     return _F_call_limited(func, owner, args);
 }
@@ -708,21 +708,21 @@ static int call_out(string func, mixed delay, mixed args...)
     type = typeof(delay);
     CHECKARG(type == T_INT || type == T_FLOAT, 2, "call_out");
     if (!this_object()) {
-        return 0;
+	return 0;
     }
     CHECKARG(function_object(func, this_object()) != AUTO || func == "create",
-             1, "call_out");
+	     1, "call_out");
     oname = object_name(this_object());
     if (sscanf(oname, "%*s#-1") != 0) {
-        error("Callout in non-persistent object");
+	error("Callout in non-persistent object");
     }
 
     /*
      * add callout
      */
     if (sscanf(oname, "/kernel/%*s") != 0) {
-        /* direct callouts for kernel objects */
-        return ::call_out(func, delay, args...);
+	/* direct callouts for kernel objects */
+	return ::call_out(func, delay, args...);
     }
     return ::call_out("_F_callout", delay, func, owner, args);
 }
@@ -734,7 +734,7 @@ static int call_out(string func, mixed delay, mixed args...)
 nomask void _F_callout(string func, string oowner, mixed *args)
 {
     if (!previous_program()) {
-        _F_call_limited(func, oowner, args);
+	_F_call_limited(func, oowner, args);
     }
 }
 
@@ -753,14 +753,14 @@ static int call_out_other(object obj, string func, mixed delay, mixed args...)
     type = typeof(delay);
     CHECKARG(type == T_INT || type == T_FLOAT, 3, "call_out_other");
     if (!this_object()) {
-        return 0;
+	return 0;
     }
     oname = function_object(func, obj);
     CHECKARG(oname && (sscanf(oname, "/kernel/%*s") == 0 || func == "create"),
-             2, "call_out_other");
+	     2, "call_out_other");
     oname = object_name(obj);
     if (sscanf(oname, "%*s#-1") != 0) {
-        error("Callout in non-persistent object");
+	error("Callout in non-persistent object");
     }
 
     /*
@@ -768,7 +768,7 @@ static int call_out_other(object obj, string func, mixed delay, mixed args...)
      */
     limits = TLSVAR(TLS(), TLS_LIMIT);
     return obj->_F_callout_other(delay, func,
-                                 (limits) ? limits[LIM_OWNER] : "System", args);
+				 (limits) ? limits[LIM_OWNER] : "System", args);
 }
 
 /*
@@ -776,10 +776,10 @@ static int call_out_other(object obj, string func, mixed delay, mixed args...)
  * DESCRIPTION:	callout_other gate
  */
 nomask int _F_callout_other(mixed delay, string func, string oowner,
-                            mixed *args)
+			    mixed *args)
 {
     if (previous_program() == AUTO) {
-        return ::call_out("_F_callout", delay, func, oowner, args);
+	return ::call_out("_F_callout", delay, func, oowner, args);
     }
 }
 
@@ -792,14 +792,14 @@ static string read_file(string path, varargs int offset, int size)
 {
     CHECKARG(path, 1, "read_file");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
     if (creator != "System" &&
-        !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                        READ_ACCESS)) {
-        error("Access denied");
+	!::find_object(ACCESSD)->access(object_name(this_object()), path,
+					READ_ACCESS)) {
+	error("Access denied");
     }
 
     return ::read_file(path, offset, size);
@@ -818,35 +818,35 @@ static int write_file(string path, string str, varargs int offset)
     CHECKARG(path, 1, "write_file");
     CHECKARG(str, 2, "write_file");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     driver = ::find_object(DRIVER);
     path = driver->normalize_path(path, nil, creator);
     if (sscanf(path, "/kernel/%*s") != 0 ||
-        sscanf(path, "/include/kernel/%*s") != 0 ||
-        (creator != "System" &&
-         !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                         WRITE_ACCESS))) {
-        error("Access denied");
+	sscanf(path, "/include/kernel/%*s") != 0 ||
+	(creator != "System" &&
+	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
+					 WRITE_ACCESS))) {
+	error("Access denied");
     }
 
     fcreator = driver->creator(path);
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(fcreator, "fileblocks");
     if (creator != "System" && rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] &&
-        rsrc[RSRC_MAX] >= 0) {
-        error("File quota exceeded");
+	rsrc[RSRC_MAX] >= 0) {
+	error("File quota exceeded");
     }
 
     size = driver->file_size(path);
     catch {
-        rlimits (-1; -1) {
-            result = ::write_file(path, str, offset);
-            if (result != 0 && (size=driver->file_size(path) - size) != 0) {
-                rsrcd->rsrc_incr(fcreator, "fileblocks", size);
-            }
-        }
+	rlimits (-1; -1) {
+	    result = ::write_file(path, str, offset);
+	    if (result != 0 && (size=driver->file_size(path) - size) != 0) {
+		rsrcd->rsrc_incr(fcreator, "fileblocks", size);
+	    }
+	}
     } : error(TLSVAR(TLS(), TLS_ERROR));
 
     return result;
@@ -863,28 +863,28 @@ static int remove_file(string path)
 
     CHECKARG(path, 1, "remove_file");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     driver = ::find_object(DRIVER);
     path = driver->normalize_path(path, nil, creator);
     if (sscanf(path, "/kernel/%*s") != 0 ||
-        sscanf(path, "/include/kernel/%*s") != 0 ||
-        (creator != "System" &&
-         !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                         WRITE_ACCESS))) {
-        error("Access denied");
+	sscanf(path, "/include/kernel/%*s") != 0 ||
+	(creator != "System" &&
+	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
+					 WRITE_ACCESS))) {
+	error("Access denied");
     }
 
     size = driver->file_size(path);
     catch {
-        rlimits (-1; -1) {
-            result = ::remove_file(path);
-            if (result != 0 && size != 0) {
-                ::find_object(RSRCD)->rsrc_incr(driver->creator(path),
-                                                "fileblocks", -size);
-            }
-        }
+	rlimits (-1; -1) {
+	    result = ::remove_file(path);
+	    if (result != 0 && size != 0) {
+		::find_object(RSRCD)->rsrc_incr(driver->creator(path),
+						"fileblocks", -size);
+	    }
+	}
     } : error(TLSVAR(TLS(), TLS_ERROR));
     return result;
 }
@@ -902,7 +902,7 @@ static int rename_file(string from, string to)
     CHECKARG(from, 1, "rename_file");
     CHECKARG(to, 2, "rename_file");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     oname = object_name(this_object());
@@ -911,13 +911,13 @@ static int rename_file(string from, string to)
     to = driver->normalize_path(to, oname + "/..", creator);
     accessd = ::find_object(ACCESSD);
     if (sscanf(from + "/", "/kernel/%*s") != 0 ||
-        sscanf(to, "/kernel/%*s") != 0 ||
-        sscanf(from + "/", "/include/kernel/%*s") != 0 || from == "/include" ||
-        sscanf(to, "/include/kernel/%*s") != 0 ||
-        (creator != "System" &&
-         (!accessd->access(oname, from, WRITE_ACCESS) ||
-          !accessd->access(oname, to, WRITE_ACCESS)))) {
-        error("Access denied");
+	sscanf(to, "/kernel/%*s") != 0 ||
+	sscanf(from + "/", "/include/kernel/%*s") != 0 || from == "/include" ||
+	sscanf(to, "/include/kernel/%*s") != 0 ||
+	(creator != "System" &&
+	 (!accessd->access(oname, from, WRITE_ACCESS) ||
+	  !accessd->access(oname, to, WRITE_ACCESS)))) {
+	error("Access denied");
     }
 
     fcreator = driver->creator(from);
@@ -926,18 +926,18 @@ static int rename_file(string from, string to)
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(tcreator, "fileblocks");
     if (size != 0 && fcreator != tcreator && creator != "System" &&
-        rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] && rsrc[RSRC_MAX] >= 0) {
-        error("File quota exceeded");
+	rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] && rsrc[RSRC_MAX] >= 0) {
+	error("File quota exceeded");
     }
 
     catch {
-        rlimits (-1; -1) {
-            result = ::rename_file(from, to);
-            if (result != 0 && fcreator != tcreator) {
-                rsrcd->rsrc_incr(tcreator, "fileblocks", size);
-                rsrcd->rsrc_incr(fcreator, "fileblocks", -size);
-            }
-        }
+	rlimits (-1; -1) {
+	    result = ::rename_file(from, to);
+	    if (result != 0 && fcreator != tcreator) {
+		rsrcd->rsrc_incr(tcreator, "fileblocks", size);
+		rsrcd->rsrc_incr(fcreator, "fileblocks", -size);
+	    }
+	}
     } : error(TLSVAR(TLS(), TLS_ERROR));
     return result;
 }
@@ -954,14 +954,14 @@ static mixed **get_dir(string path)
 
     CHECKARG(path, 1, "get_dir");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
     if (creator != "System" &&
-        !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                        READ_ACCESS)) {
-        error("Access denied");
+	!::find_object(ACCESSD)->access(object_name(this_object()), path,
+					READ_ACCESS)) {
+	error("Access denied");
     }
 
     list = ::get_dir(path);
@@ -970,25 +970,25 @@ static mixed **get_dir(string path)
     names = list[0];
     olist = allocate(sz = sizeof(names));
     if (sscanf(path, "%*s/lib/") != 0) {
-        /* class objects */
-        for (i = sz; --i >= 0; ) {
-            path = dir + "/" + names[i];
-            if ((sz=strlen(path)) >= 2 && path[sz - 2 ..] == ".c" &&
-                ::find_object(path[.. sz - 3])) {
-                olist[i] = TRUE;
-            }
-        }
+	/* class objects */
+	for (i = sz; --i >= 0; ) {
+	    path = dir + "/" + names[i];
+	    if ((sz=strlen(path)) >= 2 && path[sz - 2 ..] == ".c" &&
+		::find_object(path[.. sz - 3])) {
+		olist[i] = TRUE;
+	    }
+	}
     } else {
-        /* ordinary objects */
-        for (i = sz; --i >= 0; ) {
-            object obj;
+	/* ordinary objects */
+	for (i = sz; --i >= 0; ) {
+	    object obj;
 
-            path = dir + "/" + names[i];
-            if ((sz=strlen(path)) >= 2 && path[sz - 2 ..] == ".c" &&
-                (obj=::find_object(path[.. sz - 3]))) {
-                olist[i] = obj;
-            }
-        }
+	    path = dir + "/" + names[i];
+	    if ((sz=strlen(path)) >= 2 && path[sz - 2 ..] == ".c" &&
+		(obj=::find_object(path[.. sz - 3]))) {
+		olist[i] = obj;
+	    }
+	}
     }
     return list + ({ olist });
 }
@@ -1005,25 +1005,25 @@ static mixed *file_info(string path)
 
     CHECKARG(path, 1, "file_info");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     obj = ::find_object(DRIVER);
     path = obj->normalize_path(path, nil, creator);
     if (creator != "System" &&
-        !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                        READ_ACCESS)) {
-        error("Access denied");
+	!::find_object(ACCESSD)->access(object_name(this_object()), path,
+					READ_ACCESS)) {
+	error("Access denied");
     }
 
     info = ::get_dir(obj->escape_path(path));
     if (sizeof(info[0]) == 0) {
-        return nil;	/* file does not exist */
+	return nil;	/* file does not exist */
     }
     info = ({ info[1][i], info[2][i], nil });
     if ((sz=strlen(path)) >= 2 && path[sz - 2 ..] == ".c" &&
-        (obj=::find_object(path[.. sz - 3]))) {
-        info[2] = (sscanf(path, "%*s/lib/") != 0) ? TRUE : obj;
+	(obj=::find_object(path[.. sz - 3]))) {
+	info[2] = (sscanf(path, "%*s/lib/") != 0) ? TRUE : obj;
     }
     return info;
 }
@@ -1040,34 +1040,34 @@ static int make_dir(string path)
 
     CHECKARG(path, 1, "make_dir");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     driver = ::find_object(DRIVER);
     path = driver->normalize_path(path, nil, creator);
     if (sscanf(path, "/kernel/%*s") != 0 ||
-        sscanf(path, "/include/kernel/%*s") != 0 ||
-        (creator != "System" &&
-         !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                         WRITE_ACCESS))) {
-        error("Access denied");
+	sscanf(path, "/include/kernel/%*s") != 0 ||
+	(creator != "System" &&
+	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
+					 WRITE_ACCESS))) {
+	error("Access denied");
     }
 
     fcreator = driver->creator(path + "/");
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(fcreator, "fileblocks");
     if (creator != "System" && rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] &&
-        rsrc[RSRC_MAX] >= 0) {
-        error("File quota exceeded");
+	rsrc[RSRC_MAX] >= 0) {
+	error("File quota exceeded");
     }
 
     catch {
-        rlimits (-1; -1) {
-            result = ::make_dir(path);
-            if (result != 0) {
-                rsrcd->rsrc_incr(fcreator, "fileblocks", 1);
-            }
-        }
+	rlimits (-1; -1) {
+	    result = ::make_dir(path);
+	    if (result != 0) {
+		rsrcd->rsrc_incr(fcreator, "fileblocks", 1);
+	    }
+	}
     } : error(TLSVAR(TLS(), TLS_ERROR));
     return result;
 }
@@ -1083,27 +1083,27 @@ static int remove_dir(string path)
 
     CHECKARG(path, 1, "remove_dir");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     driver = ::find_object(DRIVER);
     path = driver->normalize_path(path, nil, creator);
     if (sscanf(path, "/kernel/%*s") != 0 ||
-        sscanf(path, "/include/kernel/%*s") != 0 ||
-        (creator != "System" &&
-         !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                         WRITE_ACCESS))) {
-        error("Access denied");
+	sscanf(path, "/include/kernel/%*s") != 0 ||
+	(creator != "System" &&
+	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
+					 WRITE_ACCESS))) {
+	error("Access denied");
     }
 
     catch {
-        rlimits (-1; -1) {
-            result = ::remove_dir(path);
-            if (result != 0) {
-                ::find_object(RSRCD)->rsrc_incr(driver->creator(path + "/"),
-                                                "fileblocks", -1);
-            }
-        }
+	rlimits (-1; -1) {
+	    result = ::remove_dir(path);
+	    if (result != 0) {
+		::find_object(RSRCD)->rsrc_incr(driver->creator(path + "/"),
+						"fileblocks", -1);
+	    }
+	}
     } : error(TLSVAR(TLS(), TLS_ERROR));
     return result;
 }
@@ -1116,14 +1116,14 @@ static int restore_object(string path)
 {
     CHECKARG(path, 1, "restore_object");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
     if (creator != "System" &&
-        !::find_object(ACCESSD)->access(object_name(this_object()), path,
-                                        READ_ACCESS)) {
-        error("Access denied");
+	!::find_object(ACCESSD)->access(object_name(this_object()), path,
+					READ_ACCESS)) {
+	error("Access denied");
     }
 
     return ::restore_object(path);
@@ -1141,36 +1141,36 @@ static void save_object(string path)
 
     CHECKARG(path, 1, "save_object");
     if (!this_object()) {
-        error("Permission denied");
+	error("Permission denied");
     }
 
     oname = object_name(this_object());
     driver = ::find_object(DRIVER);
     path = driver->normalize_path(path, oname + "/..", creator);
     if ((sscanf(path, "/kernel/%*s") != 0 &&
-         sscanf(oname, "/kernel/%*s") == 0) ||
-        sscanf(path, "/include/kernel/%*s") != 0 ||
-        (creator != "System" &&
-         !::find_object(ACCESSD)->access(oname, path, WRITE_ACCESS))) {
-        error("Access denied");
+	 sscanf(oname, "/kernel/%*s") == 0) ||
+	sscanf(path, "/include/kernel/%*s") != 0 ||
+	(creator != "System" &&
+	 !::find_object(ACCESSD)->access(oname, path, WRITE_ACCESS))) {
+	error("Access denied");
     }
 
     fcreator = driver->creator(path);
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(fcreator, "fileblocks");
     if (creator != "System" && rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] &&
-        rsrc[RSRC_MAX] >= 0) {
-        error("File quota exceeded");
+	rsrc[RSRC_MAX] >= 0) {
+	error("File quota exceeded");
     }
 
     size = driver->file_size(path);
     catch {
-        rlimits (-1; -1) {
-            ::save_object(path);
-            if ((size=driver->file_size(path) - size) != 0) {
-                rsrcd->rsrc_incr(fcreator, "fileblocks", size);
-            }
-        }
+	rlimits (-1; -1) {
+	    ::save_object(path);
+	    if ((size=driver->file_size(path) - size) != 0) {
+		rsrcd->rsrc_incr(fcreator, "fileblocks", size);
+	    }
+	}
     } : error(TLSVAR(TLS(), TLS_ERROR));
 }
 
@@ -1185,30 +1185,30 @@ static string editor(varargs string cmd)
     mixed *info;
 
     if (creator != "System" || !this_object() ||
-        sscanf(object_name(this_object()), "%*s#-1") != 0) {
-        error("Permission denied");
+	sscanf(object_name(this_object()), "%*s#-1") != 0) {
+	error("Permission denied");
     }
 
     catch {
-        rlimits (-1; -1) {
-            rsrcd = ::find_object(RSRCD);
-            if (!query_editor(this_object())) {
-                ::find_object(USERD)->add_editor(this_object());
-            }
-            driver = ::find_object(DRIVER);
+	rlimits (-1; -1) {
+	    rsrcd = ::find_object(RSRCD);
+	    if (!query_editor(this_object())) {
+		::find_object(USERD)->add_editor(this_object());
+	    }
+	    driver = ::find_object(DRIVER);
 
-            TLSVAR(TLS(), TLS_ARGUMENT) = nil;
-            result = (cmd) ? ::editor(cmd) : ::editor();
-            info = TLSVAR(TLS(), TLS_ARGUMENT);
+	    TLSVAR(TLS(), TLS_ARGUMENT) = nil;
+	    result = (cmd) ? ::editor(cmd) : ::editor();
+	    info = TLSVAR(TLS(), TLS_ARGUMENT);
 
-            if (!query_editor(this_object())) {
-                ::find_object(USERD)->remove_editor(this_object());
-            }
-            if (info) {
-                rsrcd->rsrc_incr(driver->creator(info[0]), "fileblocks",
-                                 driver->file_size(info[0]) - info[1]);
-            }
-        }
+	    if (!query_editor(this_object())) {
+		::find_object(USERD)->remove_editor(this_object());
+	    }
+	    if (info) {
+		rsrcd->rsrc_incr(driver->creator(info[0]), "fileblocks",
+				 driver->file_size(info[0]) - info[1]);
+	    }
+	}
     } : error(TLSVAR(TLS(), TLS_ERROR));
     return result;
 }
@@ -1221,7 +1221,7 @@ static string editor(varargs string cmd)
 static void tls_set(mixed index, mixed value)
 {
     if (typeof(index) == T_INT && index < 0) {
-        badarg(1, "tls_set");
+	badarg(1, "tls_set");
     }
     TLS()[index] = value;
 }
@@ -1233,7 +1233,7 @@ static void tls_set(mixed index, mixed value)
 static mixed tls_get(mixed index)
 {
     if (typeof(index) == T_INT && index < 0) {
-        badarg(1, "tls_get");
+	badarg(1, "tls_get");
     }
     return TLS()[index];
 }
@@ -1248,16 +1248,16 @@ static void send_atomic_message(string str)
     string *mesg, *messages;
 
     if (!str || sscanf(str, "*%s\0") != 0) {
-        badarg(1, "send_atomic_message");
+	badarg(1, "send_atomic_message");
     }
 
     mesg = ({ "." + str });
     tls = TLS();
     messages = TLSVAR(tls, TLS_PUT_ATOMIC);
     if (messages) {
-        messages += mesg;
+	messages += mesg;
     } else {
-        messages = mesg;
+	messages = mesg;
     }
     TLSVAR(tls, TLS_PUT_ATOMIC) = messages;
 }
@@ -1284,7 +1284,7 @@ static string *retrieve_atomic_messages()
 static void error(string str)
 {
     if (!str || sscanf(str, "%*s\0") != 0) {
-        badarg(1, "error");
+	badarg(1, "error");
     }
     ::error(str);
 }

@@ -16,7 +16,7 @@ object driver;
  * NAME:	create()
  * DESCRIPTION:	initialize this object
  */
-static void create(void)
+static void create()
 {
     driver = find_object(DRIVER);
     driver->set_error_manager(this_object());

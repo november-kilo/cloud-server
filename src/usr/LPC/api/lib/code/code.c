@@ -18,7 +18,7 @@ static void create(varargs int line)
 /*
  * start emitting code
  */
-static void start(void)
+static void start()
 {
     tls_set(LINE, 1);
     tls_set(EMIT, new StringBuffer);
@@ -32,7 +32,7 @@ void code();
 /*
  * finish emitting code
  */
-static StringBuffer end(void)
+static StringBuffer end()
 {
     StringBuffer buffer;
 
@@ -44,7 +44,7 @@ static StringBuffer end(void)
 /*
  * return line number of this code fragment
  */
-static int line(void)
+static int line()
 {
     return lineNumber;
 }

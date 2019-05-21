@@ -3,14 +3,13 @@
 # include <kernel/user.h>
 # include <status.h>
 # include <type.h>
-# include <NKlib.h>
 
 inherit auto	"~/lib/auto";
 inherit user	LIB_USER;
 inherit wiztool	LIB_WIZTOOL;
 
 private inherit	"/lib/util/string";
-private inherit "/lib/util/version";
+
 
 # define USER			"/usr/System/obj/user"
 # define USERSERVER		"/usr/System/sys/userd"
@@ -31,22 +30,15 @@ string password;		/* user password */
 static string newpasswd;	/* new password */
 static string paste_buffer;	/* buffer holding text being pasted */
 static int nconn;		/* # of connections */
-static object local_wiztool;
-static mixed *idle;
-static object avatar;
 
 /*
  * NAME:	create()
  * DESCRIPTION:	initialize object
  */
-static create(void)
+static create()
 {
     wiztool::create(200);
     state = ([ ]);
-}
-
-void println(string str) {
-    message(str + "\n");
 }
 
 /*
@@ -462,34 +454,6 @@ static void cmd_hotboot(object user, string cmd, string str)
     }
 }
 
-private void fetch_local_wiztool(void) {
-    string err_str, obj_str;
-
-    obj_str = USR_DIR + "/" + name + "/obj/wiztool";
-    if (file_info(obj_str + ".c")) {
-        if (local_wiztool) {
-            destruct_object(local_wiztool);
-        }
-
-        err_str = catch(compile_object(obj_str));
-        if (err_str) {
-            message("Failed to compile your local wiztool:\n\t" + err_str + "\n");
-            return;
-        }
-
-        local_wiztool = clone_object(obj_str);
-        message("Fetched your local wiztool.\n");
-    }
-}
-
-void showPrompt(void) {
-    if (local_wiztool && function_object("getPrompt", local_wiztool)) {
-        message(local_wiztool->getPrompt(this_object()));
-    } else {
-        message("> ");
-    }
-}
-
 /*
  * NAME:	command()
  * DESCRIPTION:	process user input
@@ -544,15 +508,7 @@ static int command(string str)
     case "quota":
     case "rsrc":
 
-    case "poly":
-    case "rational":
-    case "time":
-    case "cls":
-    case "test":
-    case "avatar":
-    case "unavatar":
-
-    case "who":
+    case "people":
     case "status":
     case "swapout":
     case "snapshot":
@@ -566,17 +522,8 @@ static int command(string str)
 	break;
 
     default:
-        if (avatar && function_object("cmd_" + str, avatar)) {
-            if (call_other(avatar, "cmd_" + str, this_object(), str, arg)) {
-                return TRUE;
-            }
-        }
-        if (local_wiztool && function_object("cmd_" + str, local_wiztool)) {
-            call_other(local_wiztool, "cmd_" + str, this_object(), str, arg);
-            break;
-        }
-        message("No command: " + str + "\n");
-        break;
+	message("No command: " + str + "\n");
+	break;
     }
 
     return TRUE;
@@ -598,7 +545,6 @@ private void tell_audience(string str)
 	if (user != this_object() &&
 	    sscanf(object_name(user), USER + "#%*d") != 0) {
 	    user->message(str);
-	    user->showPrompt();
 	}
     }
 }
@@ -623,12 +569,6 @@ int login(string str)
 	    Name[0] -= 'a' - 'A';
 	}
 
-        if (name == "admin") {
-            restore_object(DEFAULT_USER_DIR + "/admin.pwd");
-        } else {
-            restore_object(USR_DIR + "/System/data/" + name + ".pwd");
-        }
-
 	if (password) {
 	    /* check password */
 	    previous_object()->message("Password:");
@@ -637,8 +577,8 @@ int login(string str)
 	    /* no password; login immediately */
 	    connection(previous_object());
 	    tell_audience(Name + " logs in.\n");
-	    if (str != "admin") {
-	        showPrompt();
+	    if (str != "admin" && sizeof(query_users() & ({ str })) == 0) {
+		message("> ");
 		state[previous_object()] = STATE_NORMAL;
 		return MODE_ECHO;
 	    }
@@ -663,10 +603,6 @@ void logout(int quit)
 		tell_audience(Name + " disconnected.\n");
 	    }
 	}
-        if (local_wiztool) {
-            destruct_object(local_wiztool);
-            message("Destroyed your local wiztool.\n");
-        }
 	::logout(name);
     }
 }
@@ -675,7 +611,7 @@ void logout(int quit)
  * NAME:	query_name()
  * DESCRIPTION:	return this user's name
  */
-string query_name(void)
+string query_name()
 {
     return name;
 }
@@ -690,8 +626,6 @@ int receive_message(string str)
 	string cmd;
 	object user, *users;
 	int i, sz;
-
-	idle = millitime();
 
 	switch (state[previous_object()]) {
 	case STATE_NORMAL:
@@ -732,7 +666,6 @@ int receive_message(string str)
 			message("Usage: say <text>\n");
 		    } else {
 			tell_audience(Name + " says: " + str + "\n");
-			message("You say: " + str + "\n");
 		    }
 		    str = nil;
 		    break;
@@ -742,7 +675,6 @@ int receive_message(string str)
 			message("Usage: emote <text>\n");
 		    } else {
 			tell_audience(Name + " " + str + "\n");
-			message("You emote: " + Name + " " + str + "\n");
 		    }
 		    str = nil;
 		    break;
@@ -753,8 +685,20 @@ int receive_message(string str)
 			message("Usage: tell <user> <text>\n");
 		    } else {
 			user->message(Name + " tells you: " + str + "\n");
-			message("You tell: " + str + "\n");
 		    }
+		    str = nil;
+		    break;
+
+		case "users":
+		    users = users();
+		    str = "Logged on:";
+		    for (i = 0, sz = sizeof(users); i < sz; i++) {
+			cmd = users[i]->query_name();
+			if (cmd) {
+			    str += " " + cmd;
+			}
+		    }
+		    message(str + "\n");
 		    str = nil;
 		    break;
 
@@ -774,11 +718,6 @@ int receive_message(string str)
 		    paste_buffer = "";
 		    return MODE_ECHO;
 
-		case "version":
-		    println(version());
-		    showPrompt();
-		    return MODE_ECHO;
-
 		case "quit":
 		    return MODE_DISCONNECT;
 		}
@@ -796,7 +735,6 @@ int receive_message(string str)
 	    }
 	    connection(previous_object());
 	    message("\n");
-	    fetch_local_wiztool();
 	    tell_audience(Name + " logs in.\n");
 	    break;
 
@@ -818,11 +756,6 @@ int receive_message(string str)
 	case STATE_NEWPASSWD2:
 	    if (newpasswd == str) {
 		password = hash_string("crypt", str);
-                if (name == "admin") {
-                    save_object(DEFAULT_USER_DIR + "/admin.pwd");
-                } else {
-                    save_object(USR_DIR + "/System/data/" + name + ".pwd");
-                }
 		message("\nPassword changed.\n");
 	    } else {
 		message("\nMismatch; password not changed.\n");
@@ -846,183 +779,13 @@ int receive_message(string str)
 	    break;
 	}
 
-        str = query_editor(this_object());
-        if (str) {
-            message((str == "insert") ? "*\b" : ":");
-        } else {
-            showPrompt();
-        }
+	str = query_editor(this_object());
+	if (str) {
+	    message((str == "insert") ? "*\b" : ":");
+	} else {
+	    message("> ");
+	}
 	state[previous_object()] = STATE_NORMAL;
 	return MODE_ECHO;
     }
-}
-
-mixed *queryIdle(void) {
-    return idle;
-}
-
-private string idleTime(object user) {
-    Time now;
-    mixed *idle;
-
-    now = new Time(time());
-    idle = user->queryIdle();
-
-    return (now - new Time(idle[0], idle[1]))->asDuration()[4];
-}
-
-private float *buildCoefficients(string arg) {
-    string *str;
-    int sz;
-    float *coefficients;
-    Iterator i;
-
-    str = explode(arg, ",");
-    sz = sizeof(str);
-    if (!sz) {
-        return nil;
-    }
-    coefficients = allocate_float(sz);
-    i = new IntIterator(0, sz - 1);
-    while (!i->end()) {
-        coefficients[i->next()] = (float) str[i->current()];
-    }
-
-    return coefficients;
-}
-
-static void userCommandPolynomial(object user, string arg) {
-    float at, from, to;
-    float *coefficients;
-
-    if (!arg || arg == "") {
-        user->println("Usage: poly eval 0,1,2,3,4 5");
-        user->println("Usage: poly integrate 0,1,2,3,4 1..3");
-        user->showPrompt();
-        return;
-    }
-
-    if (sscanf(arg, "eval %s %f", arg, at) == 2) {
-        coefficients = buildCoefficients(arg);
-        if (coefficients == nil) {
-            user->println("Usage: poly eval 0,1,2,3,4 5");
-            user->showPrompt();
-            return;
-        }
-        user->println("" + new Polynomial(coefficients)->evaluate(at));
-    } else if (sscanf(arg, "integrate %s %f %f", arg, from, to) == 3) {
-        coefficients = buildCoefficients(arg);
-        if (coefficients == nil) {
-            user->println("Usage: poly integrate 0,1,2,3,4 1..3");
-            user->showPrompt();
-            return;
-        }
-        user->println("" + new Polynomial(coefficients)->integrate(from, to));
-    }
-
-    user->showPrompt();
-}
-
-static void userCommandRational(object user, string arg) {
-    Rational rational;
-    int n, d;
-    float f;
-
-    if (sscanf(arg, "%d/%d", n, d) == 2) {
-        rational = new Rational(n, d);
-        user->println(rational->toString() + " = " + rational->toFloat());
-    } else if (sscanf(arg, "%f", f) == 1) {
-        rational = new Rational(f);
-        user->println(rational->toString());
-    } else {
-        user->println("Usage: rational number");
-    }
-    user->showPrompt();
-}
-
-static void userCommandWho(object user, string arg) {
-    object *users;
-    string *list;
-    int sz;
-    Iterator i;
-
-    users = users() - ({ user });
-    sz = sizeof(users);
-    if (sz == 0) {
-        user->println("One is the loneliest number.");
-        user->showPrompt();
-        return;
-    }
-    list = allocate(sz);
-    i = new IntIterator(0, sz - 1);
-    while (!i->end()) {
-        list[i->next()] = users[i->current()]->query_name() + " " + idleTime(users[i->current()]);
-    }
-    arg = "Users logged in:\n" +
-          new Array(list)->reduce(new ArrayToListReducer(), 0, sz - 1, 1);
-
-    user->message(arg);
-    user->showPrompt();
-}
-
-void cmd_cls(object user, string cmd, string arg) {
-    if (previous_object() != user) {
-        return;
-    }
-
-    user->message(new Terminal()->clear());
-}
-
-void cmd_poly(object user, string cmd, string arg) {
-    Continuation command;
-
-    command = new Continuation("userCommandPolynomial", user, arg);
-    command->runNext();
-}
-
-void cmd_rational(object user, string cmd, string arg) {
-    Continuation command;
-
-    command = new Continuation("userCommandRational", user, arg);
-    command->runNext();
-}
-
-void cmd_time(object user, string cmd, string arg) {
-    user->println(ctime(time()));
-}
-
-void cmd_test(object user, string cmd, string arg) {
-    if (!access(query_owner(), "/", WRITE_ACCESS)) {
-        user->println("Access denied.");
-        return;
-    }
-
-    TEST_RUNNER->runTests(user, arg);
-}
-
-void cmd_who(object user, string cmd, string arg) {
-    Continuation command;
-
-    command = new Continuation("userCommandWho", user, arg);
-    command->runNext();
-}
-
-void cmd_avatar(object user, string cmd, string arg) {
-    if (avatar) {
-        user->println("You already have an avatar.");
-        return;
-    }
-    avatar = UNIVERSE_MASTER->addAvatar(name);
-    user->println("Fetched you an avatar.");
-    tell_audience(user->query_name() + " fetches an avatar.\n");
-}
-
-void cmd_unavatar(object user, string cmd, string arg) {
-    if (!avatar) {
-        user->println("You don't have an avatar to ditch.");
-        return;
-    }
-    avatar = UNIVERSE_MASTER->removeAvatar(name);
-    user->println("You ditch your avatar.");
-    tell_audience(user->query_name() + " ditches the avatar.\n");
 }

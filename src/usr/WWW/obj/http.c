@@ -13,7 +13,7 @@ string httphost;
 string ftphost;
 string ftphost2;
 
-static void create(void)
+static void create()
 {
     ::create();
     ({ httphost, ftphost, ftphost2 }) = "~WWW/sys/server"->query_host();

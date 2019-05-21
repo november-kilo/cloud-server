@@ -13,7 +13,7 @@ int raw;		/* pending raw input? */
  * NAME:	create()
  * DESCRIPTION:	initialize
  */
-static void create(void)
+static void create()
 {
     ::create("binary");
     driver = find_object(DRIVER);
@@ -36,7 +36,7 @@ void connect(object user, string address, int port)
  * NAME:	open()
  * DESCRIPTION:	open the connection
  */
-static void open(void)
+static void open()
 {
     ::open(([ ]));
 }
@@ -63,7 +63,7 @@ static void close(int dest)
  * NAME:	timeout()
  * DESCRIPTION:	connection timed out
  */
-static void timeout(void)
+static void timeout()
 {
     ::timeout(([ ]));
 }
@@ -172,7 +172,7 @@ void set_mode(int mode)
  * NAME:	raw_message()
  * DESCRIPTION:	process the whole input buffer after switching to raw mode
  */
-static void raw_message(void)
+static void raw_message()
 {
     string str;
     mapping tls;
@@ -215,7 +215,7 @@ int message(string str)
  * NAME:	message_done()
  * DESCRIPTION:	called when output is completed
  */
-static void message_done(void)
+static void message_done()
 {
     ::message_done(([ ]));
 }
@@ -224,7 +224,7 @@ static void message_done(void)
  * NAME:	datagram_attach()
  * DESCRIPTION:	attach a datagram channel to this connection
  */
-static void datagram_attach(void)
+static void datagram_attach()
 {
     ::datagram_attach(([ ]));
 }

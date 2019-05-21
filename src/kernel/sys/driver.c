@@ -293,7 +293,7 @@ void destruct(string path, string owner)
  * NAME:	query_owner()
  * DESCRIPTION:	return owner of driver object
  */
-string query_owner(void)
+string query_owner()
 {
     return "System";
 }
@@ -348,7 +348,7 @@ private void _initialize(mapping tls)
 
     /* initialize some resources */
     rsrcd->set_rsrc("stack",     100, 0, 0);
-    rsrcd->set_rsrc("ticks", 500000000, 0, 0);
+    rsrcd->set_rsrc("ticks", 5000000, 0, 0);
 
     /* create initial resource owners */
     rsrcd->add_owner("System");
@@ -386,7 +386,7 @@ private void _initialize(mapping tls)
  * NAME:	initialize()
  * DESCRIPTION:	first function called at system startup
  */
-static void initialize(void)
+static void initialize()
 {
     catch {
 	_initialize(([ ]));
@@ -401,7 +401,7 @@ static void initialize(void)
  * NAME:	prepare_reboot()
  * DESCRIPTION:	prepare for a snapshot
  */
-void prepare_reboot(void)
+void prepare_reboot()
 {
     if (KERNEL()) {
 	if (initd) {
@@ -571,8 +571,8 @@ static object inherit_program(string from, string path, int priv)
     path = normalize_path(path, from + "/..", creator = creator(from));
     if (sscanf(path, "%*s/lib/") == 0 ||
 	(sscanf(path, "/kernel/%*s") != 0 && creator != "System") ||
-	!accessd->access(creator, path, READ_ACCESS)) {
-        return nil;
+	!accessd->access(from, path, READ_ACCESS)) {
+	return nil;
     }
 
     if (objectd) {
@@ -758,7 +758,7 @@ private void _interrupt(mapping tls)
  * NAME:	interrupt()
  * DESCRIPTION:	called when a kill signal is sent to the server
  */
-static void interrupt(void)
+static void interrupt()
 {
     _interrupt(([ ]));
 }

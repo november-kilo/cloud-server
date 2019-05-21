@@ -10,7 +10,7 @@ object driver;		/* driver object */
  * NAME:	create()
  * DESCRIPTION:	initialize
  */
-static void create(void)
+static void create()
 {
     ::create("datagram");
     driver = find_object(DRIVER);
@@ -32,7 +32,7 @@ void connect_datagram(object user, int dgram, string address, int port)
  * NAME:	open()
  * DESCRIPTION:	open the connection
  */
-static void open(void)
+static void open()
 {
     ::open(([ ]));
 }
@@ -59,7 +59,7 @@ static void close(int dest)
  * NAME:	timeout()
  * DESCRIPTION:	connection timed out
  */
-static void timeout(void)
+static void timeout()
 {
     ::timeout(([ ]));
 }
