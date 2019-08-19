@@ -2,6 +2,7 @@
 # include <kernel/access.h>
 # include <kernel/user.h>
 # include <kernel/rsrc.h>
+#include <Maths.h>
 
 inherit access API_ACCESS;
 inherit rsrc API_RSRC;
@@ -59,6 +60,15 @@ static void create()
     compile_object("/lib/IterativeContinuation");
     compile_object("/lib/DistContinuation");
     compile_object("/lib/ContinuationToken");
+    compile_object("/lib/Array");
+    compile_object("/lib/Function");
+    compile_object("/lib/Queue");
+    compile_object("/lib/Terminal");
+    compile_object("/lib/json/JsonEncoder");
+    compile_object("/lib/json/JsonParser");
+    compile_object("/lib/maths/Rational");
+    compile_object("/lib/maths/Vector");
+    compile_object("/lib/sort/MergeSort");
 
     /* Domain stuff */
     rsrc_incr(nil, "fileblocks",

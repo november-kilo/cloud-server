@@ -514,6 +514,8 @@ static int command(string str)
     case "snapshot":
     case "reboot":
     case "hotboot":
+
+    case "test":
 	call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	break;
 
@@ -788,4 +790,17 @@ int receive_message(string str)
 	state[previous_object()] = STATE_NORMAL;
 	return MODE_ECHO;
     }
+}
+
+#include <Array.h>
+#include <Function.h>
+#include <Maths.h>
+#include <Queue.h>
+
+private void println(object user, string str) {
+    user->message(str + "\n");
+}
+
+static void cmd_test(object user, string cmd, string str) {
+    println(user, "Test what?");
 }
