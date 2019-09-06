@@ -60,13 +60,21 @@ static void create()
     compile_object("/lib/IterativeContinuation");
     compile_object("/lib/DistContinuation");
     compile_object("/lib/ContinuationToken");
-    compile_object("/lib/Array");
-    compile_object("/lib/Function");
+    compile_object("/lib/array/Array");
+    compile_object("/lib/array/ArithmeticReducer");
+    compile_object("/lib/array/TabularReducer");
+    compile_object("/lib/array/ToListReducer");
+    compile_object("/lib/array/ToMarkedListReducer");
     compile_object("/lib/Queue");
-    compile_object("/lib/Terminal");
     compile_object("/lib/json/JsonEncoder");
     compile_object("/lib/json/JsonParser");
+    compile_object("/lib/maths/integration/SimpsonIntegrator");
+    compile_object("/lib/maths/polynomial/Polynomial");
+    compile_object("/lib/maths/polynomial/DerivativeIterator");
+    compile_object("/lib/maths/polynomial/ProbabilityReducer");
+    compile_object("/lib/maths/polynomial/StringReducer");
     compile_object("/lib/maths/Rational");
+    compile_object("/lib/maths/Stats");
     compile_object("/lib/maths/Vector");
     compile_object("/lib/sort/MergeSort");
 

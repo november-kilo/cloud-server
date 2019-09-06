@@ -6,21 +6,6 @@ private int numerator;
 private int denominator;
 private float originalFloat;
 
-int gcd(int a, int b) {
-    a = (a > 0) ? a : -a;
-    b = (b > 0) ? b : -b;
-
-    while (a != b) {
-        if (a > b) {
-            a -= b;
-        } else {
-            b -= a;
-        }
-    }
-
-    return a;
-}
-
 private void fixSign(void) {
     if (denominator < 0) {
         numerator = -numerator;
@@ -51,7 +36,7 @@ void fromRatio(int numerator, int denominator) {
     ::numerator = numerator;
     ::denominator = denominator;
     if (!denominator) {
-        error("Rational: the denominator must be different from zero.");
+        error("Rational: the denominator must be different from zero");
     }
     fixSign();
     if (numerator != 0) {
@@ -123,7 +108,7 @@ void reciprocal(void) {
     int tmp;
 
     if (numerator == 0) {
-        error("Rational: the operation would result in a denominator of zero.");
+        error("Rational: the operation would result in a denominator of zero");
     }
 
     tmp = denominator;
@@ -198,18 +183,18 @@ static Rational operator^ (mixed p) {
                 i = p->toInt();
                 break;
             }
-            error("Rational: invalid power.");
+            error("Rational: invalid power (object)");
         case T_INT:
         case T_FLOAT:
             i = (int) p;
             break;
         case T_STRING:
             if (catch(i = (int)(float) p)) {
-                error("Rational: invalid power.");
+                error("Rational: invalid power (string)");
             }
             break;
         default:
-            error("Rational: invalid power.");
+            error("Rational: invalid power (default)");
     }
 
     if (i == 0) {
@@ -317,5 +302,5 @@ static void create(mixed args...) {
         return;
     }
 
-    error("Rational: invalid parameters.");
+    error("Rational: invalid parameters");
 }

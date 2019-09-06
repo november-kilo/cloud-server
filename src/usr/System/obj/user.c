@@ -794,13 +794,111 @@ int receive_message(string str)
 
 #include <Array.h>
 #include <Function.h>
+#include <Json.h>
 #include <Maths.h>
 #include <Queue.h>
+#include <Sort.h>
+#include <String.h>
 
 private void println(object user, string str) {
     user->message(str + "\n");
 }
 
 static void cmd_test(object user, string cmd, string str) {
-    println(user, "Test what?");
+    Array data;
+    Function reducer;
+    Integrator simpson;
+    MergeSort mergeSort;
+    Number number;
+    Polynomial poly;
+    Stats stats;
+    String libString;
+    Vector v1, v2, v3;
+    float *violentCrimeRateUsa1997;
+    mapping moments;
+    int i, n;
+    float k1, k2, median;
+    mapping probs;
+
+    violentCrimeRateUsa1997 = ({ 611.0, 567.6, 523.0, 506.5, 504.5, 494.4, 475.8, 463.2, 469.0, 479.3,
+                                 471.8, 458.6, 431.9, 404.5, 387.1, 387.8, 369.1, 361.6, 373.7, 386.3 });
+    mergeSort = new MergeSort();
+    mergeSort->sort(violentCrimeRateUsa1997);
+    n = sizeof(violentCrimeRateUsa1997);
+
+    stats = new Stats();
+
+    moments = stats->get(violentCrimeRateUsa1997);
+
+    println(user,
+        "Sum:                " + moments["sum"] + "\n" +
+        "Average:            " + moments["average"] + "\n" +
+        "Standard deviation: " + moments["standardDeviation"] + "\n" +
+        "Variance:           " + moments["variance"]);
+
+    if (n % 2) {
+        median = violentCrimeRateUsa1997[((n + 1) / 2) - 1];
+    } else {
+        k1 = violentCrimeRateUsa1997[(n / 2) - 1];
+        k2 = violentCrimeRateUsa1997[n / 2];
+        median = (k1 + k2) / 2.0;
+    }
+
+    println(user, "Median:             " + median);
+
+    number = new Number(pi());
+    println(user, "number: " + number->toString());
+
+    libString = new String("foo");
+
+    simpson = new SimpsonIntegrator();
+    poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
+    number = new Rational(poly->integrate(0.0, 15.0));
+    println(user, "Polynomial: " + poly->toString());
+    println(user, "Integrated polynomial: " + simpson->integrate(poly, 0.0, 15.0));
+    println(user, "Integrated polynomial: " + poly->integrate(0.0, 15.0));
+    println(user, "number: " + number->toString());
+
+    poly = poly->differentiate();
+    println(user, "Differentiated poly: " + poly->toString());
+
+    poly = new Polynomial(({
+        0.0, 0.0, 0.0, 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
+        148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0 })
+    );
+
+    reducer = new PolynomialProbabilityReducer(poly, 6, 4);
+    reducer->apply(10);
+    println(user, "Probability 3D6: " + poly->toString());
+    probs = reducer->evaluate();
+    println(user, "P(10): " + dump_value(probs, ([])));
+
+    data = new Array(({ 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
+                148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0 }));
+    data->sort();
+    println(user, "Sorted: " + data->toString());
+
+    reducer = new ArrayTabularReducer();
+    str = reducer->evaluate(data->getArray());
+    println(user, str);
+
+    reducer = new ArrayToListReducer();
+    str = data->reduce(reducer, 0, data->size() - 1, 1);
+    println(user, "Data:\n" + str);
+
+    reducer = new ArrayToMarkedListReducer();
+    str = data->reduce(reducer, 0, data->size() - 1, 1);
+    println(user, str);
+
+    reducer = new ArrayToMarkedListReducer(3);
+    str = data->reduce(reducer, 0, data->size() - 1, 1);
+    println(user, str);
+
+    v1 = new Vector(({ new Number(2), new Number(4), new Number(6) }));
+    v2 = new Vector(({ new Number(3), new Number(5), new Number(7) }));
+    v3 = v1->cross(v2);
+    println(user, "Cross product: " + v3->toString());
+
+    number = v1->dot(v2);
+    println(user, "Dot product: " + number->toString());
 }
