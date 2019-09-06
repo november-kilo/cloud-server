@@ -102,6 +102,10 @@ Number *_frexp(void) {
     return ({ new Number(f), new Number(n) });
 }
 
+Number _hypot(Number b) {
+    return new Number(hypot(number, b->toFloat()));
+}
+
 Number _ldexp(int n) {
     return new Number(ldexp(number, n));
 }

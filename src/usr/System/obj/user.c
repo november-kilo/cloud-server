@@ -806,8 +806,11 @@ private void println(object user, string str) {
 
 static void cmd_test(object user, string cmd, string str) {
     Array data;
+    Complex *roots;
     Function reducer;
     Integrator simpson;
+    EigenvalueDecomposition Eig;
+    Matrix A, D, V, M;
     MergeSort mergeSort;
     Number number;
     Polynomial poly;
@@ -901,4 +904,90 @@ static void cmd_test(object user, string cmd, string str) {
 
     number = v1->dot(v2);
     println(user, "Dot product: " + number->toString());
+
+    poly = new Polynomial(({ -1., 0., 0., 0., 1. }));
+    roots = poly->roots();
+
+    println(user, "" + roots[0]->toString());
+    println(user, "" + roots[1]->toString());
+    println(user, "" + roots[2]->toString());
+    println(user, "" + roots[3]->toString());
+
+    poly = new Polynomial(({ 5.0, 4.0, 3.0, 2.0, 1.0 }));
+    roots = poly->roots();
+
+    println(user, "" + roots[0]->toString());
+    println(user, "" + roots[1]->toString());
+    println(user, "" + roots[2]->toString());
+    println(user, "" + roots[3]->toString());
+
+    A = new Matrix(3, 3);
+    A->setMatrix(({ ({ 4.0, 6.0, 7.0 }), ({ 6.0, 3.0, 2.0 }), ({ 7.0, 2.0, 1.0 }) }));
+    Eig = A->eig();
+    V = Eig->getV();
+    D = Eig->getD();
+
+    println(user, "Nonsymmetric A\n" + A->toString());
+    println(user, "V\n" + V->toString());
+    println(user, "D\n" + D->toString());
+
+    A = new Matrix(3, 3);
+    A->setMatrix(({ ({ 5.0, 1.0, 3.0 }), ({ 2.0, 0.0, 2.0 }), ({ 3.0, 1.0, 5.0 }) }));
+    Eig = A->eig();
+    V = Eig->getV();
+    D = Eig->getD();
+
+    println(user, "Symmetric A\n" + A->toString());
+    println(user, "V\n" + V->toString());
+    println(user, "D\n" + D->toString());
 }
+
+/*
+>> nonsymmetric = [ [4,6,7]; [6,3,2]; [7,2,1] ]
+
+nonsymmetric =
+
+     4     6     7
+     6     3     2
+     7     2     1
+
+>> symmetric = [ [5,1,3]; [2,0,2]; [3,1,5] ]
+
+symmetric =
+
+     5     1     3
+     2     0     2
+     3     1     5
+
+>> [Vn,Dn]=eig(nonsymmetric)
+
+Vn =
+
+    0.6887    0.1638    0.7063
+   -0.3367   -0.7905    0.5116
+   -0.6421    0.5902    0.4893
+
+
+Dn =
+
+   -5.4594         0         0
+         0    0.2637         0
+         0         0   13.1957
+
+
+
+>> [Vs,Ds]=eig(symmetric)
+
+Vs =
+
+   -0.6707   -0.7071    0.1164
+   -0.3167    0.0000   -0.9864
+   -0.6707    0.7071    0.1164
+
+
+Ds =
+
+    8.4721         0         0
+         0    2.0000         0
+         0         0   -0.4721
+ */
