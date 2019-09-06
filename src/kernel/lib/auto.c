@@ -9,7 +9,7 @@
 
 # define TLS()			::call_trace()[1][TRACE_FIRSTARG]
 # define CHECKARG(arg, n, func)	if (!(arg)) badarg((n), (func))
-
+# define PAD "                                                                              "
 
 /*
  * NAME:	badarg()
@@ -1287,4 +1287,200 @@ static void error(string str)
 	badarg(1, "error");
     }
     ::error(str);
+}
+
+static mixed min(mixed a, mixed b) {
+    return ((a) < (b) ? (a) : (b));
+}
+
+static mixed max(mixed a, mixed b) {
+    return ((a) > (b) ? (a) : (b));
+}
+
+static int gcd(int a, int b) {
+    a = (a > 0) ? a : -a;
+    b = (b > 0) ? b : -b;
+
+    while (a != b) {
+        if (a > b) {
+            a -= b;
+        } else {
+            b -= a;
+        }
+    }
+
+    return a;
+}
+
+static float pi(void) {
+    return atan(1.0) * 4.0;
+}
+
+static string dump_value(mixed value, mapping seen)
+{
+    string str;
+    int i, sz;
+    mixed *indices, *values;
+
+    switch (typeof(value)) {
+        case T_FLOAT:
+            str = (string) value;
+        if (sscanf(str, "%*s.") == 0 && sscanf(str, "%*se") == 0) {
+            if (value >= 0.0) {
+                value += .05;
+                str = (string) floor(value);
+            } else {
+                value -= .05;
+                str = (string) ceil(value);
+            }
+            str += "." + floor(fmod(fabs(value) * 10.0, 10.0));
+        }
+        return str;
+
+        case T_INT:
+            return (string) value;
+
+        case T_STRING:
+            str = value;
+        if (sscanf(str, "%*s\\") != 0) {
+            str = implode(explode("\\" + str + "\\", "\\"), "\\\\");
+        }
+        if (sscanf(str, "%*s\"") != 0) {
+            str = implode(explode("\"" + str + "\"", "\""), "\\\"");
+        }
+        if (sscanf(str, "%*s\n") != 0) {
+            str = implode(explode("\n" + str + "\n", "\n"), "\\n");
+        }
+        if (sscanf(str, "%*s\t") != 0) {
+            str = implode(explode("\t" + str + "\t", "\t"), "\\t");
+        }
+        return "\"" + str + "\"";
+
+        case T_OBJECT:
+            return "<" + object_name(value) + ">";
+
+        case T_ARRAY:
+            if (seen[value]) {
+                return "#" + (seen[value] - 1);
+            }
+
+        seen[value] = map_sizeof(seen) + 1;
+        sz = sizeof(value);
+        if (sz == 0) {
+            return "({ })";
+        }
+
+        str = "({ ";
+        for (i = 0, --sz; i < sz; i++) {
+            str += dump_value(value[i], seen) + ", ";
+        }
+        return str + dump_value(value[i], seen) + " })";
+
+        case T_MAPPING:
+            if (seen[value]) {
+                return "@" + (seen[value] - 1);
+            }
+
+        seen[value] = map_sizeof(seen) + 1;
+        sz = map_sizeof(value);
+        if (sz == 0) {
+            return "([ ])";
+        }
+
+        str = "([ ";
+        indices = map_indices(value);
+        values = map_values(value);
+        for (i = 0, --sz; i < sz; i++) {
+            str += dump_value(indices[i], seen) + ":" +
+                   dump_value(values[i], seen) + ", ";
+        }
+        return str + dump_value(indices[i], seen) + ":" +
+               dump_value(values[i], seen) + " ])";
+
+        case T_NIL:
+            return "nil";
+    }
+}
+
+static string toString(varargs mixed value) {
+    switch (typeof(value)) {
+        case T_STRING:
+        case T_INT:
+        case T_FLOAT:
+            return (string) value;
+    }
+
+    if (T_OBJECT == typeof(value) && function_object("toString", value)) {
+        return value->toString();
+    }
+
+    return dump_value(value, ([]));
+}
+
+static int longestString(mixed *args) {
+    int x, y;
+    int i, sz;
+
+    x = 0;
+    y = 0;
+    sz = sizeof(args);
+    for (i = 0; i < sz; i++) {
+        x = strlen(toString(args[i]));
+        if (x > y) {
+            y = x;
+        }
+    }
+
+    return y;
+}
+
+static string trimString(string str) {
+    string *parsed;
+
+    parsed = parse_string("whitespace = /[\n\b\r\t ]+/ " +
+                          "word = /[^\n\b\r\t ]+/ S: word S: S word", str);
+    parsed -= ({ "" });
+
+    return implode(parsed, " ");
+}
+
+static string lalign(mixed str, int pad) {
+    int x;
+    string s;
+
+    s = toString(str);
+    x = pad - strlen(s);
+    if (x > 0) {
+        s = s + PAD[0..x-1];
+    }
+    return s;
+}
+
+static string centre(mixed str, int pad) {
+    int x, l;
+    string s;
+
+    s = toString(str);
+    l = strlen(s);
+    x = (pad - l) / 2;
+    if (x > -1) {
+        s = PAD[0..x] + s;
+    }
+    x = l - x;
+    if (x > -1) {
+        s = s + PAD[0..x];
+    }
+    return s;
+}
+
+static string ralign(mixed str, int pad) {
+    int x;
+    string s;
+
+    s = toString(str);
+    x = pad - strlen(s);
+    if (x > 0) {
+        s = PAD[0..x-1] + s;
+    }
+    return s;
 }

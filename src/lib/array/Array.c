@@ -1,8 +1,10 @@
 #include <Array.h>
 #include <Function.h>
 #include <Iterator.h>
+#include <Sort.h>
 
 inherit Iterable;
+private inherit "/lib/util/string";
 
 private mixed *elements;
 private int iterationCount;
@@ -12,7 +14,7 @@ static void create(mixed *elements) {
 }
 
 string toString(void) {
-    return "not yet impl";
+    return dump_value(elements, ([ ]));
 }
 
 mixed *getArray(void) {
@@ -25,7 +27,7 @@ int size(void) {
 
 mixed get(int index) {
     if (index < 0 || index >= size()) {
-        error("Array: index " + index + " is out of range.");
+        error("Array: index " + index + " is out of range");
     }
 
     return elements[index];
@@ -108,18 +110,31 @@ Array map(Function mapper, varargs int from, int to) {
     return mapped;
 }
 
-mixed reduce(Function reducer, varargs int from, int to) {
+private int isLastIteration(int from, int to) {
+    return iterationCount == to - from + 1;
+}
+
+mixed reduce(Function reducer, varargs int from, int to, int evalFirstVal) {
     Iterator iterator;
-    mixed reduced;
+    mixed nextValue, currentValue;
 
     ({ from, to }) = fixFromTo(from, to);
-    iterator = new IntIterator(from, to);
-
-    while (!iterator->end()) {
-        reduced = reducer->evaluate(reduced, get(iterator->next()), this_object()[from .. to], iterator->current());
+    iterator = new Iterator(this_object(), from, to);
+    currentValue = iterator->next();
+    if (evalFirstVal) {
+        currentValue = reducer->evaluate(nil, currentValue, isLastIteration(from, to));
     }
 
-    return reduced;
+    while (!iterator->end()) {
+        nextValue = iterator->next();
+        currentValue = reducer->evaluate(nextValue, currentValue, isLastIteration(from, to));
+    }
+
+    return currentValue;
+}
+
+void sort() {
+    new MergeSort()->sort(elements);
 }
 
 static mixed operator[] (int index) {
@@ -199,5 +214,5 @@ int iteratorEnd(mixed state) {
 
     ({ from, to, index, iterationCount }) = state;
 
-    return iterationCount == to - from + 1;
+    return isLastIteration(from, to);
 }

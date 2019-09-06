@@ -1,3 +1,5 @@
+#include <type.h>
+
 /*
  * returns the number of spaces requested
  */

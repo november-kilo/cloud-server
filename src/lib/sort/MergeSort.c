@@ -1,6 +1,6 @@
 #include <Sort.h>
 
-private mixed *merge(mixed *array, int l, int m, int r) {
+private void merge(mixed *array, int l, int m, int r) {
     int i, j, k;
     int n1, n2;
     mixed *left, *right;
@@ -44,29 +44,25 @@ private mixed *merge(mixed *array, int l, int m, int r) {
         j++;
         k++;
     }
-
-    return array;
 }
 
-private mixed *mergeSort(mixed *array, int l, int r) {
+private void mergeSort(mixed *array, int l, int r) {
     int m;
 
     if (l < r) {
         m = l + (r - l) / 2;
-        array = mergeSort(array, l, m);
-        array = mergeSort(array, m + 1, r);
-        array = merge(array, l, m, r);
+        mergeSort(array, l, m);
+        mergeSort(array, m + 1, r);
+        merge(array, l, m, r);
     }
-
-    return array;
 }
 
-mixed *sort(mixed *array, varargs int l, int r) {
+void sort(mixed *array, varargs int l, int r) {
     if (!l) {
         l = 0;
     }
     if (!r) {
         r = sizeof(array) - 1;
     }
-    return mergeSort(array, l, r);
+    mergeSort(array, l, r);
 }

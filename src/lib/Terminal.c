@@ -40,7 +40,7 @@ string color256(int a, string str) {
     string aStr;
 
     if (a < 0 || a > 255) {
-        error("Terminal: Invalid color.");
+        error("Terminal: Invalid color");
     }
 
     aStr = (string) a;
