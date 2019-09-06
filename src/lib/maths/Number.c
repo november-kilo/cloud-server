@@ -49,51 +49,51 @@ Number abs(void) {
     return new Number(fabs(number));
 }
 
-Number acos(void) {
+Number _acos(void) {
     return new Number(acos(number));
 }
 
-Number asin(void) {
+Number _asin(void) {
     return new Number(asin(number));
 }
 
-Number atan(void) {
+Number _atan(void) {
     return new Number(atan(number));
 }
 
-Number atan2(Number x) {
+Number _atan2(Number x) {
     return new Number(atan2(number, x->toFloat()));
 }
 
-Number ceil(void) {
+Number _ceil(void) {
     return new Number(ceil(number));
 }
 
-Number cos(void) {
+Number _cos(void) {
     return new Number(cos(number));
 }
 
-Number cosh(void) {
+Number _cosh(void) {
     return new Number(cosh(number));
 }
 
-Number exp(void) {
+Number _exp(void) {
     return new Number(exp(number));
 }
 
-Number fabs(void) {
+Number _fabs(void) {
     return abs();
 }
 
-Number floor(void) {
+Number _floor(void) {
     return new Number(floor(number));
 }
 
-Number fmod(Number y) {
+Number _fmod(Number y) {
     return new Number(fmod(number, y->toFloat()));
 }
 
-Number *frexp(void) {
+Number *_frexp(void) {
     float f;
     int n;
 
@@ -102,19 +102,19 @@ Number *frexp(void) {
     return ({ new Number(f), new Number(n) });
 }
 
-Number ldexp(int n) {
+Number _ldexp(int n) {
     return new Number(ldexp(number, n));
 }
 
-Number log(void) {
+Number _log(void) {
     return new Number(log(number));
 }
 
-Number log10(void) {
+Number _log10(void) {
     return new Number(log10(number));
 }
 
-Number *modf(void) {
+Number *_modf(void) {
     float f, n;
 
     ({ f, n }) = modf(number);
@@ -122,31 +122,31 @@ Number *modf(void) {
     return ({ new Number(f), new Number(n) });
 }
 
-Number pow(Number y) {
+Number _pow(Number y) {
     return new Number(pow(number, y->toFloat()));
 }
 
-Number random(Number mod) {
+Number _random(Number mod) {
     return new Number(random(mod->toInt()));
 }
 
-Number sin(void) {
+Number _sin(void) {
     return new Number(sin(number));
 }
 
-Number sinh(void) {
+Number _sinh(void) {
     return new Number(sinh(number));
 }
 
-Number sqrt(void) {
+Number _sqrt(void) {
     return new Number(sqrt(number));
 }
 
-Number tan(void) {
+Number _tan(void) {
     return new Number(tan(number));
 }
 
-Number tanh(void) {
+Number _tanh(void) {
     return new Number(tanh(number));
 }
 
@@ -192,7 +192,7 @@ static Number operator/ (mixed that) {
 }
 
 static Number operator^ (mixed that) {
-    return pow(that);
+    return _pow(that);
 }
 
 static int operator< (mixed that) {
