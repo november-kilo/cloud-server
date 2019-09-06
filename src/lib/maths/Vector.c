@@ -33,7 +33,7 @@ Number get(int index) {
     return components[index];
 }
 
-string toString() {
+string toString(void) {
     string str;
     int i, sz;
 

@@ -133,7 +133,7 @@ mixed reduce(Function reducer, varargs int from, int to, int evalFirstVal) {
     return currentValue;
 }
 
-void sort() {
+void sort(void) {
     new MergeSort()->sort(elements);
 }
 
