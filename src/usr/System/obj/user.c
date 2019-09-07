@@ -575,6 +575,7 @@ static int command(string str)
     case "time":
     case "who":
     case "test":
+    case "vector":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -924,6 +925,26 @@ void cmd_who(object user, string cmd, string arg) {
 #include <Queue.h>
 #include <Sort.h>
 #include <String.h>
+
+static void cmd_vector(object user, string cmd, string str) {
+    Vector a, b, c;
+    mapping cylindrical, polar, spherical;
+
+    a = new Vector(({ new Number(3), new Number(5), new Number(7) }));
+    b = new Vector(({ new Number(4), new Number(6), new Number(8) }));
+
+    c = a->cross(b);
+    user->println("A x B = C => " + c->toString());
+
+    cylindrical = a->cylindrical();
+    user->println("A in cylindrical: " + dump_value(cylindrical, ([])));
+
+    polar = a->polar();
+    user->println("A in polar: " + dump_value(polar, ([])));
+
+    spherical = a->spherical();
+    user->println("A in spherical: " + dump_value(spherical, ([])));
+}
 
 static void cmd_test(object user, string cmd, string str) {
     Array data;

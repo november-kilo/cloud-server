@@ -69,13 +69,14 @@ Vector scale(float f) {
     return new Vector(ans);
 }
 
-Number norm() {
+Number norm(void) {
     Iterator iterator;
     Number total;
     int sz;
 
     sz = sizeof(components);
     iterator = new IntIterator(0, sz -1);
+    total = new Number(0);
 
     while (!iterator->end()) {
         total += components[iterator->next()] * components[iterator->current()];
@@ -315,11 +316,11 @@ string toString(varargs int projected) {
     return "< " + result + ">";
 }
 
-string toNorm() {
+string toNorm(void) {
     return vpipeDouble() + norm()->toFloat() + vpipeDouble();
 }
 
-string unitVectorInDirectionOf() {
+string unitVectorInDirectionOf(void) {
     return toString(1) + " / " + norm()->toFloat();
 }
 
@@ -331,7 +332,7 @@ string unitVectorOrthogonalTo(Vector a) {
     return crossOfThisAndThat->toString(1) + " / " + crossOfThisAndThat->norm()->toFloat();
 }
 
-mapping directionCosines() {
+mapping directionCosines(void) {
     Number r;
     mapping cosines;
     float a, b, c;
@@ -349,7 +350,7 @@ mapping directionCosines() {
     return cosines;
 }
 
-mapping polar() {
+mapping polar(void) {
     mapping ans;
     float r, theta;
 
@@ -363,19 +364,19 @@ mapping polar() {
     return ans;
 }
 
-mapping cylindrical() {
+mapping cylindrical(void) {
     mapping p, ans;
 
     p = polar();
     ans = ([ ]);
     ans["radial"] = p["radial"];
     ans["azimuthal"] = p["angular"];
-    ans["vertical"] = components[2];
+    ans["vertical"] = components[2]->toFloat();
 
     return ans;
 }
 
-mapping spherical() {
+mapping spherical(void) {
     mapping ans;
     float p;
 
