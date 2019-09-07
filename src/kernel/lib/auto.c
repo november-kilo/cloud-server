@@ -1485,6 +1485,34 @@ static string ralign(mixed str, int pad) {
     return s;
 }
 
+string spaces(int x) {
+    if (x < 1) {
+        return "";
+    }
+
+    return PAD[0 .. x - 1];
+}
+
+string repeat(string x, int y) {
+    int i;
+    string str;
+
+    str = "";
+    if (y < 1) {
+        return str;
+    }
+
+    if (y == 1) {
+        return x;
+    }
+
+    while (i++ < y) {
+        str += x;
+    }
+
+    return str;
+}
+
 static float hypot(float a, float b) {
     float c;
 

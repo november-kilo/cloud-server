@@ -63,6 +63,7 @@ static void create()
     compile_object("/lib/array/Array");
     compile_object("/lib/array/ArithmeticReducer");
     compile_object("/lib/array/TabularReducer");
+    compile_object("/lib/array/ToBoxReducer");
     compile_object("/lib/array/ToListReducer");
     compile_object("/lib/array/ToMarkedListReducer");
     compile_object("/lib/Queue");
