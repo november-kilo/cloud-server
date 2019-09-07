@@ -33,7 +33,7 @@ Number get(int index) {
     return components[index];
 }
 
-string toString() {
+string toString(void) {
     string str;
     int i, sz;
 
@@ -88,22 +88,23 @@ Vector cross(Vector that) {
     Number vx, vy, vz;
     Number x, y, z;
 
-    if (size() != 3 && that->size() != 3) {
-        error("Vector: cross product defined only for 3D vectors");
+    if (size() == 3 && that->size() == 3) {
+        ux = get(0);
+        uy = get(1);
+        uz = get(2);
+        vx = that->get(0);
+        vy = that->get(1);
+        vz = that->get(2);
+
+        x = uy * vz - uz * vy;
+        y = uz * vx - ux * vz;
+        z = ux * vy - uy * vx;
+
+        return new Vector(({ x, y, z }));
+
     }
 
-    ux = get(0);
-    uy = get(1);
-    uz = get(2);
-    vx = that->get(0);
-    vy = that->get(1);
-    vz = that->get(2);
-
-    x = uy * vz - uz * vy;
-    y = uz * vx - ux * vz;
-    z = ux * vy - uy * vx;
-
-    return new Vector(({ x, y, z }));
+    error("Vector: cross product defined only for 3D vectors");
 }
 
 private string getOpStr(int op) {
@@ -215,10 +216,7 @@ static Vector operator- (varargs mixed value) {
 static Vector operator* (mixed value) {
     if (typeof(value) == T_OBJECT) {
         if (value <- Vector) {
-            if (size() == 3 && value->size() == 3) {
-                return cross(value);
-            }
-            error("Vector: vector product defined only for 3D vectors");
+            return cross(value);
         }
 
         if (value <- Number) {

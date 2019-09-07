@@ -68,7 +68,10 @@ static void create()
     compile_object("/lib/Queue");
     compile_object("/lib/json/JsonEncoder");
     compile_object("/lib/json/JsonParser");
+    compile_object("/lib/maths/Complex");
     compile_object("/lib/maths/integration/SimpsonIntegrator");
+    compile_object("/lib/maths/matrix/Matrix");
+    compile_object("/lib/maths/matrix/EigenvalueDecomposition");
     compile_object("/lib/maths/polynomial/Polynomial");
     compile_object("/lib/maths/polynomial/DerivativeIterator");
     compile_object("/lib/maths/polynomial/ProbabilityReducer");
