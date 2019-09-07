@@ -14,6 +14,7 @@
 #define Array object "/lib/array/Array"
 #define ArrayArithmeticReducer object "/lib/array/ArithmeticReducer"
 #define ArrayTabularReducer object "/lib/array/TabularReducer"
+#define ArrayToBoxReducer object "/lib/array/ToBoxReducer"
 #define ArrayToListReducer object "/lib/array/ToListReducer"
 #define ArrayToMarkedListReducer object "/lib/array/ToMarkedListReducer"
 
