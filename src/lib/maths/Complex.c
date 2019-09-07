@@ -16,7 +16,7 @@ float im(void) {
     return i;
 }
 
-string toString() {
+string toString(void) {
     return "(" + r + " + (" + i + "i))";
 }
 
