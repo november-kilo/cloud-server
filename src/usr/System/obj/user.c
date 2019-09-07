@@ -614,6 +614,24 @@ private void tell_audience(string str)
     }
 }
 
+private void saveUser(void) {
+    if (name == "admin") {
+        save_object(DEFAULT_USER_DIR + "/admin.pwd");
+        return;
+    }
+    
+    save_object(USR_SAVE_DIR + "/" + name + ".pwd");
+}
+
+private void restoreUser(void) {
+    if (name == "admin") {
+        restore_object(DEFAULT_USER_DIR + "/admin.pwd");
+        return;
+    }
+    
+    restore_object(USR_SAVE_DIR + "/" + name + ".pwd");
+}
+
 /*
  * NAME:	login()
  * DESCRIPTION:	login a new user
@@ -634,11 +652,7 @@ int login(string str)
 	    Name[0] -= 'a' - 'A';
 	}
 
-        if (name == "admin") {
-            restore_object(DEFAULT_USER_DIR + "/admin.pwd");
-        } else {
-            restore_object(USR_DIR + "/System/data/" + name + ".pwd");
-        }
+	restoreUser();
 
 	if (password) {
 	    /* check password */
@@ -833,11 +847,7 @@ int receive_message(string str) {
             case STATE_NEWPASSWD2:
                 if (newpasswd == str) {
                     password = hash_string("crypt", str);
-                    if (name == "admin") {
-                        save_object(DEFAULT_USER_DIR + "/admin.pwd");
-                    } else {
-                        save_object(USR_DIR + "/System/data/" + name + ".pwd");
-                    }
+                    saveUser();
                     message("\nPassword changed.\n");
                 } else {
                     message("\nMismatch; password not changed.\n");

@@ -1528,3 +1528,11 @@ static float hypot(float a, float b) {
 
     return c;
 }
+
+static float radianToDegree(float radian) {
+    return radian * 180.0 / pi();
+}
+
+static float degreeToRadian(float degree) {
+    return degree * pi() / 180.0;
+}
