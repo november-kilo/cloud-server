@@ -2,6 +2,7 @@
 
 #define MATHS_LIB_H
 
+#include <float.h>
 #include <type.h>
 #include <Function.h>
 #include <Iterator.h>
@@ -9,8 +10,13 @@
 #define TOLERANCE 1e-7
 #define MAX_ITERATIONS 250
 
+#define Complex object "/lib/maths/Complex"
+
 #define Integrator object "/lib/maths/integration/Integrator"
 #define SimpsonIntegrator object "/lib/maths/integration/SimpsonIntegrator"
+
+#define Matrix object "/lib/maths/matrix/Matrix"
+#define EigenvalueDecomposition object "/lib/maths/matrix/EigenvalueDecomposition"
 
 #define Number object "/lib/maths/Number"
 

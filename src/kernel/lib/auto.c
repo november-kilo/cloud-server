@@ -1484,3 +1484,19 @@ static string ralign(mixed str, int pad) {
     }
     return s;
 }
+
+static float hypot(float a, float b) {
+    float c;
+
+    if (fabs(a) > fabs(b)) {
+        c = b / a;
+        c = fabs(a) * sqrt(1.0 + c * c);
+    } else if (b != 0.0) {
+        c = a / b;
+        c = fabs(b) * sqrt(1.0 + c * c);
+    } else {
+        c = 0.0;
+    }
+
+    return c;
+}
