@@ -3,6 +3,10 @@
 # include <kernel/user.h>
 # include <status.h>
 # include <type.h>
+# include <Array.h>
+# include <Iterator.h>
+# include <Terminal.h>
+# include <Time.h>
 
 inherit auto	"~/lib/auto";
 inherit user	LIB_USER;
@@ -30,6 +34,8 @@ string password;		/* user password */
 static string newpasswd;	/* new password */
 static string paste_buffer;	/* buffer holding text being pasted */
 static int nconn;		/* # of connections */
+static object local_wiztool;
+static mixed *idle;
 
 /*
  * NAME:	create()
@@ -39,6 +45,10 @@ static create()
 {
     wiztool::create(200);
     state = ([ ]);
+}
+
+void println(string str) {
+    message(str + "\n");
 }
 
 /*
@@ -454,6 +464,52 @@ static void cmd_hotboot(object user, string cmd, string str)
     }
 }
 
+mixed *queryIdle(void) {
+    return idle;
+}
+
+private string idleTime(object user) {
+    Time now;
+    mixed *idle;
+
+    now = new Time(time());
+    idle = user->queryIdle();
+
+    if (idle == nil) {
+        return "";
+    }
+
+    return (now - new Time(idle[0], idle[1]))->asDuration()[4];
+}
+
+private void fetch_local_wiztool(void) {
+    string err_str, obj_str;
+
+    obj_str = USR_DIR + "/" + name + "/obj/wiztool";
+    if (file_info(obj_str + ".c")) {
+        if (local_wiztool) {
+            destruct_object(local_wiztool);
+        }
+
+        err_str = catch(compile_object(obj_str));
+        if (err_str) {
+            message("Failed to compile your local wiztool:\n\t" + err_str + "\n");
+            return;
+        }
+
+        local_wiztool = clone_object(obj_str);
+        message("Created your local wiztool.\n");
+    }
+}
+
+void showPrompt(void) {
+    if (local_wiztool && function_object("getPrompt", local_wiztool)) {
+        message(local_wiztool->getPrompt(this_object()));
+    } else {
+        message("> ");
+    }
+}
+
 /*
  * NAME:	command()
  * DESCRIPTION:	process user input
@@ -515,17 +571,24 @@ static int command(string str)
     case "reboot":
     case "hotboot":
 
+    case "cls":
+    case "time":
+    case "who":
     case "test":
-	call_other(this_object(), "cmd_" + str, this_object(), str, arg);
-	break;
+	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
+	    break;
 
     case "halt":
-	call_other(this_object(), "cmd_shutdown", this_object(), str, arg);
-	break;
+        call_other(this_object(), "cmd_shutdown", this_object(), str, arg);
+        break;
 
     default:
-	message("No command: " + str + "\n");
-	break;
+        if (local_wiztool && function_object("cmd_" + str, local_wiztool)) {
+            call_other(local_wiztool, "cmd_" + str, this_object(), str, arg);
+            break;
+        }
+        message("No command: " + str + "\n");
+        break;
     }
 
     return TRUE;
@@ -571,6 +634,12 @@ int login(string str)
 	    Name[0] -= 'a' - 'A';
 	}
 
+        if (name == "admin") {
+            restore_object(DEFAULT_USER_DIR + "/admin.pwd");
+        } else {
+            restore_object(USR_DIR + "/System/data/" + name + ".pwd");
+        }
+
 	if (password) {
 	    /* check password */
 	    previous_object()->message("Password:");
@@ -579,8 +648,8 @@ int login(string str)
 	    /* no password; login immediately */
 	    connection(previous_object());
 	    tell_audience(Name + " logs in.\n");
-	    if (str != "admin" && sizeof(query_users() & ({ str })) == 0) {
-		message("> ");
+	    if (str != "admin") {
+	        showPrompt();
 		state[previous_object()] = STATE_NORMAL;
 		return MODE_ECHO;
 	    }
@@ -598,14 +667,18 @@ int login(string str)
 void logout(int quit)
 {
     if (previous_program() == LIB_CONN && --nconn == 0) {
-	if (query_conn()) {
-	    if (quit) {
-		tell_audience(Name + " logs out.\n");
-	    } else {
-		tell_audience(Name + " disconnected.\n");
-	    }
-	}
-	::logout(name);
+        if (query_conn()) {
+            if (quit) {
+                tell_audience(Name + " logs out.\n");
+            } else {
+                tell_audience(Name + " disconnected.\n");
+            }
+        }
+        if (local_wiztool) {
+            destruct_object(local_wiztool);
+            message("Destroyed your local wiztool.\n");
+        }
+        ::logout(name);
     }
 }
 
@@ -622,174 +695,216 @@ string query_name()
  * NAME:	receive_message()
  * DESCRIPTION:	process a message from the user
  */
-int receive_message(string str)
-{
+int receive_message(string str) {
     if (previous_program() == LIB_CONN) {
-	string cmd;
-	object user, *users;
-	int i, sz;
+        string cmd;
+        object user, *users;
+        int i, sz;
 
-	switch (state[previous_object()]) {
-	case STATE_NORMAL:
-	    cmd = str;
-	    if (strlen(str) != 0 && str[0] == '!') {
-		cmd = cmd[1 ..];
-	    }
+        idle = millitime();
 
-	    if (!query_editor(this_object()) || cmd != str) {
-		/* check standard commands */
-		if (strlen(cmd) != 0) {
-		    switch (cmd[0]) {
-		    case '\'':
-			if (strlen(cmd) > 1) {
-			    cmd[0] = ' ';
-			    str = cmd;
-			}
-			cmd = "say";
-			break;
+        switch (state[previous_object()]) {
+            case STATE_NORMAL:
+                cmd = str;
+                if (strlen(str) != 0 && str[0] == '!') {
+                    cmd = cmd[1..];
+                }
 
-		    case ':':
-			if (strlen(cmd) > 1) {
-			    cmd[0] = ' ';
-			    str = cmd;
-			}
-			cmd = "emote";
-			break;
+                if (!query_editor(this_object()) || cmd != str) {
+                    /* check standard commands */
+                    if (strlen(cmd) != 0) {
+                        switch (cmd[0]) {
+                            case '\'':
+                                if (strlen(cmd) > 1) {
+                                    cmd[0] = ' ';
+                                    str = cmd;
+                                }
+                                cmd = "say";
+                                break;
 
-		    default:
-			sscanf(cmd, "%s ", cmd);
-			break;
-		    }
-		}
+                            case ':':
+                                if (strlen(cmd) > 1) {
+                                    cmd[0] = ' ';
+                                    str = cmd;
+                                }
+                                cmd = "emote";
+                                break;
 
-		switch (cmd) {
-		case "say":
-		    if (sscanf(str, "%*s %s", str) == 0) {
-			message("Usage: say <text>\n");
-		    } else {
-			tell_audience(Name + " says: " + str + "\n");
-		    }
-		    str = nil;
-		    break;
+                            default:
+                                sscanf(cmd, "%s ", cmd);
+                                break;
+                        }
+                    }
 
-		case "emote":
-		    if (sscanf(str, "%*s %s", str) == 0) {
-			message("Usage: emote <text>\n");
-		    } else {
-			tell_audience(Name + " " + str + "\n");
-		    }
-		    str = nil;
-		    break;
+                    switch (cmd) {
+                        case "say":
+                            if (sscanf(str, "%*s %s", str) == 0) {
+                                message("Usage: say <text>\n");
+                            } else {
+                                tell_audience(Name + " says: " + str + "\n");
+                            }
+                            str = nil;
+                            break;
 
-		case "tell":
-		    if (sscanf(str, "%*s %s %s", cmd, str) != 3 ||
-			!(user=find_user(cmd))) {
-			message("Usage: tell <user> <text>\n");
-		    } else {
-			user->message(Name + " tells you: " + str + "\n");
-		    }
-		    str = nil;
-		    break;
+                        case "emote":
+                            if (sscanf(str, "%*s %s", str) == 0) {
+                                message("Usage: emote <text>\n");
+                            } else {
+                                tell_audience(Name + " " + str + "\n");
+                            }
+                            str = nil;
+                            break;
 
-		case "users":
-		    users = users();
-		    str = "Logged on:";
-		    for (i = 0, sz = sizeof(users); i < sz; i++) {
-			cmd = users[i]->query_name();
-			if (cmd) {
-			    str += " " + cmd;
-			}
-		    }
-		    message(str + "\n");
-		    str = nil;
-		    break;
+                        case "tell":
+                            if (sscanf(str, "%*s %s %s", cmd, str) != 3 ||
+                                !(user = find_user(cmd))) {
+                                message("Usage: tell <user> <text>\n");
+                            } else {
+                                user->message(Name + " tells you: " + str + "\n");
+                            }
+                            str = nil;
+                            break;
 
-		case "password":
-		    if (password) {
-			message("Old password:");
-			state[previous_object()] = STATE_OLDPASSWD;
-		    } else {
-			message("New password:");
-			state[previous_object()] = STATE_NEWPASSWD1;
-		    }
-		    return MODE_NOECHO;
+                        case "users":
+                            users = users();
+                            str = "Logged on:";
+                            for (i = 0, sz = sizeof(users); i < sz; i++) {
+                                cmd = users[i]->query_name();
+                                if (cmd) {
+                                    str += " " + cmd;
+                                }
+                            }
+                            message(str + "\n");
+                            str = nil;
+                            break;
 
-		case "paste":
-		    ::message("End your pasting with a single period.\n\"\b");
-		    state[previous_object()] = STATE_PASTING;
-		    paste_buffer = "";
-		    return MODE_ECHO;
+                        case "password":
+                            if (password) {
+                                message("Old password:");
+                                state[previous_object()] = STATE_OLDPASSWD;
+                            } else {
+                                message("New password:");
+                                state[previous_object()] = STATE_NEWPASSWD1;
+                            }
+                            return MODE_NOECHO;
 
-		case "quit":
-		    return MODE_DISCONNECT;
-		}
-	    }
+                        case "paste":
+                            ::message("End your pasting with a single period.\n\"\b");
+                            state[previous_object()] = STATE_PASTING;
+                            paste_buffer = "";
+                            return MODE_ECHO;
 
-	    if (str) {
-		call_limited("command", str);
-	    }
-	    break;
+                        case "quit":
+                            return MODE_DISCONNECT;
+                    }
+                }
 
-	case STATE_LOGIN:
-	    if (hash_string("crypt", str, password) != password) {
-		previous_object()->message("\nBad password.\n");
-		return MODE_DISCONNECT;
-	    }
-	    connection(previous_object());
-	    message("\n");
-	    tell_audience(Name + " logs in.\n");
-	    break;
+                if (str) {
+                    call_limited("command", str);
+                }
+                break;
 
-	case STATE_OLDPASSWD:
-	    if (hash_string("crypt", str, password) != password) {
-		message("\nBad password.\n");
-		break;
-	    }
-	    message("\nNew password:");
-	    state[previous_object()] = STATE_NEWPASSWD1;
-	    return MODE_NOECHO;
+            case STATE_LOGIN:
+                if (hash_string("crypt", str, password) != password) {
+                    previous_object()->message("\nBad password.\n");
+                    return MODE_DISCONNECT;
+                }
+                connection(previous_object());
+                message("\n");
+                fetch_local_wiztool();
+                tell_audience(Name + " logs in.\n");
+                break;
 
-	case STATE_NEWPASSWD1:
-	    newpasswd = str;
-	    message("\nRetype new password:");
-	    state[previous_object()] = STATE_NEWPASSWD2;
-	    return MODE_NOECHO;
+            case STATE_OLDPASSWD:
+                if (hash_string("crypt", str, password) != password) {
+                    message("\nBad password.\n");
+                    break;
+                }
+                message("\nNew password:");
+                state[previous_object()] = STATE_NEWPASSWD1;
+                return MODE_NOECHO;
 
-	case STATE_NEWPASSWD2:
-	    if (newpasswd == str) {
-		password = hash_string("crypt", str);
-		message("\nPassword changed.\n");
-	    } else {
-		message("\nMismatch; password not changed.\n");
-	    }
-	    newpasswd = nil;
-	    break;
+            case STATE_NEWPASSWD1:
+                newpasswd = str;
+                message("\nRetype new password:");
+                state[previous_object()] = STATE_NEWPASSWD2;
+                return MODE_NOECHO;
 
-	case STATE_PASTING:
-	    if (str != ".") {
-		paste_buffer += str + "\n";
-		::message("\"\b");
-		return MODE_ECHO;
-	    }
-	    if (strlen(paste_buffer)) {
-		tell_audience("--- Pasted segment from " + Name +
-			      " ---\n" + paste_buffer +
-			      "--- Pasted segment ends ---\n");
-		state[previous_object()] = STATE_NORMAL;
-		paste_buffer = nil;
-	    }
-	    break;
-	}
+            case STATE_NEWPASSWD2:
+                if (newpasswd == str) {
+                    password = hash_string("crypt", str);
+                    if (name == "admin") {
+                        save_object(DEFAULT_USER_DIR + "/admin.pwd");
+                    } else {
+                        save_object(USR_DIR + "/System/data/" + name + ".pwd");
+                    }
+                    message("\nPassword changed.\n");
+                } else {
+                    message("\nMismatch; password not changed.\n");
+                }
+                newpasswd = nil;
+                break;
 
-	str = query_editor(this_object());
-	if (str) {
-	    message((str == "insert") ? "*\b" : ":");
-	} else {
-	    message("> ");
-	}
-	state[previous_object()] = STATE_NORMAL;
-	return MODE_ECHO;
+            case STATE_PASTING:
+                if (str != ".") {
+                    paste_buffer += str + "\n";
+                    ::message("\"\b");
+                    return MODE_ECHO;
+                }
+                if (strlen(paste_buffer)) {
+                    tell_audience("--- Pasted segment from " + Name +
+                                  " ---\n" + paste_buffer +
+                                  "--- Pasted segment ends ---\n");
+                    state[previous_object()] = STATE_NORMAL;
+                    paste_buffer = nil;
+                }
+                break;
+        }
+
+        str = query_editor(this_object());
+        if (str) {
+            message((str == "insert") ? "*\b" : ":");
+        } else {
+            showPrompt();
+        }
+        state[previous_object()] = STATE_NORMAL;
+        return MODE_ECHO;
     }
+}
+
+void cmd_cls(object user, string cmd, string arg) {
+    if (previous_object() != user) {
+        return;
+    }
+
+    user->message(new Terminal()->clear());
+}
+
+void cmd_time(object user, string cmd, string arg) {
+    user->println(ctime(time()));
+}
+
+void cmd_who(object user, string cmd, string arg) {
+    object *users;
+    string *list;
+    int sz;
+    Iterator i;
+
+    users = users() - ({ user });
+    sz = sizeof(users);
+    if (sz == 0) {
+        user->println("One is the loneliest number.");
+        return;
+    }
+    list = allocate(sz);
+    i = new IntIterator(0, sz - 1);
+    while (!i->end()) {
+        list[i->next()] = users[i->current()]->query_name() + " " + idleTime(users[i->current()]);
+    }
+    arg = "Users logged in:\n" +
+          new Array(list)->reduce(new ArrayToListReducer(), 0, sz - 1, 1);
+
+    user->message(arg);
 }
 
 #include <Array.h>
@@ -799,10 +914,6 @@ int receive_message(string str)
 #include <Queue.h>
 #include <Sort.h>
 #include <String.h>
-
-private void println(object user, string str) {
-    user->message(str + "\n");
-}
 
 static void cmd_test(object user, string cmd, string str) {
     Array data;
@@ -833,7 +944,7 @@ static void cmd_test(object user, string cmd, string str) {
 
     moments = stats->get(violentCrimeRateUsa1997);
 
-    println(user,
+    user->println(
         "Sum:                " + moments["sum"] + "\n" +
         "Average:            " + moments["average"] + "\n" +
         "Standard deviation: " + moments["standardDeviation"] + "\n" +
@@ -847,23 +958,23 @@ static void cmd_test(object user, string cmd, string str) {
         median = (k1 + k2) / 2.0;
     }
 
-    println(user, "Median:             " + median);
+    user->println("Median:             " + median);
 
     number = new Number(pi());
-    println(user, "number: " + number->toString());
+    user->println("number: " + number->toString());
 
     libString = new String("foo");
 
     simpson = new SimpsonIntegrator();
     poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
     number = new Rational(poly->integrate(0.0, 15.0));
-    println(user, "Polynomial: " + poly->toString());
-    println(user, "Integrated polynomial: " + simpson->integrate(poly, 0.0, 15.0));
-    println(user, "Integrated polynomial: " + poly->integrate(0.0, 15.0));
-    println(user, "number: " + number->toString());
+    user->println("Polynomial: " + poly->toString());
+    user->println("Integrated polynomial: " + simpson->integrate(poly, 0.0, 15.0));
+    user->println("Integrated polynomial: " + poly->integrate(0.0, 15.0));
+    user->println("number: " + number->toString());
 
     poly = poly->differentiate();
-    println(user, "Differentiated poly: " + poly->toString());
+    user->println("Differentiated poly: " + poly->toString());
 
     poly = new Polynomial(({
         0.0, 0.0, 0.0, 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
@@ -872,54 +983,54 @@ static void cmd_test(object user, string cmd, string str) {
 
     reducer = new PolynomialProbabilityReducer(poly, 6, 4);
     reducer->apply(10);
-    println(user, "Probability 3D6: " + poly->toString());
+    user->println("Probability 3D6: " + poly->toString());
     probs = reducer->evaluate();
-    println(user, "P(10): " + dump_value(probs, ([])));
+    user->println("P(10): " + dump_value(probs, ([])));
 
     data = new Array(({ 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
                 148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0 }));
     data->sort();
-    println(user, "Sorted: " + data->toString());
+    user->println("Sorted: " + data->toString());
 
     reducer = new ArrayTabularReducer();
     str = reducer->evaluate(data->getArray());
-    println(user, str);
+    user->println(str);
 
     reducer = new ArrayToListReducer();
     str = data->reduce(reducer, 0, data->size() - 1, 1);
-    println(user, "Data:\n" + str);
+    user->println("Data:\n" + str);
 
     reducer = new ArrayToMarkedListReducer();
     str = data->reduce(reducer, 0, data->size() - 1, 1);
-    println(user, str);
+    user->println(str);
 
     reducer = new ArrayToMarkedListReducer(3);
     str = data->reduce(reducer, 0, data->size() - 1, 1);
-    println(user, str);
+    user->println(str);
 
     v1 = new Vector(({ new Number(2), new Number(4), new Number(6) }));
     v2 = new Vector(({ new Number(3), new Number(5), new Number(7) }));
     v3 = v1->cross(v2);
-    println(user, "Cross product: " + v3->toString());
+    user->println("Cross product: " + v3->toString());
 
     number = v1->dot(v2);
-    println(user, "Dot product: " + number->toString());
+    user->println("Dot product: " + number->toString());
 
     poly = new Polynomial(({ -1., 0., 0., 0., 1. }));
     roots = poly->roots();
 
-    println(user, "" + roots[0]->toString());
-    println(user, "" + roots[1]->toString());
-    println(user, "" + roots[2]->toString());
-    println(user, "" + roots[3]->toString());
+    user->println("" + roots[0]->toString());
+    user->println("" + roots[1]->toString());
+    user->println("" + roots[2]->toString());
+    user->println("" + roots[3]->toString());
 
     poly = new Polynomial(({ 5.0, 4.0, 3.0, 2.0, 1.0 }));
     roots = poly->roots();
 
-    println(user, "" + roots[0]->toString());
-    println(user, "" + roots[1]->toString());
-    println(user, "" + roots[2]->toString());
-    println(user, "" + roots[3]->toString());
+    user->println("" + roots[0]->toString());
+    user->println("" + roots[1]->toString());
+    user->println("" + roots[2]->toString());
+    user->println("" + roots[3]->toString());
 
     A = new Matrix(3, 3);
     A->setMatrix(({ ({ 4.0, 6.0, 7.0 }), ({ 6.0, 3.0, 2.0 }), ({ 7.0, 2.0, 1.0 }) }));
@@ -927,9 +1038,9 @@ static void cmd_test(object user, string cmd, string str) {
     V = Eig->getV();
     D = Eig->getD();
 
-    println(user, "Nonsymmetric A\n" + A->toString());
-    println(user, "V\n" + V->toString());
-    println(user, "D\n" + D->toString());
+    user->println("Nonsymmetric A\n" + A->toString());
+    user->println("V\n" + V->toString());
+    user->println("D\n" + D->toString());
 
     A = new Matrix(3, 3);
     A->setMatrix(({ ({ 5.0, 1.0, 3.0 }), ({ 2.0, 0.0, 2.0 }), ({ 3.0, 1.0, 5.0 }) }));
@@ -937,9 +1048,9 @@ static void cmd_test(object user, string cmd, string str) {
     V = Eig->getV();
     D = Eig->getD();
 
-    println(user, "Symmetric A\n" + A->toString());
-    println(user, "V\n" + V->toString());
-    println(user, "D\n" + D->toString());
+    user->println("Symmetric A\n" + A->toString());
+    user->println("V\n" + V->toString());
+    user->println("D\n" + D->toString());
 }
 
 /*
