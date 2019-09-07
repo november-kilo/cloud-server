@@ -575,6 +575,7 @@ static int command(string str)
     case "time":
     case "who":
     case "test":
+    case "vector":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -614,6 +615,24 @@ private void tell_audience(string str)
     }
 }
 
+private void saveUser(void) {
+    if (name == "admin") {
+        save_object(DEFAULT_USER_DIR + "/admin.pwd");
+        return;
+    }
+    
+    save_object(USR_SAVE_DIR + "/" + name + ".pwd");
+}
+
+private void restoreUser(void) {
+    if (name == "admin") {
+        restore_object(DEFAULT_USER_DIR + "/admin.pwd");
+        return;
+    }
+    
+    restore_object(USR_SAVE_DIR + "/" + name + ".pwd");
+}
+
 /*
  * NAME:	login()
  * DESCRIPTION:	login a new user
@@ -634,11 +653,7 @@ int login(string str)
 	    Name[0] -= 'a' - 'A';
 	}
 
-        if (name == "admin") {
-            restore_object(DEFAULT_USER_DIR + "/admin.pwd");
-        } else {
-            restore_object(USR_DIR + "/System/data/" + name + ".pwd");
-        }
+	restoreUser();
 
 	if (password) {
 	    /* check password */
@@ -833,11 +848,7 @@ int receive_message(string str) {
             case STATE_NEWPASSWD2:
                 if (newpasswd == str) {
                     password = hash_string("crypt", str);
-                    if (name == "admin") {
-                        save_object(DEFAULT_USER_DIR + "/admin.pwd");
-                    } else {
-                        save_object(USR_DIR + "/System/data/" + name + ".pwd");
-                    }
+                    saveUser();
                     message("\nPassword changed.\n");
                 } else {
                     message("\nMismatch; password not changed.\n");
@@ -914,6 +925,26 @@ void cmd_who(object user, string cmd, string arg) {
 #include <Queue.h>
 #include <Sort.h>
 #include <String.h>
+
+static void cmd_vector(object user, string cmd, string str) {
+    Vector a, b, c;
+    mapping cylindrical, polar, spherical;
+
+    a = new Vector(({ new Number(3), new Number(5), new Number(7) }));
+    b = new Vector(({ new Number(4), new Number(6), new Number(8) }));
+
+    c = a->cross(b);
+    user->println("A x B = C => " + c->toString());
+
+    cylindrical = a->cylindrical();
+    user->println("A in cylindrical: " + dump_value(cylindrical, ([])));
+
+    polar = a->polar();
+    user->println("A in polar: " + dump_value(polar, ([])));
+
+    spherical = a->spherical();
+    user->println("A in spherical: " + dump_value(spherical, ([])));
+}
 
 static void cmd_test(object user, string cmd, string str) {
     Array data;
