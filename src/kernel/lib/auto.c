@@ -1403,13 +1403,6 @@ static string dump_value(mixed value, mapping seen)
 }
 
 static string toString(varargs mixed value) {
-    switch (typeof(value)) {
-        case T_STRING:
-        case T_INT:
-        case T_FLOAT:
-            return (string) value;
-    }
-
     if (T_OBJECT == typeof(value) && function_object("toString", value)) {
         return value->toString();
     }
