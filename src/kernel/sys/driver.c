@@ -5,6 +5,7 @@
 # include <status.h>
 # include <trace.h>
 # include <type.h>
+#include <kfun.h>
 
 # define TLS()		call_trace()[1][TRACE_FIRSTARG]
 
@@ -760,6 +761,9 @@ private void _interrupt(mapping tls)
  */
 static void interrupt()
 {
+#ifdef KF_PERL_TERM
+    perl_term();
+#endif
     _interrupt(([ ]));
 }
 
