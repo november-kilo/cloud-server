@@ -10,6 +10,14 @@ float toFloat(void) {
     return number;
 }
 
+Number toDegree(void) {
+    return new Number(radianToDegree(number));
+}
+
+Number toRadian(void) {
+    return new Number(degreeToRadian(number));
+}
+
 string toString(void) {
     return ::toString(number);
 }
