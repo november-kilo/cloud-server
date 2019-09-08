@@ -934,16 +934,21 @@ static void cmd_vector(object user, string cmd, string str) {
     b = new Vector(({ new Number(4), new Number(6), new Number(8) }));
 
     c = a->cross(b);
-    user->println("A x B = C => " + c->toString());
+    user->println("A x B = " + c->toString());
 
     cylindrical = a->cylindrical();
-    user->println("A in cylindrical: " + dump_value(cylindrical, ([])));
+    user->println("A in cylindrical:\n\tradial: " + cylindrical["radial"]->toString() + "\n" +
+                  "\tazimuthal: " + cylindrical["azimuthal"]["deg"]->toString() + " deg\n" +
+                  "\tvertical: " + cylindrical["vertical"]->toString());
 
     polar = a->polar();
-    user->println("A in polar: " + dump_value(polar, ([])));
+    user->println("A in polar:\n\tradial: " + polar["radial"]->toString() + "\n" +
+                  "\tangular: " + polar["angular"]["deg"]->toString() + " deg");
 
     spherical = a->spherical();
-    user->println("A in spherical: " + dump_value(spherical, ([])));
+    user->println("A in spherical:\n\tradial: " + spherical["radial"]->toString() + "\n" +
+                  "\tpolar: " + spherical["polar"]["deg"]->toString() + " deg\n" +
+                  "\tazimuthal: " + spherical["azimuthal"]["deg"]->toString() + " deg");
 }
 
 static void cmd_test(object user, string cmd, string str) {

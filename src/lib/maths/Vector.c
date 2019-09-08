@@ -321,7 +321,7 @@ string toNorm(void) {
 }
 
 string unitVectorInDirectionOf(void) {
-    return toString(1) + " / " + norm()->toFloat();
+    return toString(1) + " / " + norm()->toString();
 }
 
 string unitVectorOrthogonalTo(Vector a) {
@@ -329,37 +329,36 @@ string unitVectorOrthogonalTo(Vector a) {
 
     crossOfThisAndThat = cross(a);
 
-    return crossOfThisAndThat->toString(1) + " / " + crossOfThisAndThat->norm()->toFloat();
+    return crossOfThisAndThat->toString(1) + " / " + crossOfThisAndThat->norm()->toString();
 }
 
 mapping directionCosines(void) {
-    Number r;
+    Number r, a, b, c;
     mapping cosines;
-    float a, b, c;
 
     r = norm();
     cosines = ([ ]);
-    a = acos(components[0]->toFloat() / r->toFloat());
-    b = acos(components[1]->toFloat() / r->toFloat());
-    c = acos(components[2]->toFloat() / r->toFloat());
+    a = new Number(acos(components[0]->toFloat() / r->toFloat()));
+    b = new Number(acos(components[1]->toFloat() / r->toFloat()));
+    c = new Number(acos(components[2]->toFloat() / r->toFloat()));
 
-    cosines["a"] = ([ "a": components[0] / r, "rad": a, "deg": radianToDegree(a) ]);
-    cosines["b"] = ([ "b": components[1] / r, "rad": b, "deg": radianToDegree(b) ]);
-    cosines["c"] = ([ "c": components[2] / r, "rad": c, "deg": radianToDegree(c) ]);
+    cosines["a"] = ([ "a": components[0] / r, "rad": a, "deg": a->toDegree() ]);
+    cosines["b"] = ([ "b": components[1] / r, "rad": b, "deg": b->toDegree() ]);
+    cosines["c"] = ([ "c": components[2] / r, "rad": c, "deg": c->toDegree() ]);
 
     return cosines;
 }
 
 mapping polar(void) {
     mapping ans;
-    float r, theta;
+    Number r, theta;
 
     ans = ([ ]);
-    r = norm()->toFloat();
-    theta = atan(components[1]->toFloat() / components[0]->toFloat());
+    r = norm();
+    theta = new Number(atan(components[1]->toFloat() / components[0]->toFloat()));
 
     ans["radial"] = r;
-    ans["angular"] = ([ "rad": theta, "deg": radianToDegree(theta) ]);
+    ans["angular"] = ([ "rad": theta, "deg": theta->toDegree() ]);
 
     return ans;
 }
@@ -371,18 +370,18 @@ mapping cylindrical(void) {
     ans = ([ ]);
     ans["radial"] = p["radial"];
     ans["azimuthal"] = p["angular"];
-    ans["vertical"] = components[2]->toFloat();
+    ans["vertical"] = components[2];
 
     return ans;
 }
 
 mapping spherical(void) {
     mapping ans;
-    float p;
+    Number p;
 
     ans = cylindrical();
-    p = acos(components[2]->toFloat() / ans["radial"]);
-    ans["polar"] = ([ "rad": p, "deg": radianToDegree(p) ]);
+    p = new Number(acos(components[2]->toFloat() / ans["radial"]->toFloat()));
+    ans["polar"] = ([ "rad": p, "deg": p->toDegree() ]);
     ans["vertical"] = nil;
 
     return ans;
