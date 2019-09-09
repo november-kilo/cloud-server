@@ -2,8 +2,13 @@
 
 private string *kant;
 
+string toString(void) {
+    return implode(kant, "\n\n");
+}
+
 string *matches(string *words, varargs string opts) {
     string pattern, tmp;
+    string *m;
     string *out;
     int i, sz;
 
@@ -12,11 +17,11 @@ string *matches(string *words, varargs string opts) {
     }
 
     tmp = sizeof(words) > 1 ? implode(words, "|") : words[0];
-    pattern = "/" + tmp + "/" + opts;
+    pattern = "m/" + tmp + "/" + opts;
     out = ({ });
 
     for (i = 0, sz = sizeof(kant); i < sz; i++) {
-        if (perl_matches(kant[i], pattern)) {
+        if (perl_match(kant[i], pattern)) {
             out += ({ kant[i] });
         }
     }

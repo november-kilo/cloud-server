@@ -1186,7 +1186,11 @@ static void cmd_matches(object user, string cmd, string str) {
 }
 
 static string *fetchAristotle(object user) {
-    return "/sys/kantlipsum"->matches(({ "Aristotle" }));
+    string *aristotle;
+
+    aristotle = "/sys/kantlipsum"->matches(({ "Aristotle" }));
+    user->println("sizeof aristotle: " + sizeof(aristotle));
+    return aristotle;
 }
 
 static int transformAristotle(string *aristotle, object user) {
@@ -1199,8 +1203,10 @@ static int transformAristotle(string *aristotle, object user) {
         thePhilosopher = new Terminal->bold("The Philosopher");
         iterator = new IntIterator(0, sz - 1);
         while (!iterator->end()) {
-            aristotle[iterator->next()] = perl_substitute(aristotle[iterator->current()],
-                    "s/Aristotle/" +thePhilosopher + "/g");
+            aristotle[iterator->next()] = perl_sub(
+                    aristotle[iterator->current()],
+                    "s/Aristotle/" + thePhilosopher + "/g"
+            );
         }
         str = implode(aristotle, "\n\n");
         user->println(break_string(str, 120, 0));
