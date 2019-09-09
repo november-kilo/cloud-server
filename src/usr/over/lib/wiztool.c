@@ -2,15 +2,17 @@
 #include <Maths.h>
 #include <Terminal.h>
 
+#define KANTLIPSUM "/usr/over/sys/kantlipsum"
+
 inherit Terminal;
 inherit "/lib/util/string";
 
 private object kant;
 
 static void create(void) {
-    kant = find_object("/usr/over/sys/kantlipsum");
+    kant = find_object(KANTLIPSUM);
     if (!kant) {
-        kant = compile_object("/usr/over/sys/kantlipsum");
+        kant = compile_object(KANTLIPSUM);
     }
 }
 
@@ -108,9 +110,9 @@ void cmd_match(object user, string cmd, string str) {
 static string *fetchAristotle() {
     object kant;
 
-    kant = find_object("/user/over/sys/kantlipsum");
+    kant = find_object(KANTLIPSUM);
     if (!kant) {
-        kant = compile_object("/usr/over/sys/kantlipsum");
+        kant = compile_object(KANTLIPSUM);
     }
     return kant->matches(({ "Aristotle" }));
 }
