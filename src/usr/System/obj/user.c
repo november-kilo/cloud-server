@@ -7,6 +7,7 @@
 # include <Iterator.h>
 # include <Terminal.h>
 # include <Time.h>
+# include <kfun.h>
 
 inherit auto	"~/lib/auto";
 inherit user	LIB_USER;
@@ -576,6 +577,9 @@ static int command(string str)
     case "who":
     case "test":
     case "vector":
+    case "regex":
+    case "matches":
+    case "aristotle":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -919,6 +923,7 @@ void cmd_who(object user, string cmd, string arg) {
 }
 
 #include <Array.h>
+#include <Continuation.h>
 #include <Function.h>
 #include <Json.h>
 #include <Maths.h>
@@ -1138,3 +1143,85 @@ Ds =
          0    2.0000         0
          0         0   -0.4721
  */
+
+static void cmd_regex(object user, string cmd, string str) {
+    mapping results;
+
+    user->println("find first...");
+    results = regexp(str, FALSE);
+    if (results["error"]) {
+        user->println("regex: " + results["error"]);
+        return;
+    }
+
+    user->println(dump_value(results, ([])));
+
+    user->println("find global...");
+    results = regexp(str, TRUE);
+    if (results["error"]) {
+        user->println("regex: " + results["error"]);
+        return;
+    }
+
+    user->println(dump_value(results, ([])));
+}
+
+static void cmd_matches(object user, string cmd, string str) {
+    string *words, *results;
+    int i, sz;
+
+    if (!str || str == "") {
+        user->println("usage: matches <words>");
+        return;
+    }
+
+    words = explode(str, " ");
+    results = "/sys/kantlipsum"->matches(words);
+    if (sizeof(results) == 0) {
+        user->println("matches: no words found");
+        return;
+    }
+    user->println(break_string(implode(results, "\n\n"), 120, 0));
+    user->println("found " + sizeof(results));
+}
+
+static string *fetchAristotle(object user) {
+    string *aristotle;
+
+    aristotle = "/sys/kantlipsum"->matches(({ "Aristotle" }));
+    user->println("sizeof aristotle: " + sizeof(aristotle));
+    return aristotle;
+}
+
+static int transformAristotle(string *aristotle, object user) {
+    int sz;
+    string str, thePhilosopher;
+    Iterator iterator;
+
+    sz = sizeof(aristotle);
+    if (sz) {
+        thePhilosopher = new Terminal->bold("The Philosopher");
+        iterator = new IntIterator(0, sz - 1);
+        while (!iterator->end()) {
+            aristotle[iterator->next()] = perl_sub(
+                    aristotle[iterator->current()],
+                    "s/Aristotle/" + thePhilosopher + "/g"
+            );
+        }
+        str = implode(aristotle, "\n\n");
+        user->println(break_string(str, 120, 0));
+    } else {
+        user->println("no me gusta");
+    }
+
+    user->showPrompt();
+    return 1;
+}
+
+static void cmd_aristotle(object user, string cmd, string str) {
+    Continuation c;
+
+    c = new Continuation("fetchAristotle", user);
+    c >>= new ChainedContinuation("transformAristotle", user);
+    c->runNext();
+}

@@ -1,0 +1,1 @@
+inherit "~over/lib/wiztool";

@@ -624,6 +624,9 @@ static void shutdown(varargs int hotboot)
     }
     rlimits (-1; -1) {
 	::shutdown(hotboot);
+#ifdef KF_PERL_TERM
+	::perl_term();
+#endif
 	::find_object(DRIVER)->message("System halted.\n");
     }
 }
@@ -1529,3 +1532,75 @@ static float radianToDegree(float radian) {
 static float degreeToRadian(float degree) {
     return degree * pi() / 180.0;
 }
+
+#ifndef KF_REGEXP
+static mapping regexp(string str, int global) {
+    error("Feature unavailable");
+}
+#else
+static mapping regexp(string str, int global) {
+    string path, pattern;
+    mixed * found;
+    int *offsets;
+
+    if (KF_REGEXP != 0) {
+        return ([ "error": "The regexp extension is not available" ]);
+    }
+
+    if (!str || sscanf(str, "%s %s", path, pattern) != 2) {
+        return ([
+            "error": "usage: regexp <filename> <pattern>\nexample: regex ~System/obj/user.c ad\\w*"
+        ]);
+    }
+
+    path = ::find_object(DRIVER)->normalize_path(path, nil);
+
+    if (!file_info(path)) {
+        return ([ "error": "file not found" ]);
+    }
+
+    if (!pattern || pattern == "") {
+        return ([ "error": "invalid pattern" ]);
+    }
+
+    if (!::find_object(ACCESSD)->access(object_name(this_object()), path, READ_ACCESS)) {
+        return ([ "error": "Access denied" ]);
+    }
+
+    str = read_file(path);
+    found = ({});
+
+    while (TRUE) {
+        offsets = ::regexp(pattern, str);
+        if (offsets == nil) {
+            break;
+        }
+        found += ({ str[offsets[0]..offsets[1]] });
+        str = str[offsets[1]..];
+        if (!global) {
+            break;
+        }
+    }
+
+    return ([
+            "error": FALSE,
+            "path": path,
+            "pattern": pattern,
+            "found": found
+        ]);
+}
+#endif
+
+#ifndef KF_PERL_MATCHES
+static int perl_matches(string text, string pattern) {
+    error("Feature unavailable");
+}
+#endif
+
+#ifndef KF_PERL_SUBSTITUTE
+static string perl_substitute(string replace, string with) {
+    error("Feature unavailable");
+}
+#endif
+
+void perl_term() {}
