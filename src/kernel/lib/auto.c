@@ -1543,10 +1543,6 @@ static mapping regexp(string str, int global) {
     mixed * found;
     int *offsets;
 
-    if (KF_REGEXP != 0) {
-        return ([ "error": "The regexp extension is not available" ]);
-    }
-
     if (!str || sscanf(str, "%s %s", path, pattern) != 2) {
         return ([
             "error": "usage: regexp <filename> <pattern>\nexample: regex ~System/obj/user.c ad\\w*"
@@ -1591,14 +1587,14 @@ static mapping regexp(string str, int global) {
 }
 #endif
 
-#ifndef KF_PERL_MATCHES
-static int perl_matches(string text, string pattern) {
+#ifndef KF_PERL_MATCH
+static int perl_match(string text, string pattern) {
     error("Feature unavailable");
 }
 #endif
 
-#ifndef KF_PERL_SUBSTITUTE
-static string perl_substitute(string replace, string with) {
+#ifndef KF_PERL_SUB
+static string perl_sub(string replace, string with) {
     error("Feature unavailable");
 }
 #endif

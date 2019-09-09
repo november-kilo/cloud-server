@@ -81,7 +81,6 @@ static void create()
     compile_object("/lib/maths/Stats");
     compile_object("/lib/maths/Vector");
     compile_object("/lib/sort/MergeSort");
-    compile_object("/sys/kantlipsum");
 
     /* Domain stuff */
     rsrc_incr(nil, "fileblocks",

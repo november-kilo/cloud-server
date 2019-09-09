@@ -576,10 +576,6 @@ static int command(string str)
     case "time":
     case "who":
     case "test":
-    case "vector":
-    case "regex":
-    case "matches":
-    case "aristotle":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -931,31 +927,6 @@ void cmd_who(object user, string cmd, string arg) {
 #include <Sort.h>
 #include <String.h>
 
-static void cmd_vector(object user, string cmd, string str) {
-    Vector a, b, c;
-    mapping cylindrical, polar, spherical;
-
-    a = new Vector(({ new Number(3), new Number(5), new Number(7) }));
-    b = new Vector(({ new Number(4), new Number(6), new Number(8) }));
-
-    c = a->cross(b);
-    user->println("A x B = " + c->toString());
-
-    cylindrical = a->cylindrical();
-    user->println("A in cylindrical:\n\tradial: " + cylindrical["radial"]->toString() + "\n" +
-                  "\tazimuthal: " + cylindrical["azimuthal"]["deg"]->toString() + " deg\n" +
-                  "\tvertical: " + cylindrical["vertical"]->toString());
-
-    polar = a->polar();
-    user->println("A in polar:\n\tradial: " + polar["radial"]->toString() + "\n" +
-                  "\tangular: " + polar["angular"]["deg"]->toString() + " deg");
-
-    spherical = a->spherical();
-    user->println("A in spherical:\n\tradial: " + spherical["radial"]->toString() + "\n" +
-                  "\tpolar: " + spherical["polar"]["deg"]->toString() + " deg\n" +
-                  "\tazimuthal: " + spherical["azimuthal"]["deg"]->toString() + " deg");
-}
-
 static void cmd_test(object user, string cmd, string str) {
     Array data;
     Complex *roots;
@@ -1143,85 +1114,3 @@ Ds =
          0    2.0000         0
          0         0   -0.4721
  */
-
-static void cmd_regex(object user, string cmd, string str) {
-    mapping results;
-
-    user->println("find first...");
-    results = regexp(str, FALSE);
-    if (results["error"]) {
-        user->println("regex: " + results["error"]);
-        return;
-    }
-
-    user->println(dump_value(results, ([])));
-
-    user->println("find global...");
-    results = regexp(str, TRUE);
-    if (results["error"]) {
-        user->println("regex: " + results["error"]);
-        return;
-    }
-
-    user->println(dump_value(results, ([])));
-}
-
-static void cmd_matches(object user, string cmd, string str) {
-    string *words, *results;
-    int i, sz;
-
-    if (!str || str == "") {
-        user->println("usage: matches <words>");
-        return;
-    }
-
-    words = explode(str, " ");
-    results = "/sys/kantlipsum"->matches(words);
-    if (sizeof(results) == 0) {
-        user->println("matches: no words found");
-        return;
-    }
-    user->println(break_string(implode(results, "\n\n"), 120, 0));
-    user->println("found " + sizeof(results));
-}
-
-static string *fetchAristotle(object user) {
-    string *aristotle;
-
-    aristotle = "/sys/kantlipsum"->matches(({ "Aristotle" }));
-    user->println("sizeof aristotle: " + sizeof(aristotle));
-    return aristotle;
-}
-
-static int transformAristotle(string *aristotle, object user) {
-    int sz;
-    string str, thePhilosopher;
-    Iterator iterator;
-
-    sz = sizeof(aristotle);
-    if (sz) {
-        thePhilosopher = new Terminal->bold("The Philosopher");
-        iterator = new IntIterator(0, sz - 1);
-        while (!iterator->end()) {
-            aristotle[iterator->next()] = perl_sub(
-                    aristotle[iterator->current()],
-                    "s/Aristotle/" + thePhilosopher + "/g"
-            );
-        }
-        str = implode(aristotle, "\n\n");
-        user->println(break_string(str, 120, 0));
-    } else {
-        user->println("no me gusta");
-    }
-
-    user->showPrompt();
-    return 1;
-}
-
-static void cmd_aristotle(object user, string cmd, string str) {
-    Continuation c;
-
-    c = new Continuation("fetchAristotle", user);
-    c >>= new ChainedContinuation("transformAristotle", user);
-    c->runNext();
-}
