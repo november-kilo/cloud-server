@@ -67,7 +67,7 @@ void cmd_regex(object user, string cmd, string str) {
         return;
     }
 
-    user->println(dump_value(results, ([])));
+    user->println(dump_value(results));
 
     user->println("find global...");
     results = regexp(str, TRUE);
@@ -76,7 +76,7 @@ void cmd_regex(object user, string cmd, string str) {
         return;
     }
 
-    user->println(dump_value(results, ([])));
+    user->println(dump_value(results));
 }
 
 void cmd_match(object user, string cmd, string str) {

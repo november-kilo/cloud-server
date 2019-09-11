@@ -14,7 +14,7 @@ static void create(mixed *elements) {
 }
 
 string toString(void) {
-    return dump_value(elements, ([ ]));
+    return dump_value(elements);
 }
 
 mixed *getArray(void) {

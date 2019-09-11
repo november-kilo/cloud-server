@@ -1426,7 +1426,7 @@ static string toString(varargs mixed value) {
         return value->toString();
     }
 
-    return dump_value(value, ([]));
+    return dump_value(value);
 }
 
 static int longestString(mixed *args) {
