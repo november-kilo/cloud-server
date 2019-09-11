@@ -961,10 +961,16 @@ static mixed **get_dir(string path)
     }
 
     path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
-    if (creator != "System" &&
-	!::find_object(ACCESSD)->access(object_name(this_object()), path,
-					READ_ACCESS)) {
-	error("Access denied");
+    if (creator != "System") {
+        if (this_user() != nil) {
+            if (!::find_object(ACCESSD)->access(this_user()->query_name(), path, READ_ACCESS)) {
+                error("Access denied");
+            }
+        } else {
+            if (!::find_object(ACCESSD)->access(object_name(this_object()), path, READ_ACCESS)) {
+                error("Access denied");
+            }
+        }
     }
 
     list = ::get_dir(path);
@@ -1012,11 +1018,17 @@ static mixed *file_info(string path)
     }
 
     obj = ::find_object(DRIVER);
-    path = obj->normalize_path(path, nil, creator);
-    if (creator != "System" &&
-	!::find_object(ACCESSD)->access(object_name(this_object()), path,
-					READ_ACCESS)) {
-	error("Access denied");
+    path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
+    if (creator != "System") {
+        if (this_user() != nil) {
+            if (!::find_object(ACCESSD)->access(this_user()->query_name(), path, READ_ACCESS)) {
+                error("Access denied");
+            }
+        } else {
+            if (!::find_object(ACCESSD)->access(object_name(this_object()), path, READ_ACCESS)) {
+                error("Access denied");
+            }
+        }
     }
 
     info = ::get_dir(obj->escape_path(path));
@@ -1319,11 +1331,15 @@ static float pi(void) {
     return atan(1.0) * 4.0;
 }
 
-static string dump_value(mixed value, mapping seen)
+static string dump_value(mixed value, varargs mapping seen)
 {
     string str;
     int i, sz;
     mixed *indices, *values;
+
+    if (seen == nil) {
+        seen = ([]);
+    }
 
     switch (typeof(value)) {
         case T_FLOAT:
@@ -1599,4 +1615,4 @@ static string perl_sub(string replace, string with) {
 }
 #endif
 
-void perl_term() {}
+void perl_term(void) {}

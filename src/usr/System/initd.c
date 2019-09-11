@@ -66,6 +66,7 @@ static void create()
     compile_object("/lib/array/ToBoxReducer");
     compile_object("/lib/array/ToListReducer");
     compile_object("/lib/array/ToMarkedListReducer");
+    compile_object("/lib/file/Tree");
     compile_object("/lib/Queue");
     compile_object("/lib/json/JsonEncoder");
     compile_object("/lib/json/JsonParser");
@@ -81,7 +82,6 @@ static void create()
     compile_object("/lib/maths/Stats");
     compile_object("/lib/maths/Vector");
     compile_object("/lib/sort/MergeSort");
-    compile_object("/sys/kantlipsum");
 
     /* Domain stuff */
     rsrc_incr(nil, "fileblocks",

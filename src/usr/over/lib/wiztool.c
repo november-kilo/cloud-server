@@ -1,8 +1,4 @@
-#include <Continuation.h>
-#include <Maths.h>
-#include <Terminal.h>
-
-#define KANTLIPSUM "/usr/over/sys/kantlipsum"
+#include "over.h"
 
 inherit Terminal;
 inherit "/lib/util/string";
@@ -22,6 +18,17 @@ string getPrompt(object user) {
 
 private int isValidCall(string caller) {
     return caller == "/usr/System/obj/user";
+}
+
+private int access(string owner, string file, int type) {
+    int x;
+    x = find_object(ACCESSD)->access(owner, file, type);
+    this_user()->println("x = " + x);
+    return x;
+}
+
+private string absPath(object user, string str) {
+    return DRIVER->normalize_path(str, user->query_directory(), query_owner());
 }
 
 void cmd_vector(object user, string cmd, string str) {
@@ -107,7 +114,7 @@ void cmd_match(object user, string cmd, string str) {
     user->println("found " + sizeof(results));
 }
 
-static string *fetchAristotle() {
+static string *fetchAristotle(void) {
     object kant;
 
     kant = find_object(KANTLIPSUM);
@@ -152,4 +159,47 @@ void cmd_aristotle(object user, string cmd, string str) {
     c = new Continuation("fetchAristotle");
     c >>= new ChainedContinuation("transformAristotle", user);
     c->runNext();
+}
+
+void cmd_lsr(object user, string cmd, string str) {
+    Iterator iterator;
+    FileTree fileTree;
+    string pre, post, path, owner, file;
+    mixed *finfo;
+
+    if (!isValidCall(previous_program())) {
+        return;
+    }
+
+    if (!str || str == "") {
+        user->println("usage: lsr <path>");
+        return;
+    }
+
+    owner = query_owner();
+    path = absPath(user, str);
+    iterator = new Iterator(new FileTree(path), nil, nil);
+    iterator->next();
+    while (!iterator->end()) {
+        file = iterator->next();
+        finfo = file_info(file);
+
+        pre = finfo[0] == -2 ? "d " : "- ";
+        /* pre += access(owner, file, WRITE_ACCESS) ? "w " : "- "; */
+        pre += ctime(finfo[1]);
+
+        if (finfo[2] || finfo[2] == 1) {
+            post = "*";
+        } else {
+            post = "";
+        }
+
+        if (path == "/") {
+            file = file[1..];
+        } else {
+            file = file[strlen(path) + 1..]; /* perl_sub(file, "s{\\Q" + path + "/\\E}{}"); */
+        }
+
+        user->println(pre + " " + file + post);
+    }
 }
