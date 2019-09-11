@@ -28,6 +28,8 @@ private inherit	"/lib/util/string";
 # define STATE_NEWPASSWD2	4
 # define STATE_PASTING		5
 
+#define CMD_HISTORY_SIZE 20
+
 static string name;		/* user name */
 static string Name;		/* capitalized user name */
 static mapping state;		/* state for a connection object */
@@ -37,6 +39,8 @@ static string paste_buffer;	/* buffer holding text being pasted */
 static int nconn;		/* # of connections */
 static object local_wiztool;
 static mixed *idle;
+mapping settings;
+string *cmdHistory;
 
 /*
  * NAME:	create()
@@ -46,6 +50,13 @@ static create()
 {
     wiztool::create(200);
     state = ([ ]);
+    if (!settings) {
+        settings = ([ ]);
+    }
+
+    if (!cmdHistory) {
+        cmdHistory = ({ });
+    }
 }
 
 void println(string str) {
@@ -465,6 +476,22 @@ static void cmd_hotboot(object user, string cmd, string str)
     }
 }
 
+private void addCmdHistory(string str) {
+    if (!cmdHistory) {
+        cmdHistory = ({ });
+    }
+    if (sizeof(cmdHistory)) {
+        if (str != cmdHistory[sizeof(cmdHistory) - 1]) {
+            if (sizeof(cmdHistory) > CMD_HISTORY_SIZE) {
+                cmdHistory = cmdHistory[1..];
+            }
+            cmdHistory += ({ str });
+        }
+    } else {
+        cmdHistory = ({ str });
+    }
+}
+
 mixed *queryIdle(void) {
     return idle;
 }
@@ -517,7 +544,10 @@ void showPrompt(void) {
  */
 static int command(string str)
 {
-    string arg;
+    string arg, originalString;
+    int commandExecuted;
+
+    commandExecuted = TRUE;
 
     if (query_editor(this_object())) {
 	if (strlen(str) != 0 && str[0] == '!') {
@@ -535,6 +565,7 @@ static int command(string str)
 	return TRUE;
     }
 
+    originalString = str;
     sscanf(str, "%s %s", str, arg);
 
     switch (str) {
@@ -571,28 +602,27 @@ static int command(string str)
     case "snapshot":
     case "reboot":
     case "hotboot":
+    case "shutdown":
 
     case "cls":
     case "time":
     case "who":
     case "test":
-    case "regex":
+    case "config":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
-
-    case "halt":
-        call_other(this_object(), "cmd_shutdown", this_object(), str, arg);
-        break;
 
     default:
         if (local_wiztool && function_object("cmd_" + str, local_wiztool)) {
             call_other(local_wiztool, "cmd_" + str, this_object(), str, arg);
             break;
         }
+        commandExecuted = FALSE;
         message("No command: " + str + "\n");
         break;
     }
 
+    addCmdHistory(originalString);
     return TRUE;
 }
 
@@ -612,6 +642,7 @@ private void tell_audience(string str)
 	if (user != this_object() &&
 	    sscanf(object_name(user), USER + "#%*d") != 0) {
 	    user->message(str);
+	    user->showPrompt();
 	}
     }
 }
@@ -694,6 +725,7 @@ void logout(int quit)
             destruct_object(local_wiztool);
             message("Destroyed your local wiztool.\n");
         }
+        saveUser();
         ::logout(name);
     }
 }
@@ -715,7 +747,8 @@ int receive_message(string str) {
     if (previous_program() == LIB_CONN) {
         string cmd;
         object user, *users;
-        int i, sz;
+        int i, sz, x;
+        Iterator iterator;
 
         idle = millitime();
 
@@ -746,6 +779,38 @@ int receive_message(string str) {
                                 cmd = "emote";
                                 break;
 
+                            case '$':
+                                if (cmd == "$") {
+                                    if (!cmdHistory || sizeof(cmdHistory) == 0) {
+                                        println("No command history yet.");
+                                    } else {
+                                        iterator = new IntIterator(0, sizeof(cmdHistory) - 1);
+                                        while (!iterator->end()) {
+                                            println("" + iterator->next() + ": " + cmdHistory[iterator->current()]);
+                                        }
+                                    }
+                                } else if (cmd == "$$") {
+                                    if (!cmdHistory || sizeof(cmdHistory) == 0) {
+                                        println("No command history yet.");
+                                    } else {
+                                        call_limited("command", cmdHistory[sizeof(cmdHistory) - 1]);
+                                    }
+                                } else if (sscanf(cmd, "$%d", x)) {
+                                    if (!cmdHistory || sizeof(cmdHistory) == 0) {
+                                        println("No command history yet.");
+                                    } else {
+                                        if (x < 0 || x >= sizeof(cmdHistory)) {
+                                            println("Command " + x + " out of range.");
+                                        } else {
+                                            call_limited("command", cmdHistory[x]);
+                                        }
+                                    }
+                                } else {
+                                    println("usage: $\nusage: $<number>\nusage: $$");
+                                }
+                                str = nil;
+                                break;
+
                             default:
                                 sscanf(cmd, "%s ", cmd);
                                 break;
@@ -757,6 +822,7 @@ int receive_message(string str) {
                             if (sscanf(str, "%*s %s", str) == 0) {
                                 message("Usage: say <text>\n");
                             } else {
+                                addCmdHistory(cmd);
                                 tell_audience(Name + " says: " + str + "\n");
                             }
                             str = nil;
@@ -766,6 +832,7 @@ int receive_message(string str) {
                             if (sscanf(str, "%*s %s", str) == 0) {
                                 message("Usage: emote <text>\n");
                             } else {
+                                addCmdHistory(cmd);
                                 tell_audience(Name + " " + str + "\n");
                             }
                             str = nil;
@@ -776,7 +843,9 @@ int receive_message(string str) {
                                 !(user = find_user(cmd))) {
                                 message("Usage: tell <user> <text>\n");
                             } else {
-                                user->message(Name + " tells you: " + str + "\n");
+                                addCmdHistory(cmd);
+                                user->println(Name + " tells you: " + str + "\n");
+                                println("You tell them: " + str);
                             }
                             str = nil;
                             break;
@@ -790,6 +859,7 @@ int receive_message(string str) {
                                     str += " " + cmd;
                                 }
                             }
+                            addCmdHistory(cmd);
                             message(str + "\n");
                             str = nil;
                             break;
@@ -816,6 +886,7 @@ int receive_message(string str) {
                 }
 
                 if (str) {
+                    addCmdHistory(str);
                     call_limited("command", str);
                 }
                 break;
@@ -921,6 +992,7 @@ void cmd_who(object user, string cmd, string arg) {
 
 #include <Array.h>
 #include <Continuation.h>
+#include <File.h>
 #include <Function.h>
 #include <Json.h>
 #include <Maths.h>
@@ -1115,3 +1187,90 @@ Ds =
          0    2.0000         0
          0         0   -0.4721
  */
+
+private int setSetting(string key, mixed value) {
+    int returnValue;
+
+    if (!settings) {
+        settings = ([ ]);
+    }
+
+    returnValue = 0;
+
+    if (settings[key]) {
+        returnValue = 1;
+    }
+
+    if (settings[key] != value) {
+        returnValue = 2;
+    }
+
+    settings[key] = value;
+
+    return returnValue;
+}
+
+private mixed getSetting(string key) {
+    if (!settings) {
+        settings = ([ ]);
+    }
+    return settings[key];
+}
+
+private string listSettings(void) {
+    string *keys;
+    string key;
+    mixed *values;
+    int sz;
+    Iterator iterator;
+
+    if (!settings) {
+        settings = ([ ]);
+    }
+
+    keys = map_indices(settings);
+    sz = sizeof(keys);
+
+    if (sz == 0) {
+        return "No settings\n";
+    }
+
+    values = allocate(sz);
+    iterator = new IntIterator(0, sz - 1);
+
+    while (!iterator->end()) {
+        key = keys[iterator->next()];
+        values[iterator->current()] = "" + key + " = " + settings[key];
+    }
+
+    return "Settings:\n" + (new Array(values)->toList());
+}
+
+static void cmd_config(object user, string cmd, string str) {
+    int x;
+    string s, v;
+
+    if (str) {
+        if (str == "list") {
+            user->message(listSettings());
+            return;
+        }
+
+        if (sscanf(str, "set %s %d", s, x) == 2) {
+            setSetting(s, x);
+            return;
+        } else if (sscanf(str, "set %s %s", s, v) == 2) {
+            setSetting(s, v);
+            return;
+        }
+
+        if (sscanf(str, "get %s", s) == 1) {
+            user->println(s + " = " + getSetting(s));
+            return;
+        }
+    }
+
+    user->println("usage: config list");
+    user->println("usage: config get <setting-name>");
+    user->println("usage: config set <setting-name> <setting-value>");
+}
