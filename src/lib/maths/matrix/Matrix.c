@@ -17,7 +17,7 @@ int getColumnDimension(void) {
 }
 
 string toString(void) {
-    return dump_value(A, ([ ]));
+    return dump_value(A);
 }
 
 void setIJ(int i, int j, float s) {
