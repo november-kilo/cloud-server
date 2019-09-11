@@ -133,6 +133,10 @@ mixed reduce(Function reducer, varargs int from, int to, int evalFirstVal) {
     return currentValue;
 }
 
+string toList(void) {
+    return reduce(new ArrayToListReducer(), 0, size() - 1, 1);
+}
+
 void sort(void) {
     new MergeSort()->sort(elements);
 }

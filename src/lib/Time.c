@@ -38,9 +38,9 @@ static void create(mixed time, varargs float mtime) {
     }
 }
 
-int time()	{ return time; }
-float mtime()	{ return mtime; }
-float millis() {
+int time(void)	{ return time; }
+float mtime(void)	{ return mtime; }
+float millis(void) {
     return millis;
 }
 
