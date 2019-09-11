@@ -20,13 +20,6 @@ private int isValidCall(string caller) {
     return caller == "/usr/System/obj/user";
 }
 
-private int access(string owner, string file, int type) {
-    int x;
-    x = find_object(ACCESSD)->access(owner, file, type);
-    this_user()->println("x = " + x);
-    return x;
-}
-
 private string absPath(object user, string str) {
     return DRIVER->normalize_path(str, user->query_directory(), query_owner());
 }
@@ -183,9 +176,6 @@ void cmd_lsr(object user, string cmd, string str) {
     while (!iterator->end()) {
         file = iterator->next();
         finfo = file_info(file);
-
-        pre = finfo[0] == -2 ? "d " : "- ";
-        /* pre += access(owner, file, WRITE_ACCESS) ? "w " : "- "; */
         pre += ctime(finfo[1]);
 
         if (finfo[2] || finfo[2] == 1) {
@@ -197,7 +187,7 @@ void cmd_lsr(object user, string cmd, string str) {
         if (path == "/") {
             file = file[1..];
         } else {
-            file = file[strlen(path) + 1..]; /* perl_sub(file, "s{\\Q" + path + "/\\E}{}"); */
+            file = file[strlen(path) + 1..];
         }
 
         user->println(pre + " " + file + post);
