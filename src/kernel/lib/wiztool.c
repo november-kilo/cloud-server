@@ -570,7 +570,7 @@ static void store(mixed value)
     if (hindex == hsize) {
 	hindex = 0;
     }
-    message("$" + hindex + " = " + dump_value(value, ([ ])) + "\n");
+    message("$" + hindex + " = " + dump_value(value) + "\n");
     history[hindex] = value;
     if (++hindex > hmax) {
 	hmax = hindex;
@@ -879,7 +879,7 @@ static void cmd_history(object user, string cmd, string str)
 	if (i >= hmax) {
 	    i -= hsize;
 	}
-	message("$" + i + " = " + dump_value(history[i], ([ ])) + "\n");
+	message("$" + i + " = " + dump_value(history[i]) + "\n");
     }
 }
 

@@ -1070,7 +1070,7 @@ static void cmd_test(object user, string cmd, string str) {
     reducer->apply(10);
     user->println("Probability 3D6: " + poly->toString());
     probs = reducer->evaluate();
-    user->println("P(10): " + dump_value(probs, ([])));
+    user->println("P(10): " + dump_value(probs));
 
     data = new Array(({ 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
                 148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0 }));

@@ -8,7 +8,7 @@ string toString(void) {
     if (!stats) {
         stats = ([ ]);
     }
-    return dump_value(stats, ([ ]));
+    return dump_value(stats);
 }
 
 mapping get(float *data) {
