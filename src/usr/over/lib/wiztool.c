@@ -2,6 +2,7 @@
 
 inherit Terminal;
 inherit "/lib/util/string";
+inherit tree "~over/lib/tree";
 
 private object kant;
 
@@ -157,7 +158,7 @@ void cmd_aristotle(object user, string cmd, string str) {
 void cmd_lsr(object user, string cmd, string str) {
     Iterator iterator;
     FileTree fileTree;
-    string pre, post, path, owner, file;
+    string pre, post, path, owner, file, err;
     mixed *finfo;
 
     if (!isValidCall(previous_program())) {
@@ -171,12 +172,17 @@ void cmd_lsr(object user, string cmd, string str) {
 
     owner = query_owner();
     path = absPath(user, str);
-    iterator = new Iterator(new FileTree(path), nil, nil);
+    user->println(path);
+    err = catch(iterator = new Iterator(new FileTree(path), nil, nil));
+    if (err) {
+        user->println("lsr: invalid path");
+        return;
+    }
     iterator->next();
     while (!iterator->end()) {
         file = iterator->next();
         finfo = file_info(file);
-        pre += ctime(finfo[1]);
+        pre = ctime(finfo[1]);
 
         if (finfo[2] || finfo[2] == 1) {
             post = "*";
@@ -192,4 +198,56 @@ void cmd_lsr(object user, string cmd, string str) {
 
         user->println(pre + " " + file + post);
     }
+}
+
+void cmd_proots(object user, string cmd, string str) {
+    Polynomial e;
+    Complex *r;
+    Iterator iterator;
+
+    e = new Polynomial(({ 0.0, 2.0, -3.0, 1.0 })); /* 0.0x^0 + 2.0x^1 - 3.0x^2 + 1.0x^3, or x^3 - 3x^2 + 2x */
+    r = e->roots();
+    iterator = new IntIterator(0, sizeof(r) - 1);
+
+    while (!iterator->end()) {
+        user->println("root: " + r[iterator->next()]->toString());
+    }
+}
+
+void cmd_tree(object user, string cmd, string str) {
+    mapping *map;
+
+    map = ({
+        ([ "key": "one", "children": ({ ([ "key": "two" ]), ([ "key": "three" ]), ([ "key": "four" ]) }) ]),
+        ([ "key": "five", "children": ({ ([ "key" : "six", "children": ({ ([ "key": "seven", "children": ({ ([ "key": "eight" ]) }) ]) }) ]), ([ "key": "nine" ]) }) ])
+    });
+
+    tree::init();
+    tree::traverse(map);
+
+    user->println("Tree:\n" + tree::toString());
+}
+
+void cmd_exp(object user, string cmd, string str) {
+    Integrator simpson, glQuad;
+    Function f;
+    Polynomial poly;
+
+    simpson = new SimpsonIntegrator();
+    glQuad = new GaussLegendreIntegrator();
+
+    if (!find_object("/usr/over/lib/exponential")) {
+        compile_object("/usr/over/lib/exponential");
+    }
+    f = new_object("/usr/over/lib/exponential");
+
+    user->println("Target:         20.03574985");
+    user->println("Direct:         " + (f->evaluate(3) - f->evaluate(-3)));
+    user->println("Simpson:        " + (simpson->integrate(f, -3.0, 3.0)));
+    user->println("Gauss-Legendre: " + (glQuad->integrate(f, -3.0, 3.0)));
+
+    poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
+    user->println("\nTarget:         68148.75");
+    user->println("Simpson:        " + poly->integrate(0.0, 15.0, simpson));
+    user->println("Gauss-Legendre: " + poly->integrate(0.0, 15.0, glQuad));
 }

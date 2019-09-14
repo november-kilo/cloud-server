@@ -3,6 +3,7 @@
 
 #include <Continuation.h>
 #include <File.h>
+#include <Function.h>
 #include <Maths.h>
 #include <Terminal.h>
 
