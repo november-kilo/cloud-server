@@ -1551,7 +1551,7 @@ static float degreeToRadian(float degree) {
 
 #ifndef KF_REGEXP
 static mapping regexp(string str, int global) {
-    error("Feature unavailable");
+    error("Feature unavailable\n");
 }
 #else
 static mapping regexp(string str, int global) {
@@ -1605,13 +1605,13 @@ static mapping regexp(string str, int global) {
 
 #ifndef KF_PERL_MATCH
 static string *perl_match(string text, string pattern) {
-    error("Feature unavailable");
+    error("Feature unavailable\n");
 }
 #endif
 
 #ifndef KF_PERL_SUB
 static string perl_sub(string replace, string with) {
-    error("Feature unavailable");
+    error("Feature unavailable\n");
 }
 #endif
 

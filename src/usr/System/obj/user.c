@@ -1340,6 +1340,7 @@ static void cmd_match(object user, string cmd, string str) {
     string errorString;
     int i, sz;
 
+#ifdef KF_PERL_MATCH
     user->println("This command tests perl_match extension.\n");
 
     if (!str || str == "") {
@@ -1359,6 +1360,9 @@ static void cmd_match(object user, string cmd, string str) {
     }
     user->println(break_string(implode(results, "\n\n"), 120, 0));
     user->println("found " + sizeof(results));
+#else
+    user->println("The perl kfuns are not available.\n");
+#endif
 }
 
 static string *fetchAristotle(void) {
@@ -1393,11 +1397,21 @@ static int transformAristotle(string *aristotle, object user) {
 static void cmd_aristotle(object user, string cmd, string str) {
     Continuation c;
 
+#ifdef KF_PERL_MATCH
+#ifdef KF_PERL_SUB
     user->println("This command tests perl_sub extension.\n");
 
     c = new Continuation("fetchAristotle");
     c >>= new ChainedContinuation("transformAristotle", user);
     c->runNext();
+#endif
+#endif
+
+#ifndef KF_PERL_MATCH
+#ifndef KF_PERL_SUB
+    user->println("The perl kfuns are not available.\n");
+#endif
+#endif
 }
 
 static void cmd_lsr(object user, string cmd, string str) {
