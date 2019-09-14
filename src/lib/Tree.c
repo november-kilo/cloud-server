@@ -7,7 +7,7 @@ inherit "/lib/util/string";
 private string *out;
 private int indent;
 
-void init(void) {
+static void create(void) {
     out = ({ });
     indent = 0;
 }
@@ -44,27 +44,3 @@ void traverse(mapping *tree) {
     }
 }
 
-/*
-function walk(tree) {
-    tree.forEach(function(node) {
-        var str = '';
-        if (indent < 2) {
-            str = '└─';
-        } else {
-            for (let i = 2; i < indent * 2; i++) {
-                str += ' ';
-            }
-            str += ' └─';
-        }
-
-        output.push(str + ' ' + node.key);
-        if(node.children) {
-            indent ++;
-            walk(node.children);
-        }
-        if(tree.indexOf(node) === tree.length - 1) {
-            indent--;
-        }
-    })
-}
- */

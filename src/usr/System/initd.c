@@ -71,6 +71,7 @@ static void create()
     compile_object("/lib/json/JsonEncoder");
     compile_object("/lib/json/JsonParser");
     compile_object("/lib/maths/Complex");
+    compile_object("/lib/maths/functions/Exponential");
     compile_object("/lib/maths/integration/GaussLegendreQuadrature");
     compile_object("/lib/maths/integration/SimpsonIntegrator");
     compile_object("/lib/maths/matrix/Matrix");
@@ -83,6 +84,8 @@ static void create()
     compile_object("/lib/maths/Stats");
     compile_object("/lib/maths/Vector");
     compile_object("/lib/sort/MergeSort");
+    compile_object("/lib/Tree");
+    compile_object("/sys/kantlipsum");
 
     /* Domain stuff */
     rsrc_incr(nil, "fileblocks",
