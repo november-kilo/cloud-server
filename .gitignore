@@ -10,3 +10,5 @@ src/**/data/
 nkcloud.dgd
 **/.idea
 **/.vscode
+extensions/*.o
+extensions/*.1.0

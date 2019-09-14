@@ -1,0 +1,6 @@
+[submodule "submodules/dgd"]
+	path = submodules/dgd
+	url = http://github.com/dworkin/dgd
+[submodule "submodules/lpc-ext"]
+	path = submodules/lpc-ext
+	url = http://github.com/dworkin/lpc-ext
