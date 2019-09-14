@@ -71,6 +71,7 @@ static void create()
     compile_object("/lib/json/JsonEncoder");
     compile_object("/lib/json/JsonParser");
     compile_object("/lib/maths/Complex");
+    compile_object("/lib/maths/integration/GaussLegendreQuadrature");
     compile_object("/lib/maths/integration/SimpsonIntegrator");
     compile_object("/lib/maths/matrix/Matrix");
     compile_object("/lib/maths/matrix/EigenvalueDecomposition");
