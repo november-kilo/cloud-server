@@ -13,6 +13,7 @@
 #define Complex object "/lib/maths/Complex"
 
 #define Integrator object "/lib/maths/integration/Integrator"
+#define GaussLegendreIntegrator object "/lib/maths/integration/GaussLegendreQuadrature"
 #define SimpsonIntegrator object "/lib/maths/integration/SimpsonIntegrator"
 
 #define Matrix object "/lib/maths/matrix/Matrix"
