@@ -1503,7 +1503,7 @@ static void cmd_exp(object user, string cmd, string str) {
 
     user->println("Integrate exp(x) dx from -3..3");
     user->println("Target:         20.03574985");
-    user->println("Direct:         " + (exp(3.0) - exp(-3.0)));
+    user->println("Direct:         " + (f->evaluate(3) - f->evaluate(-3)));
     user->println("Simpson:        " + (simpson->integrate(f, -3.0, 3.0)));
     user->println("Gauss-Legendre: " + (glQuad->integrate(f, -3.0, 3.0)));
 

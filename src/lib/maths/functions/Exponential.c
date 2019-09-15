@@ -3,5 +3,5 @@
 inherit Function;
 
 float evaluate(mixed x) {
-    return exp((float) x);
+    return exp(new Number(x)->toFloat());
 }
