@@ -1485,7 +1485,7 @@ static void cmd_tree(object user, string cmd, string str) {
     });
 
     tree = new Tree();
-    tree->traverse(map);
+    tree->traverse(map, !!str);
 
     user->println("Tree:\n" + tree->toString());
 }

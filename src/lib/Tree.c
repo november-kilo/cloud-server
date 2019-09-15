@@ -40,7 +40,7 @@ void traverse(mapping *tree, varargs int useAscii) {
         out += ({ str + " " + tree[i]["key"] });
         if (tree[iterator->current()]["children"]) {
             indent++;
-            traverse(tree[i]["children"]);
+            traverse(tree[i]["children"], useAscii);
         }
         if (i == sizeof(tree) - 1) {
             --indent;
