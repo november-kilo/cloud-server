@@ -16,7 +16,11 @@ string toString(void) {
     return implode(out, "\n");
 }
 
-void traverse(mapping *tree) {
+private string pipes(varargs int useAscii) {
+    return useAscii ? "`-" : lpipe() + hpipe();
+}
+
+void traverse(mapping *tree, varargs int useAscii) {
     Iterator iterator;
     string *keys;
 
@@ -29,14 +33,14 @@ void traverse(mapping *tree) {
         i = iterator->next();
 
         if (indent == 0) {
-            str += lpipe() + hpipe();
+            str += pipes(useAscii);
         } else {
-            str += spaces((3 * indent)) + lpipe() + hpipe();
+            str += spaces((3 * indent)) + pipes(useAscii);
         }
         out += ({ str + " " + tree[i]["key"] });
         if (tree[iterator->current()]["children"]) {
             indent++;
-            traverse(tree[i]["children"]);
+            traverse(tree[i]["children"], useAscii);
         }
         if (i == sizeof(tree) - 1) {
             --indent;
