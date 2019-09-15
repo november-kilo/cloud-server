@@ -14,7 +14,6 @@
 #include <Sort.h>
 #include <String.h>
 #include <Time.h>
-#include <Tree.h>
 
 inherit auto	"~/lib/auto";
 inherit user	LIB_USER;
@@ -1474,17 +1473,44 @@ static void cmd_proots(object user, string cmd, string str) {
 }
 
 static void cmd_tree(object user, string cmd, string str) {
-    Tree tree;
+    JsonTree tree;
+    JsonParser jp;
+    string json;
     mapping *map;
+
+    jp = new JsonParser();
+
+    /*
+[{
+	"key": "one",
+	"children": [{
+		"key": "two"
+	}, {
+		"key": "three"
+	}]
+}, {
+	"key": "five",
+	"children": [{
+		"key": "six",
+		"children": [{
+			"key": "seven",
+			"children": [{
+				"key": "eight"
+			}]
+		}]
+	}, {
+		"key": "nine"
+	}]
+}]
+     */
+    json = "[{ \"key\": \"one\", \"children\": [{ \"key\": \"two\" }, { \"key\": \"three\" }] }, { \"key\": \"five\", \"children\": [{ \"key\": \"six\", \"children\": [{ \"key\": \"seven\", \"children\": [{ \"key\": \"eight\" }] }] }, { \"key\": \"nine\" } ] }]";
+
 
     user->println("This command tests tree printing. Currently, the tree lib provides no tree-building functions.\n");
 
-    map = ({
-        ([ "key": "one", "children": ({ ([ "key": "two" ]), ([ "key": "three" ]), ([ "key": "four" ]) }) ]),
-        ([ "key": "five", "children": ({ ([ "key" : "six", "children": ({ ([ "key": "seven", "children": ({ ([ "key": "eight" ]) }) ]) }) ]), ([ "key": "nine" ]) }) ])
-    });
+    map = jp->parse(json)["json"];
 
-    tree = new Tree();
+    tree = new JsonTree();
     tree->traverse(map, !!str);
 
     user->println("Tree:\n" + tree->toString());
