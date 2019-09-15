@@ -30,3 +30,10 @@ editors		= 10;			/* max # of editor sessions */
 objects		= 10000;		/* max # of objects */
 call_outs	= 10000;		/* max # of call_outs */
 array_size	= 32767;		/* max array size */
+
+/* if you're using extensions, add them here */
+modules = ([
+    "./submodules/lpc-ext/jit.1.0" : "/home/server/cloud/submodules/lpc-ext/jit",
+    "./extensions/perl_kfuns.1.0" : "/home/server/cloud/extensions",
+    "./submodules/lpc-ext/regexp.1.0" : "/home/server/cloud/submodules/lpc-ext"
+]);

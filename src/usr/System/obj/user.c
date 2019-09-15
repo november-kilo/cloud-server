@@ -3,11 +3,18 @@
 # include <kernel/user.h>
 # include <status.h>
 # include <type.h>
-# include <Array.h>
-# include <Iterator.h>
-# include <Terminal.h>
-# include <Time.h>
 # include <kfun.h>
+#include <Array.h>
+#include <Continuation.h>
+#include <File.h>
+#include <Function.h>
+#include <Json.h>
+#include <Maths.h>
+#include <Queue.h>
+#include <Sort.h>
+#include <String.h>
+#include <Time.h>
+#include <Tree.h>
 
 inherit auto	"~/lib/auto";
 inherit user	LIB_USER;
@@ -609,6 +616,14 @@ static int command(string str)
     case "who":
     case "test":
     case "config":
+    case "aristotle":
+    case "match":
+    case "exp":
+    case "lsr":
+    case "tree":
+    case "proots":
+    case "regex":
+    case "vector":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -990,16 +1005,6 @@ void cmd_who(object user, string cmd, string arg) {
     user->message(arg);
 }
 
-#include <Array.h>
-#include <Continuation.h>
-#include <File.h>
-#include <Function.h>
-#include <Json.h>
-#include <Maths.h>
-#include <Queue.h>
-#include <Sort.h>
-#include <String.h>
-
 static void cmd_test(object user, string cmd, string str) {
     Array data;
     Complex *roots;
@@ -1273,4 +1278,239 @@ static void cmd_config(object user, string cmd, string str) {
     user->println("usage: config list");
     user->println("usage: config get <setting-name>");
     user->println("usage: config set <setting-name> <setting-value>");
+}
+
+private string absPath(object user, string str) {
+return DRIVER->normalize_path(str, user->query_directory(), query_owner());
+}
+
+static void cmd_vector(object user, string cmd, string str) {
+    Vector a, b, c;
+    mapping cylindrical, polar, spherical;
+
+    user->println("This command tests some functionality of the Vector lib.\n");
+
+    a = new Vector(({ new Number(3), new Number(5), new Number(7) }));
+    b = new Vector(({ new Number(4), new Number(6), new Number(8) }));
+
+    c = a->cross(b);
+    user->println("A x B = " + c->toString());
+
+    cylindrical = a->cylindrical();
+    user->println("A in cylindrical:\n\tradial: " + cylindrical["radial"]->toString() + "\n" +
+                  "\tazimuthal: " + cylindrical["azimuthal"]["deg"]->toString() + " deg\n" +
+                  "\tvertical: " + cylindrical["vertical"]->toString());
+
+    polar = a->polar();
+    user->println("A in polar:\n\tradial: " + polar["radial"]->toString() + "\n" +
+                  "\tangular: " + polar["angular"]["deg"]->toString() + " deg");
+
+    spherical = a->spherical();
+    user->println("A in spherical:\n\tradial: " + spherical["radial"]->toString() + "\n" +
+                  "\tpolar: " + spherical["polar"]["deg"]->toString() + " deg\n" +
+                  "\tazimuthal: " + spherical["azimuthal"]["deg"]->toString() + " deg");
+}
+
+static void cmd_regex(object user, string cmd, string str) {
+    mapping results;
+
+    user->println("This command tests regexp extension.\n");
+
+    user->println("find first...");
+    results = regexp(str, FALSE);
+    if (results["error"]) {
+        user->println("regex: " + results["error"]);
+        return;
+    }
+
+    user->println(dump_value(results));
+
+    user->println("find global...");
+    results = regexp(str, TRUE);
+    if (results["error"]) {
+        user->println("regex: " + results["error"]);
+        return;
+    }
+
+    user->println(dump_value(results));
+}
+
+static void cmd_match(object user, string cmd, string str) {
+    string *words, *results;
+    string errorString;
+    int i, sz;
+
+#ifdef KF_PERL_MATCH
+    user->println("This command tests perl_match extension.\n");
+
+    if (!str || str == "") {
+        user->println("usage: match <words>");
+        return;
+    }
+
+    words = explode(str, " ");
+    errorString = catch(results = "/sys/kantlipsum"->matches(words));
+    if (errorString) {
+        user->message("error: " + errorString);
+        return;
+    }
+    if (sizeof(results) == 0) {
+        user->println("matches: no words found");
+        return;
+    }
+    user->println(break_string(implode(results, "\n\n"), 120, 0));
+    user->println("found " + sizeof(results));
+#else
+    user->println("The perl kfuns are not available.\n");
+#endif
+}
+
+static string *fetchAristotle(void) {
+    return "/sys/kantlipsum"->matches(({ "Aristotle" }));
+}
+
+static int transformAristotle(string *aristotle, object user) {
+    int sz;
+    string str, thePhilosopher;
+    Iterator iterator;
+
+    sz = sizeof(aristotle);
+    if (sz) {
+        thePhilosopher = new Terminal->bold("The Philosopher");
+        iterator = new IntIterator(0, sz - 1);
+        while (!iterator->end()) {
+            aristotle[iterator->next()] = perl_sub(
+                    aristotle[iterator->current()],
+                    "s/Aristotle/" + thePhilosopher + "/g"
+            );
+        }
+        str = implode(aristotle, "\n\n");
+        user->println(break_string(str, 120, 0));
+    } else {
+        user->println("no me gusta");
+    }
+
+    user->showPrompt();
+    return 1;
+}
+
+static void cmd_aristotle(object user, string cmd, string str) {
+    Continuation c;
+
+#ifdef KF_PERL_MATCH
+#ifdef KF_PERL_SUB
+    user->println("This command tests perl_sub extension.\n");
+
+    c = new Continuation("fetchAristotle");
+    c >>= new ChainedContinuation("transformAristotle", user);
+    c->runNext();
+#endif
+#endif
+
+#ifndef KF_PERL_MATCH
+#ifndef KF_PERL_SUB
+    user->println("The perl kfuns are not available.\n");
+#endif
+#endif
+}
+
+static void cmd_lsr(object user, string cmd, string str) {
+    Iterator iterator;
+    FileTree fileTree;
+    string pre, post, path, owner, file, err;
+    mixed *finfo;
+
+    user->println("This command is a work in progress, intended to provide -R to the ls command.\n");
+
+    if (!str || str == "") {
+        user->println("usage: lsr <path>");
+        return;
+    }
+
+    owner = query_owner();
+    path = absPath(user, str);
+    user->println(path);
+    err = catch(iterator = new Iterator(new FileTree(path), nil, nil));
+    if (err) {
+        user->println("lsr: invalid path");
+        return;
+    }
+    iterator->next();
+    while (!iterator->end()) {
+        file = iterator->next();
+        finfo = file_info(file);
+        pre = ctime(finfo[1]);
+
+        if (finfo[2] || finfo[2] == 1) {
+            post = "*";
+        } else {
+            post = "";
+        }
+
+        if (path == "/") {
+            file = file[1..];
+        } else {
+            file = file[strlen(path) + 1..];
+        }
+
+        user->println(pre + " " + file + post);
+    }
+}
+
+static void cmd_proots(object user, string cmd, string str) {
+    Polynomial e;
+    Complex *r;
+    Iterator iterator;
+
+    user->println("This command tests polynomial root finding.\n");
+
+    e = new Polynomial(({ 0.0, 2.0, -3.0, 1.0 })); /* 0.0x^0 + 2.0x^1 - 3.0x^2 + 1.0x^3, or x^3 - 3x^2 + 2x */
+    r = e->roots();
+    iterator = new IntIterator(0, sizeof(r) - 1);
+
+    while (!iterator->end()) {
+        user->println("root: " + r[iterator->next()]->toString());
+    }
+}
+
+static void cmd_tree(object user, string cmd, string str) {
+    Tree tree;
+    mapping *map;
+
+    user->println("This command tests tree printing. Currently, the tree lib provides no tree-building functions.\n");
+
+    map = ({
+        ([ "key": "one", "children": ({ ([ "key": "two" ]), ([ "key": "three" ]), ([ "key": "four" ]) }) ]),
+        ([ "key": "five", "children": ({ ([ "key" : "six", "children": ({ ([ "key": "seven", "children": ({ ([ "key": "eight" ]) }) ]) }) ]), ([ "key": "nine" ]) }) ])
+    });
+
+    tree = new Tree();
+    tree->traverse(map);
+
+    user->println("Tree:\n" + tree->toString());
+}
+
+static void cmd_exp(object user, string cmd, string str) {
+    Integrator simpson, glQuad;
+    Polynomial poly;
+    Function f;
+
+    simpson = new SimpsonIntegrator();
+    glQuad = new GaussLegendreIntegrator();
+    f = new Exponential();
+
+    user->println("This command tests integration of univariate functions.\n");
+
+    user->println("Integrate exp(x) dx from -3..3");
+    user->println("Target:         20.03574985");
+    user->println("Direct:         " + (exp(3.0) - exp(-3.0)));
+    user->println("Simpson:        " + (simpson->integrate(f, -3.0, 3.0)));
+    user->println("Gauss-Legendre: " + (glQuad->integrate(f, -3.0, 3.0)));
+
+    poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
+    user->println("\nIntegrate " + poly->toString() + "dx from 0..15");
+    user->println("Target:         68148.75");
+    user->println("Simpson:        " + poly->integrate(0.0, 15.0)); /* -- not ok */
+    user->println("Also Simpson:   " + poly->integrate(0.0, 15.0, simpson)); /* -- not ok */
+    user->println("Gauss-Legendre: " + poly->integrate(0.0, 15.0, glQuad)); /* not ok */
 }

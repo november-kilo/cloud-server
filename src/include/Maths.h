@@ -12,6 +12,8 @@
 
 #define Complex object "/lib/maths/Complex"
 
+#define Exponential object "/lib/maths/functions/Exponential"
+
 #define Integrator object "/lib/maths/integration/Integrator"
 #define GaussLegendreIntegrator object "/lib/maths/integration/GaussLegendreQuadrature"
 #define SimpsonIntegrator object "/lib/maths/integration/SimpsonIntegrator"
