@@ -6,7 +6,7 @@ src/include/status.h
 src/include/trace.h
 src/include/type.h
 src/kernel/data/access.data
-src/**/data/
+src/usr/System/data/*.pwd
 nkcloud.dgd
 **/.idea
 **/.vscode

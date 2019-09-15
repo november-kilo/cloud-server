@@ -1,7 +1,7 @@
 The Cloud Server library is intended to become a showcase of the capabilities
 of DGD and Hydra, and a basis for other LPC projects.
 
-This repository includes the driver and extension module in the submodules folder.
+This is a learning/experimenting project. This repository makes use of:
 https://github.com/dworkin/dgd
 https://github.com/dworkin/lpc-ext
 

@@ -8,7 +8,7 @@ CFLAGS=	-fPIC -DPIC $(CCFLAGS)
 LD=$(CC)
 LDFLAGS=-shared $(DEBUG)
 
-EXTMOD=../submodules/lpc-ext/src
+EXTMOD=../../lpc-ext/src
 OBJ=$(EXTMOD)/lpc_ext.o
 PERL=.
 
