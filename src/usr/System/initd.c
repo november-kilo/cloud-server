@@ -81,6 +81,12 @@ static void create()
     compile_object("/lib/maths/polynomial/DerivativeIterator");
     compile_object("/lib/maths/polynomial/ProbabilityReducer");
     compile_object("/lib/maths/polynomial/StringReducer");
+    compile_object("/lib/maths/quadrature/Simpson");
+    compile_object("/lib/maths/quadrature/Trapezoid");
+    compile_object("/lib/maths/quadrature/MidPointExp");
+    compile_object("/lib/maths/quadrature/MidPointInfinity");
+    compile_object("/lib/maths/quadrature/MidPointInvSqrLower");
+    compile_object("/lib/maths/quadrature/MidPointInvSqrUpper");
     compile_object("/lib/maths/Rational");
     compile_object("/lib/maths/Stats");
     compile_object("/lib/maths/Vector");

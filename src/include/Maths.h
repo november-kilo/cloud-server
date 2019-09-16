@@ -28,6 +28,15 @@
 #define PolynomialProbabilityReducer object "/lib/maths/polynomial/ProbabilityReducer"
 #define PolynomialStringReducer object "/lib/maths/polynomial/StringReducer"
 
+#define Quadrature object "/lib/maths/quadrature/Quadrature"
+#define SimpsonQuad object "/lib/maths/quadrature/Simpson"
+#define TrapzdQuad object "/lib/maths/quadrature/Trapezoid"
+#define MidPointRule object "/lib/maths/quadrature/MidPoint"
+#define MdPointExp object "/lib/maths/quadrature/MidPointExp"
+#define MidPointInfinity object "/lib/maths/quadrature/MidPointInfinity"
+#define MidPointInvSqrLower object "/lib/maths/quadrature/MidPointInvSqrLower"
+#define MidPointInvSqrUpper object "/lib/maths/quadrature/MidPointInvSqrUpper"
+
 #define Rational object "/lib/maths/Rational"
 
 #define Stats object "/lib/maths/Stats"
