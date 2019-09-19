@@ -1,4 +1,4 @@
-#include <Maths.h>
+#include <Math.h>
 
 private int n;
 private int issymmetric;

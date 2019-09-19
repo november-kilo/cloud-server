@@ -1,5 +1,5 @@
 #include <Array.h>
-#include <Maths.h>
+#include <Math.h>
 
 inherit Function;
 

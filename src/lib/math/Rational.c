@@ -1,4 +1,4 @@
-#include <Maths.h>
+#include <Math.h>
 
 inherit Number;
 
@@ -276,29 +276,23 @@ Rational toRational(void) {
     return new Rational(numerator, denominator);
 }
 
-static void create(mixed args...) {
+static void create(Number args...) {
     if (sizeof(args) == 1) {
-        if (T_FLOAT == typeof(args[0])) {
-            if (modf(args[0])[0] == 0.) {
-                fromRatio((int) args[0], 1);
-                return;
-            }
-            fromFloat(args[0]);
-            return;
-        }
-
-        if (T_OBJECT == typeof(args[0])) {
+        if (typeof(args[0]) == T_OBJECT) {
             if (args[0] <- Rational) {
                 fromRational(args[0]);
                 return;
             }
-            if (args[0] <- Number) {
-                fromRational(args[0]->toRational());
+            if (modf(args[0]->toFloat())[0] == 0.0) {
+                fromRatio(args[0]->toInt(), 1);
                 return;
             }
+            fromFloat(args[0]->toFloat());
+            return;
         }
-    } else if (sizeof(args) == 2 && T_INT == typeof(args[0]) && T_INT == typeof(args[1])) {
-        fromRatio(args[0], args[1]);
+    }
+    if (sizeof(args) == 2) {
+        fromRatio(args[0]->toInt(), args[1]->toInt());
         return;
     }
 

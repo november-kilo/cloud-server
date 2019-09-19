@@ -1,6 +1,10 @@
-#include <Maths.h>
+#include <Math.h>
 
 private float number;
+
+int isZero(void) {
+    return fabs(number) < FLT_EPSILON;
+}
 
 int toInt(void) {
     return (int) number;

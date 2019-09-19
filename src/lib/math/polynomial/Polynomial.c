@@ -1,4 +1,4 @@
-#include <Maths.h>
+#include <Math.h>
 
 inherit Function;
 private inherit "/lib/util/string";
@@ -18,7 +18,7 @@ int degree(void) {
 }
 
 float *coefficients(void) {
-    return coeffs;
+    return coeffs[..];
 }
 
 float evaluate(float at) {
