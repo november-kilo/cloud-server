@@ -617,7 +617,7 @@ static int command(string str)
     case "config":
     case "aristotle":
     case "match":
-    case "exp":
+    case "integrate":
     case "lsr":
     case "tree":
     case "proots":
@@ -1516,13 +1516,14 @@ static void cmd_tree(object user, string cmd, string str) {
     user->println("Tree:\n" + tree->toString());
 }
 
-static void cmd_exp(object user, string cmd, string str) {
-    Integrator simpson, glQuad;
+static void cmd_integrate(object user, string cmd, string str) {
+    Integrator simpson, gaussLegendre, romberg;
     Polynomial poly;
     Function f;
 
     simpson = new SimpsonIntegrator();
-    glQuad = new GaussLegendreIntegrator();
+    gaussLegendre = new GaussLegendreIntegrator();
+    romberg = new RombergIntegrator();
     f = new Exponential();
 
     user->println("This command tests integration of univariate functions.\n");
@@ -1531,12 +1532,14 @@ static void cmd_exp(object user, string cmd, string str) {
     user->println("Target:         20.03574985");
     user->println("Direct:         " + (f->evaluate(3) - f->evaluate(-3)));
     user->println("Simpson:        " + (simpson->integrate(f, -3.0, 3.0)));
-    user->println("Gauss-Legendre: " + (glQuad->integrate(f, -3.0, 3.0)));
+    user->println("Gauss-Legendre: " + (gaussLegendre->integrate(f, -3.0, 3.0)));
+    user->println("Romberg:        " + (romberg->integrate(f, -3.0, 3.0)));
 
     poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
     user->println("\nIntegrate " + poly->toString() + "dx from 0..15");
     user->println("Target:         68148.75");
-    user->println("Simpson:        " + poly->integrate(0.0, 15.0)); /* -- not ok */
-    user->println("Also Simpson:   " + poly->integrate(0.0, 15.0, simpson)); /* -- not ok */
-    user->println("Gauss-Legendre: " + poly->integrate(0.0, 15.0, glQuad)); /* not ok */
+    user->println("Simpson:        " + poly->integrate(0.0, 15.0));
+    user->println("Also Simpson:   " + poly->integrate(0.0, 15.0, simpson));
+    user->println("Gauss-Legendre: " + poly->integrate(0.0, 15.0, gaussLegendre));
+    user->println("Romberg:        " + poly->integrate(0.0, 15.0, romberg));
 }

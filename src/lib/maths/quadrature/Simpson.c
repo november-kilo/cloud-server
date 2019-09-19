@@ -5,7 +5,7 @@ inherit Function;
 float evaluate(Function f, float a, float b, varargs float tolerance) {
     int j, jmax;
     float s, st, ost, os;
-    TrapzdQuad trapdz;
+    TrapezoidQuadrature trapdz;
 
     if (!tolerance) {
         tolerance = TOLERANCE;
@@ -13,8 +13,8 @@ float evaluate(Function f, float a, float b, varargs float tolerance) {
 
     ost = 0.0;
     os = 0.0;
-    jmax = 20;
-    trapdz = new TrapzdQuad(f, a, b);
+    jmax = MAX_INTEGRATION_ITERATIONS;
+    trapdz = new TrapezoidQuadrature(f, a, b);
 
     for (j = 0; j < jmax; j++) {
         st = trapdz->next();
