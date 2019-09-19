@@ -1617,7 +1617,7 @@ static string perl_sub(string replace, string with) {
 
 void perl_term(void) {}
 
-#ifndef #ifndef KF_LOG1P
+#ifndef KF_LOG1P
 static mixed log1p(mixed x) {
     error("log1p() unavailable");
 }

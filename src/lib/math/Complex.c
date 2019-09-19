@@ -35,7 +35,7 @@ Number arg(void) {
         return new Number(0);
     }
 
-    return y->atan2(x);
+    return y->_atan2(x);
 }
 
 Number abs(void) {
