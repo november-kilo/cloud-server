@@ -1,6 +1,6 @@
-#ifndef MATHS_LIB_H
+#ifndef MATH_LIB_H
 
-#define MATHS_LIB_H
+#define MATH_LIB_H
 
 #include <float.h>
 #include <kfun.h>
