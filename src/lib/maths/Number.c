@@ -204,7 +204,7 @@ static Number operator/ (mixed that) {
 }
 
 static Number operator^ (mixed that) {
-    return _pow(that);
+    return _pow(new Number(that));
 }
 
 static int operator< (mixed that) {
