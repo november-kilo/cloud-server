@@ -1544,22 +1544,12 @@ static void cmd_integrate(object user, string cmd, string str) {
 
 static void cmd_complex(object user, string cmd, string str) {
     Number z1, z2, z3, x;
+    string err;
+
+    user->println("This command tests complex arithmetic, functions, and properties.\n");
 
     z1 = new Complex(5, 3);
     z2 = new Complex(2, 4);
-
-    user->println("abs z1 = "+ z1->abs()->toString());
-    user->println("absSquared z1 = "+ z1->absSquared()->toString());
-    user->println("arg z1 = "+ z1->arg()->toString());
-    user->println("log |z1| = " + z1->logAbs()->toString());
-    user->println("conj z1 = " + z1->conj()->toString());
-    user->println("negate z1 = " + z1->negate()->toString());
-    z3 = z1->sqrt();
-    user->println("sqrt z1 = " + z3->toString());
-    x = new Rational(z3->re());
-    user->println("\tr = " + x->toString());
-    x = new Rational(z3->im());
-    user->println("\ti = " + x->toString());
 
     user->println("z1 + z2 = " + (z1 + z2)->toString());
     user->println("z1 + 5 = " + (z1 + 5)->toString());
@@ -1584,4 +1574,13 @@ static void cmd_complex(object user, string cmd, string str) {
     user->println("sqrt(z1) = " + z3->toString());
     z3 = z2->sqrt();
     user->println("sqrt(z2) = " + z3->toString());
+
+    z3 = z1^z2;
+    user->println("z1^z2 = " + z3->toString());
+
+    z3 = z1->pow(z2);
+    user->println("z1->pow(z2) = " + z3->toString());
+
+    user->println("z1->log() = " + (z1->log())->toString());
+    user->println("z1->log10() = " + (z1->log10())->toString());
 }
