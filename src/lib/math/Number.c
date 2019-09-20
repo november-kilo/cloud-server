@@ -130,6 +130,12 @@ Number _log10(void) {
     return new Number(log10(number));
 }
 
+#ifdef KF_LOG1P
+Number _log1p(void) {
+    return new Number(log1p(number));
+}
+#endif
+
 Number *_modf(void) {
     float f, n;
 
