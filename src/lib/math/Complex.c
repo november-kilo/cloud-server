@@ -85,6 +85,14 @@ Complex reciprocal(void) {
     return new Complex(r, i);
 }
 
+Complex inverse(void) {
+    Number s;
+
+    s = new Number(1) / abs();
+
+    return new Complex((re() * s) * s, -(im() * s) * s);
+}
+
 Complex sqrt(void) {
     float x, y, t, w, ai, vi;
 
@@ -112,6 +120,75 @@ Complex sqrt(void) {
     vi = (ai >= 0.0) ? w : -w;
 
     return new Complex(ai / (2.0 * vi), vi);
+}
+
+Complex exp(void) {
+    Number x, y;
+
+    x = re()->_exp();
+    y = im();
+
+    return new Complex(x * y->_cos(), x * y->_sin());
+}
+
+private Complex powComplex(Complex that) {
+    Number logr, br, bi, beta, theta, rho;
+
+    if (re()->isZero() && im()->isZero()) {
+        if (that->re()->isZero() && that->im()->isZero()) {
+            error("Complex: result undefined");
+        }
+        return new Complex(0, 0);
+    } else if (that->re()->toFloat() == 1.0 && that->im()->isZero()) {
+        return new Complex(re(), im());
+    } else if (that->re()->toFloat() == -1.0 && that->im()->isZero()) {
+        return inverse();
+    }
+
+    logr = logAbs();
+    theta = arg();
+    br = that->re();
+    bi = that->im();
+    rho = (logr * br - bi * theta)->_exp();
+    beta = theta * br + bi * logr;
+
+    return new Complex(rho * beta->_cos(), rho * beta->_sin());
+}
+
+private Complex powReal(Number that) {
+    Number logr, theta, rho, beta;
+
+    if (re()->isZero() && im()->isZero()) {
+        if (that->isZero()) {
+            error("Complex: result undefined");
+        }
+        return new Complex(0, 0);
+    }
+
+    logr = logAbs();
+    theta = arg();
+    rho = (logr * that)->_exp();
+    beta = theta * that;
+
+    return new Complex(rho * beta->_cos(), rho * beta->_sin());
+}
+
+Complex pow(mixed that) {
+    if (typeof(that) == T_OBJECT && that <- Complex) {
+        return powComplex(that);
+    }
+
+    return powReal(new Number(that));
+}
+
+Complex log(void) {
+    return new Complex(logAbs(), arg());
+}
+
+Complex log10(void) {
+    Complex l;
+
+    return log() * (1.0 / ::log(10.0));
 }
 
 private Number *operands(Complex this, mixed that) {
@@ -185,4 +262,8 @@ static Complex operator/ (mixed that) {
     }
 
     return new Complex(zr, zi);
+}
+
+static Complex operator^ (mixed that) {
+    return pow(that);
 }
