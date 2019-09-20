@@ -1,4 +1,4 @@
-#include <Maths.h>
+#include <Math.h>
 
 static int n;
 static float a;

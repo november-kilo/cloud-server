@@ -1,4 +1,4 @@
-#include <Maths.h>
+#include <Math.h>
 
 private float **A;
 private int m;

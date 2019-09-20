@@ -2,7 +2,7 @@
 # include <kernel/access.h>
 # include <kernel/user.h>
 # include <kernel/rsrc.h>
-#include <Maths.h>
+#include <Math.h>
 
 inherit access API_ACCESS;
 inherit rsrc API_RSRC;
@@ -71,23 +71,23 @@ static void create()
     compile_object("/lib/json/JsonEncoder");
     compile_object("/lib/json/JsonParser");
     compile_object("/lib/json/JsonTree");
-    compile_object("/lib/maths/Complex");
-    compile_object("/lib/maths/functions/Exponential");
-    compile_object("/lib/maths/integration/GaussLegendreIntegrator");
-    compile_object("/lib/maths/integration/RombergIntegrator");
-    compile_object("/lib/maths/integration/SimpsonIntegrator");
-    compile_object("/lib/maths/matrix/Matrix");
-    compile_object("/lib/maths/matrix/EigenvalueDecomposition");
-    compile_object("/lib/maths/polynomial/Polynomial");
-    compile_object("/lib/maths/polynomial/DerivativeIterator");
-    compile_object("/lib/maths/polynomial/Interpolator");
-    compile_object("/lib/maths/polynomial/ProbabilityReducer");
-    compile_object("/lib/maths/polynomial/StringReducer");
-    compile_object("/lib/maths/quadrature/Simpson");
-    compile_object("/lib/maths/quadrature/Trapezoid");
-    compile_object("/lib/maths/Rational");
-    compile_object("/lib/maths/Stats");
-    compile_object("/lib/maths/Vector");
+    compile_object("/lib/math/Complex");
+    compile_object("/lib/math/functions/Exponential");
+    compile_object("/lib/math/integration/GaussLegendreIntegrator");
+    compile_object("/lib/math/integration/RombergIntegrator");
+    compile_object("/lib/math/integration/SimpsonIntegrator");
+    compile_object("/lib/math/matrix/Matrix");
+    compile_object("/lib/math/matrix/EigenvalueDecomposition");
+    compile_object("/lib/math/polynomial/Polynomial");
+    compile_object("/lib/math/polynomial/DerivativeIterator");
+    compile_object("/lib/math/polynomial/Interpolator");
+    compile_object("/lib/math/polynomial/ProbabilityReducer");
+    compile_object("/lib/math/polynomial/StringReducer");
+    compile_object("/lib/math/quadrature/Simpson");
+    compile_object("/lib/math/quadrature/Trapezoid");
+    compile_object("/lib/math/Rational");
+    compile_object("/lib/math/Stats");
+    compile_object("/lib/math/Vector");
     compile_object("/lib/sort/MergeSort");
     compile_object("/sys/jsonparse");
     compile_object("/sys/kantlipsum");

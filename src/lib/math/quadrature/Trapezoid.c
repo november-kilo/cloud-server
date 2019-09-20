@@ -1,4 +1,4 @@
-#include <Maths.h>
+#include <Math.h>
 
 inherit Quadrature;
 

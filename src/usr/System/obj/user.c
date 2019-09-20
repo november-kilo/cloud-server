@@ -9,7 +9,7 @@
 #include <File.h>
 #include <Function.h>
 #include <Json.h>
-#include <Maths.h>
+#include <Math.h>
 #include <Queue.h>
 #include <Sort.h>
 #include <String.h>
@@ -623,6 +623,7 @@ static int command(string str)
     case "proots":
     case "regex":
     case "vector":
+    case "complex":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -1015,7 +1016,6 @@ static void cmd_test(object user, string cmd, string str) {
     Number number;
     Polynomial poly;
     Stats stats;
-    String libString;
     Vector v1, v2, v3;
     float *violentCrimeRateUsa1997;
     mapping moments;
@@ -1051,8 +1051,6 @@ static void cmd_test(object user, string cmd, string str) {
 
     number = new Number(pi());
     user->println("number: " + number->toString());
-
-    libString = new String("foo");
 
     simpson = new SimpsonIntegrator();
     poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
@@ -1542,4 +1540,48 @@ static void cmd_integrate(object user, string cmd, string str) {
     user->println("Also Simpson:   " + poly->integrate(0.0, 15.0, simpson));
     user->println("Gauss-Legendre: " + poly->integrate(0.0, 15.0, gaussLegendre));
     user->println("Romberg:        " + poly->integrate(0.0, 15.0, romberg));
+}
+
+static void cmd_complex(object user, string cmd, string str) {
+    Number z1, z2, z3, x;
+
+    z1 = new Complex(5, 3);
+    z2 = new Complex(2, 4);
+
+    user->println("abs z1 = "+ z1->abs()->toString());
+    user->println("absSquared z1 = "+ z1->absSquared()->toString());
+    user->println("arg z1 = "+ z1->arg()->toString());
+    user->println("log |z1| = " + z1->logAbs()->toString());
+    user->println("conj z1 = " + z1->conj()->toString());
+    user->println("negate z1 = " + z1->negate()->toString());
+    z3 = z1->sqrt();
+    user->println("sqrt z1 = " + z3->toString());
+    x = new Rational(z3->re());
+    user->println("\tr = " + x->toString());
+    x = new Rational(z3->im());
+    user->println("\ti = " + x->toString());
+
+    user->println("z1 + z2 = " + (z1 + z2)->toString());
+    user->println("z1 + 5 = " + (z1 + 5)->toString());
+
+    user->println("z1 - z2 = " + (z1 - z2)->toString());
+    user->println("z1 - 5 = " + (z1 - 5)->toString());
+
+    user->println("z1 * z2 = " + (z1 * z2)->toString());
+    user->println("z1 * 5 = " + (z1 * 5)->toString());
+
+    user->println("z1 / z2 = " + (z1 / z2)->toString());
+    user->println("z1 / 5 = " + (z1 / 5)->toString());
+
+    z3 = z1->reciprocal();
+    user->println("z1->reciprocal() = " + z3->toString());
+    x = new Rational(z3->re());
+    user->println("\tr = " + x->toString());
+    x = new Rational(z3->im());
+    user->println("\ti = " + x->toString());
+
+    z3 = z1->sqrt();
+    user->println("sqrt(z1) = " + z3->toString());
+    z3 = z2->sqrt();
+    user->println("sqrt(z2) = " + z3->toString());
 }
