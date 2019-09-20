@@ -186,8 +186,6 @@ Complex log(void) {
 }
 
 Complex log10(void) {
-    Complex l;
-
     return log() * (1.0 / ::log(10.0));
 }
 
