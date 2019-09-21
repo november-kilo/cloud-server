@@ -1551,36 +1551,10 @@ static void cmd_complex(object user, string cmd, string str) {
     z1 = new Complex(5, 3);
     z2 = new Complex(2, 4);
 
-    user->println("z1 + z2 = " + (z1 + z2)->toString());
-    user->println("z1 + 5 = " + (z1 + 5)->toString());
-
-    user->println("z1 - z2 = " + (z1 - z2)->toString());
-    user->println("z1 - 5 = " + (z1 - 5)->toString());
-
-    user->println("z1 * z2 = " + (z1 * z2)->toString());
-    user->println("z1 * 5 = " + (z1 * 5)->toString());
-
-    user->println("z1 / z2 = " + (z1 / z2)->toString());
-    user->println("z1 / 5 = " + (z1 / 5)->toString());
-
-    z3 = z1->reciprocal();
-    user->println("z1->reciprocal() = " + z3->toString());
-    x = new Rational(z3->re());
-    user->println("\tr = " + x->toString());
-    x = new Rational(z3->im());
-    user->println("\ti = " + x->toString());
-
-    z3 = z1->sqrt();
-    user->println("sqrt(z1) = " + z3->toString());
-    z3 = z2->sqrt();
-    user->println("sqrt(z2) = " + z3->toString());
-
-    z3 = z1^z2;
-    user->println("z1^z2 = " + z3->toString());
-
-    z3 = z1->pow(z2);
-    user->println("z1->pow(z2) = " + z3->toString());
-
-    user->println("z1->log() = " + (z1->log())->toString());
-    user->println("z1->log10() = " + (z1->log10())->toString());
+    user->println(z1->cos()->toString());
+    user->println(z1->sin()->toString());
+    user->println(z1->tan()->toString());
+    user->println(z1->sec()->toString());
+    user->println(z1->csc()->toString());
+    user->println(z1->cot()->toString());
 }
