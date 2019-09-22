@@ -189,6 +189,55 @@ Complex log10(void) {
     return log() * (1.0 / ::log(10.0));
 }
 
+
+Complex cos(void) {
+    if (im()->isZero()) {
+        return new Complex(re()->_cos(), 0);
+    }
+
+    return new Complex(re()->_cos() * im()->_cosh(), re()->_sin() * im()->_sinh());
+}
+
+Complex sin(void) {
+    if (im()->isZero()) {
+        return new Complex(re()->_sin(), 0);
+    }
+
+    return new Complex(re()->_sin() * im()->_cosh(), re()->_cos() * im()->_sinh());
+}
+
+Complex tan(void) {
+    Number r, i, d, f;
+
+    r = re();
+    i = im();
+    d = (r->_cos() * r->_cos()) + (i->_sinh() * i->_sinh());
+
+    if (i->abs() < 1) {
+        r = (r * 2)->_sin() / d * 0.5;
+        i = (i * 2)->_sinh() / d * 0.5;
+        return new Complex(r, i);
+    }
+
+    f = ((r->_cos() / i->_sinh()) * r->_cos() / i->_sinh()) + 1;
+    r = (r * 2)->_sin() / d * 0.5;
+    i = new Number(1.0 / (::tanh(i->toFloat()) * f->toFloat()));
+
+    return new Complex(r, i);
+}
+
+Complex sec(void) {
+    return cos()->inverse();
+}
+
+Complex csc(void) {
+    return sin()->inverse();
+}
+
+Complex cot(void) {
+    return tan()->inverse();
+}
+
 private Number *operands(Complex this, mixed that) {
     Number xr, xi, yr, yi;
 
