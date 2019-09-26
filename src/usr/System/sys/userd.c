@@ -27,7 +27,8 @@ static void create()
     userd->set_telnet_manager(0, this_object());
     users = ([ ]);
     banner = "\n" +
-	     "Welcome to the Cloud Server.\n" +
+	     "Welcome to the Cloud Server.\n\t" +
+	     "/usr/System/sys/version"->version() + "\n" +
 	     "\n" +
 	     "After login, the following commands are available:\n" +
 	     " - users                see who is logged on\n" +

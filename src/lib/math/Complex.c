@@ -9,8 +9,8 @@ static void create(mixed r, mixed i, varargs int polarFlag) {
     r = new Number(r);
     i = new Number(i);
 
-    ::r = polarFlag ? r->toFloat() * cos(i->toFloat()) : r;
-    ::i = polarFlag ? r->toFloat() * sin(i->toFloat()) : i;
+    ::r = polarFlag ? r * i->_cos() : r;
+    ::i = polarFlag ? r * i->_sin() : i;
 }
 
 Number re(void) {
@@ -40,6 +40,17 @@ Number arg(void) {
 
 Number abs(void) {
     return new Number(hypot(re()->toFloat(), im()->toFloat()));
+}
+
+Number *toPolar(void) {
+    Number theta;
+
+    theta = arg();
+    if (re() < 0) {
+        theta += new Number(pi());
+    }
+
+    return ({ abs(), theta });
 }
 
 Number absSquared(void) {
