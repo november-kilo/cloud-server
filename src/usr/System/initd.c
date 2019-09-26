@@ -41,6 +41,7 @@ static void create()
     set_global_access("System", TRUE);
 
     /* server objects */
+    load("sys/version");
     load("sys/errord");
     load("sys/upgraded");
     load("sys/userd");
