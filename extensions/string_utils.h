@@ -10,6 +10,5 @@
 
 sds lpcArrayToSds(LPC_array);
 char *copyBlock(sds, int);
-LPC_array SdsToLpcArray(sds);
 
 #endif
