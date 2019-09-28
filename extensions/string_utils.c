@@ -23,21 +23,3 @@ char *copyBlock(sds string, int n) {
 
 	return copy;
 }
-
-#if 0
-LPC_array SdsToLpcArray(sds string) {
-    LPC_array array;
-
-    sds s = sdsnew("Hello World!");
-    sdsrange(s,1,4);
-    printf("-%s-\n");
-
-    ssize_t nwritten = write(fd, link->sndbuf, sdslen(link->sndbuf));
-    if (nwritten <= 0) {
-        /* Error handling... */
-    }
-    sdsrange(link->sndbuf,nwritten,-1);
-
-    return array;
-}
-#endif
