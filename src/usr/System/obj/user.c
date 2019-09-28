@@ -624,6 +624,7 @@ static int command(string str)
     case "regex":
     case "vector":
     case "complex":
+    case "libstring":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -1557,4 +1558,38 @@ static void cmd_complex(object user, string cmd, string str) {
     user->println(z1->sec()->toString());
     user->println(z1->csc()->toString());
     user->println(z1->cot()->toString());
+}
+
+static void cmd_libstring(object user, string cmd, string str) {
+	int len, offset, m;
+	StringBuffer stringBuffer;
+	String testString, replacedString;
+
+	offset = 0;
+	m = status()[ST_STRSIZE];
+	stringBuffer = new StringBuffer();
+
+	while (TRUE) {
+		str = read_file("~nik/kant.txt", offset, m);
+		len = strlen(str);
+		if (len == 0) {
+			break;
+		}
+		stringBuffer->append(str);
+		offset += len;
+	}
+
+	testString = new String(stringBuffer);
+	user->println("original len: " + testString->length());
+
+	replacedString = testString->replace("philosophy", "SCIENCE!");
+	user->println("replaced len: " + replacedString->length());
+
+	stringBuffer = replacedString->buffer();
+	remove_file("~nik/science.txt");
+	while ((str = stringBuffer->chunk()) != nil) {
+		write_file("~nik/science.txt", str);
+	}
+
+	user->println("Done.");
 }
