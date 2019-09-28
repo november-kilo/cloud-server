@@ -2,26 +2,26 @@
 
 static void kf_replace(LPC_frame frame, int nargs, LPC_value returnValue) {
 	LPC_dataspace data;
-    LPC_array inputArray, outputArray;
-    LPC_string replaceThis, withThat;
-    LPC_int maxArray, maxString;
-    LPC_value value;
+	LPC_array inputArray, outputArray;
+	LPC_string replaceThis, withThat;
+	LPC_int maxArray, maxString;
+	LPC_value value;
 
-    int i, x, blocks, extraBlock;
-    unsigned long joinedLen;
-    sds string, a, b, joined;
-    sds *tokens;
+	int i, x, blocks, extraBlock;
+	unsigned long joinedLen;
+	sds string, a, b, joined;
+	sds *tokens;
 
 	data = lpc_frame_dataspace(frame);
-    inputArray = lpc_array_getval(lpc_frame_arg(frame, nargs, 0));
-    replaceThis = lpc_string_getval(lpc_frame_arg(frame, nargs, 1));
-    withThat = lpc_string_getval(lpc_frame_arg(frame, nargs, 2));
-    maxArray = lpc_int_getval(lpc_frame_arg(frame, nargs, 3));
-    maxString = lpc_int_getval(lpc_frame_arg(frame, nargs, 4));
+	inputArray = lpc_array_getval(lpc_frame_arg(frame, nargs, 0));
+	replaceThis = lpc_string_getval(lpc_frame_arg(frame, nargs, 1));
+	withThat = lpc_string_getval(lpc_frame_arg(frame, nargs, 2));
+	maxArray = lpc_int_getval(lpc_frame_arg(frame, nargs, 3));
+	maxString = lpc_int_getval(lpc_frame_arg(frame, nargs, 4));
 
-    string = lpcArrayToSds(inputArray);
-    a = sdsnew(lpc_string_text(replaceThis));
-    b = sdsnew(lpc_string_text(withThat));
+	string = lpcArrayToSds(inputArray);
+	a = sdsnew(lpc_string_text(replaceThis));
+	b = sdsnew(lpc_string_text(withThat));
 	tokens = sdssplitlen(string, sdslen(string), a, sdslen(a), &x);
 	joined = sdsjoinsds(tokens, x, b, sdslen(b));
 
@@ -55,8 +55,8 @@ static void kf_replace(LPC_frame frame, int nargs, LPC_value returnValue) {
 		lpc_array_assign(data, outputArray, i, value);
 	}
 
-    sdsfree(string);
-    sdsfree(a);
+	sdsfree(string);
+	sdsfree(a);
 	sdsfree(b);
 	sdsfreesplitres(tokens, x);
 	sdsfree(joined);
@@ -65,19 +65,19 @@ static void kf_replace(LPC_frame frame, int nargs, LPC_value returnValue) {
 }
 
 static char kf_replace_proto[] = {
-        LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
-        LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
-        LPC_TYPE_STRING, LPC_TYPE_STRING,
-        LPC_TYPE_INT, LPC_TYPE_INT, 0
+	LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
+	LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
+	LPC_TYPE_STRING, LPC_TYPE_STRING,
+	LPC_TYPE_INT, LPC_TYPE_INT, 0
 };
 
 static LPC_ext_kfun kf[STRING_KFUNS_COUNT] = {
-        { "replace", kf_replace_proto, &kf_replace }
+	{ "replace", kf_replace_proto, &kf_replace }
 };
 
 int lpc_ext_init(int major, int minor, const char *config) {
-    lpc_ext_kfun(kf, STRING_KFUNS_COUNT);
+	lpc_ext_kfun(kf, STRING_KFUNS_COUNT);
 
-    return 1;
+	return 1;
 }
 
