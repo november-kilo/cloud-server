@@ -1,17 +1,4 @@
-#include <EXTERN.h>
-#include <perl.h>
-#include "lpc_ext.h"
-
-#define PERL_KFUN_COUNT 3
-
-#define PERL_KFUN_SETUP my_perl = perl_alloc();\
-perl_construct(my_perl);\
-perl_parse(my_perl, NULL, 3, embedding, NULL);\
-PL_exit_flags |= PERL_EXIT_DESTRUCT_END
-
-#define PERL_KFUN_CLEANUP PL_perl_destruct_level = 1;\
-perl_destruct(my_perl);\
-perl_free(my_perl)
+#include "perl_kfuns.h"
 
 static PerlInterpreter *my_perl;
 
@@ -56,7 +43,7 @@ static I32 substitute(SV **string, char *pattern, LPC_frame lpcFrame) {
     return SvIV(retval);
 }
 
-static void perl_match(LPC_frame frame, int nargs, LPC_value returnValue) {
+static void kf_perl_match(LPC_frame frame, int nargs, LPC_value returnValue) {
     char *embedding[] = { "", "-e", "0", NULL };
     AV *match_list;
     I32 num_matches, i, j;
@@ -104,7 +91,7 @@ static void perl_match(LPC_frame frame, int nargs, LPC_value returnValue) {
     PERL_KFUN_CLEANUP;
 }
 
-static void perl_sub(LPC_frame frame, int nargs, LPC_value returnValue) {
+static void kf_perl_sub(LPC_frame frame, int nargs, LPC_value returnValue) {
     char *embedding[] = { "", "-e", "0", NULL };
     I32 num_matches;
     SV *text;
@@ -135,32 +122,32 @@ static void perl_sub(LPC_frame frame, int nargs, LPC_value returnValue) {
     PERL_KFUN_CLEANUP;
 }
 
-static void perl_term(LPC_frame frame, int nargs, LPC_value returnValue) {
+static void kf_perl_term(LPC_frame frame, int nargs, LPC_value returnValue) {
     PERL_SYS_TERM();
 }
 
-static char perl_match_proto[] = {
+static char kf_perl_match_proto[] = {
         LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
         LPC_TYPE_STRING,
         LPC_TYPE_STRING,
         0
 };
 
-static char perl_sub_proto[] = {
+static char kf_perl_sub_proto[] = {
         LPC_TYPE_STRING,
         LPC_TYPE_STRING,
         LPC_TYPE_STRING,
         0
 };
 
-static char perl_term_proto[] = {
+static char kf_perl_term_proto[] = {
         LPC_TYPE_VOID, 0
 };
 
-static LPC_ext_kfun kf[PERL_KFUN_COUNT] = {
-    { "perl_match", perl_match_proto, &perl_match },
-    { "perl_sub", perl_sub_proto, &perl_sub },
-    { "perl_term", perl_term_proto, &perl_term }
+static LPC_ext_kfun kf[PERL_KFUNS_COUNT] = {
+    { "perl_match", kf_perl_match_proto, &kf_perl_match },
+    { "perl_sub", kf_perl_sub_proto, &kf_perl_sub },
+    { "perl_term", kf_perl_term_proto, &kf_perl_term }
 };
 
 int lpc_ext_init(int major, int minor, const char *config) {
@@ -171,7 +158,7 @@ int lpc_ext_init(int major, int minor, const char *config) {
     char **env;
     PERL_SYS_INIT3(&argc,&argv,&env);
 
-    lpc_ext_kfun(kf, PERL_KFUN_COUNT);
+    lpc_ext_kfun(kf, PERL_KFUNS_COUNT);
 
     return 1;
 }

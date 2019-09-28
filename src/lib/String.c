@@ -1106,3 +1106,29 @@ String lowerCase()
 	buffer->append(chunk);
     }
 }
+
+String replace(string replaceThis, string withThis) {
+	StringBuffer stringBuffer;
+	String str;
+	string *blocks, *output;
+	string chunk;
+	int i, sz;
+
+	stringBuffer = this_object()->buffer();
+	blocks = ({ });
+	while ((chunk = stringBuffer->chunk()) != nil) {
+		blocks += ({ chunk });
+	}
+
+	output = ::replace(blocks, replaceThis, withThis);
+
+	for (i = 0, sz = sizeof(output); i < sz; i++) {
+		if (i == 0) {
+			str = new String(output[i]);
+			continue;
+		}
+		str += output[i];
+	}
+
+	return str;
+}

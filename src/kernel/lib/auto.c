@@ -1622,3 +1622,14 @@ static mixed log1p(mixed x) {
     error("log1p() unavailable");
 }
 #endif
+
+static string *replace(string *strings, string replaceThis, string withThis) {
+#ifndef KF_REPLACE
+	error("replace() unavailable");
+#endif
+	mixed *s;
+
+	s = status();
+
+	return ::replace(strings, replaceThis, withThis, s[ST_ARRAYSIZE], s[ST_STRSIZE]);
+}
