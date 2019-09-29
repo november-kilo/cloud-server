@@ -60,7 +60,6 @@ static void create()
     compile_object("/lib/DelayedContinuation");
     compile_object("/lib/IterativeContinuation");
     compile_object("/lib/DistContinuation");
-    compile_object("/lib/ContinuationToken");
     compile_object("/lib/array/Array");
     compile_object("/lib/array/ArithmeticReducer");
     compile_object("/lib/array/TabularReducer");

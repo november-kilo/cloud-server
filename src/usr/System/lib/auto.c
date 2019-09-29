@@ -12,7 +12,6 @@
 # define DELAYED_CONTINUATION	"/lib/DelayedContinuation"
 # define ITERATIVE_CONTINUATION	"/lib/IterativeContinuation"
 # define DIST_CONTINUATION	"/lib/DistContinuation"
-# define CONTINUATION_TOKEN	"/lib/ContinuationToken"
 
 
 private mapping storage;	/* uninitialized until used */
@@ -80,7 +79,6 @@ static object new_object(string path, mixed args...)
 	case DELAYED_CONTINUATION:
 	case ITERATIVE_CONTINUATION:
 	case DIST_CONTINUATION:
-	case CONTINUATION_TOKEN:
 	    uid = "System";
 	    break;
 
@@ -223,39 +221,14 @@ nomask int _F_touch()
 # define REF_COUNT	1	/* callback countdown */
 # define REF_TIMEOUT	2	/* timeout handle */
 
-# define CONT_VAL	5	/* previous return value */
-# define CONT_SIZE	6	/* size of continuation */
-
 /*
  * NAME:	startContinuation()
  * DESCRIPTION:	runNext a continuation, start first callout if none running yet
  */
-static void startContinuation(mixed *continuations, int parallel)
+static void startContinuation(mixed *continuation, int parallel)
 {
     if (previous_program() == CONTINUATION) {
-	mixed *continued, *continuation, objs, *ref;
-	int sz, i, j;
-	string func;
-
-	continued = ({ });
-
-	for (sz = sizeof(continuations), i = 0; i < sz; i++) {
-	    continuation = continuations[i];
-	    objs = continuation[CONT_OBJS];
-	    if (typeof(objs) == T_ARRAY) {
-		/*
-		 * disallow calling external static functions via continuations
-		 */
-		func = continuation[CONT_FUNC];
-		for (j = sizeof(objs); --j >= 0; ) {
-		    if (!function_object(func, objs[j])) {
-			error("Uncallable external function in continuation");
-		    }
-		}
-	    }
-
-	    continued += continuation + ({ nil });
-	}
+	mixed *ref;
 
 	if (parallel || !(ref=::tls_get(TLS_CONT))) {
 	    /*
@@ -265,13 +238,13 @@ static void startContinuation(mixed *continuations, int parallel)
 	    if (!parallel) {
 		::tls_set(TLS_CONT, ref);
 	    }
-	    ::call_out_other(continued[CONT_ORIGIN], "_F_continued", 0, ref);
+	    ::call_out_other(continuation[CONT_ORIGIN], "_F_continued", 0, ref);
 	}
 
 	/*
 	 * run these continuations before all others
 	 */
-	ref[REF_CONT] = continued + ref[REF_CONT];
+	ref[REF_CONT] = continuation + ref[REF_CONT];
     }
 }
 
@@ -282,7 +255,7 @@ static void startContinuation(mixed *continuations, int parallel)
 static object suspendContinuation()
 {
     mixed *ref, *continued;
-    object token;
+    object continuation;
 
     ref = ::tls_get(TLS_CONT);
     if (!ref || sizeof(continued=ref[REF_CONT]) == 0 || !continued[CONT_ORIGIN])
@@ -291,9 +264,9 @@ static object suspendContinuation()
     }
     ref[REF_CONT] = ({ });
 
-    token = new ContinuationToken;
-    token->saveContinuation(continued);
-    return token;
+    continuation = new Continuation;
+    continuation->saveContinuation(continued);
+    return continuation;
 }
 
 /*
@@ -430,19 +403,6 @@ nomask void _F_continued(mixed *ref)
 {
     if (previous_program() == AUTO) {
 	continued(ref);
-    }
-}
-
-/*
- * NAME:	_F_resume()
- * DESCRIPTION:	resume a suspended continuation
- */
-nomask void _F_resume(mixed *continued, mixed arg)
-{
-    if (previous_program() == CONTINUATION_TOKEN) {
-	continued[CONT_VAL] = arg;
-	::call_out_other(this_object(), "_F_continued", 0,
-			 ({ continued, 0, 0 }));
     }
 }
 
