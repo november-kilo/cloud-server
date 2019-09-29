@@ -45,6 +45,7 @@ static void kf_replace(LPC_frame frame, int nargs, LPC_value returnValue) {
 
 		copy = copyBlock(joined, maxString);
 		lpc_string_putval(value, lpc_string_new(data, copy, strlen(copy)));
+		lpc_runtime_ticks(frame, strlen(copy));
 		free(copy);
 		lpc_array_assign(data, outputArray, i, value);
 		sdsrange(joined, maxString, -1);
@@ -52,6 +53,7 @@ static void kf_replace(LPC_frame frame, int nargs, LPC_value returnValue) {
 
 	if (extraBlock) {
 		lpc_string_putval(value, lpc_string_new(data, joined, strlen(joined)));
+		lpc_runtime_ticks(frame, strlen(joined));
 		lpc_array_assign(data, outputArray, i, value);
 	}
 

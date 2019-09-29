@@ -11,4 +11,4 @@ nkcloud.dgd
 **/.idea
 **/.vscode
 extensions/**/*.o
-extensions/*.1.0
+extensions/*.1.*
