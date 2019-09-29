@@ -1,7 +1,7 @@
 #include <Continuation.h>
 
 private mixed *queue;
-private ContinuationToken *suspended;
+private Continuation *suspended;
 
 static void create(void) {
     queue = ({ });
@@ -13,7 +13,7 @@ Continuation enqueueCont(void) {
 }
 
 static void enqueue(mixed value) {
-    ContinuationToken token;
+    Continuation token;
 
     if (sizeof(suspended) != 0) {
         token = suspended[0];
