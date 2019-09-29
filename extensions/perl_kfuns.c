@@ -81,6 +81,7 @@ static void kf_perl_match(LPC_frame frame, int nargs, LPC_value returnValue) {
         for (j = 0; j < i; j++) {
             lpcMatch = lpc_string_new(data, out[j], strlen(out[j]));
             lpc_string_putval(value, lpcMatch);
+	        lpc_runtime_ticks(frame, lpc_string_length(lpcMatch));
             lpc_array_assign(data, results, j, value);
         }
 
@@ -116,6 +117,7 @@ static void kf_perl_sub(LPC_frame frame, int nargs, LPC_value returnValue) {
         lpcString = lpc_string_new(data, p, strlen(p));
 
         lpc_string_putval(returnValue, lpcString);
+	    lpc_runtime_ticks(frame, lpc_string_length(lpcString));
     }
 
     SvREFCNT_dec(text);
