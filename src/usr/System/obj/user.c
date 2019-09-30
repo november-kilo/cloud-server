@@ -1597,12 +1597,17 @@ static void cmd_libstring(object user, string cmd, string str) {
 }
 
 static void reportMessage(mixed value, object user) {
+	string str;
+
+	if (typeof(value) == T_OBJECT && function_object("toString", value)) {
+		value = value->toString();
+	}
 	user->println("Message: " + dump_value(value));
 	user->showPrompt();
 }
 
-static string publishMessage(varargs string message) {
-	if (!message || message == "") {
+static string publishMessage(varargs mixed message) {
+	if (!message || (typeof(message) == T_STRING && message == "")) {
 		message = "It's a secret to everybody.";
 	}
 
