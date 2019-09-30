@@ -625,6 +625,8 @@ static int command(string str)
     case "vector":
     case "complex":
     case "libstring":
+    case "dq":
+    case "eq":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -1592,4 +1594,33 @@ static void cmd_libstring(object user, string cmd, string str) {
 	}
 
 	user->println("Done.");
+}
+
+static void reportMessage(mixed value, object user) {
+	user->println("Message: " + dump_value(value));
+	user->showPrompt();
+}
+
+static string publishMessage(varargs string message) {
+	if (!message || message == "") {
+		message = "It's a secret to everybody.";
+	}
+
+	return message;
+}
+
+static void cmd_eq(object user, string cmd, string str) {
+	Continuation c;
+
+	c = new Continuation("publishMessage", str);
+	c >>= SystemQueue->publisher();
+	c->runNext();
+}
+
+static void cmd_dq(object user, string cmd, string str) {
+	Continuation c;
+
+	c = SystemQueue->consumer();
+	c >>= new ChainedContinuation("reportMessage", user);
+	c->runNext();
 }
