@@ -18,7 +18,7 @@ static void enqueue(mixed value) {
     if (sizeof(suspended) != 0) {
         token = suspended[0];
         suspended = suspended[1 ..];
-        token->resumeContinuation(value);
+        token->runNext(value);
     } else {
         queue += ({ value });
     }

@@ -91,6 +91,7 @@ static void create()
     compile_object("/lib/sort/MergeSort");
     compile_object("/sys/jsonparse");
     compile_object("/sys/kantlipsum");
+    compile_object("/sys/systemqueue");
 
     /* Domain stuff */
     rsrc_incr(nil, "fileblocks",
