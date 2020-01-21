@@ -1012,7 +1012,6 @@ static void cmd_test(object user, string cmd, string str) {
     Array data;
     Complex *roots;
     Function reducer;
-    Integrator simpson;
     EigenvalueDecomposition Eig;
     Matrix A, D, V, M;
     MergeSort mergeSort;
@@ -1055,13 +1054,9 @@ static void cmd_test(object user, string cmd, string str) {
     number = new Number(pi());
     user->println("number: " + number->toString());
 
-    simpson = new SimpsonIntegrator();
     poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
-    number = new Rational(poly->integrate(0.0, 15.0));
     user->println("Polynomial: " + poly->toString());
-    user->println("Integrated polynomial: " + simpson->integrate(poly, 0.0, 15.0));
     user->println("Integrated polynomial: " + poly->integrate(0.0, 15.0));
-    user->println("number: " + number->toString());
 
     poly = poly->differentiate();
     user->println("Differentiated poly: " + poly->toString());
@@ -1086,15 +1081,8 @@ static void cmd_test(object user, string cmd, string str) {
     str = reducer->evaluate(data->getArray());
     user->println(str);
 
+	user->println("Data (" + data->size() + "):");
     reducer = new ArrayToListReducer();
-    str = data->reduce(reducer, 0, data->size() - 1, 1);
-    user->println("Data:\n" + str);
-
-    reducer = new ArrayToMarkedListReducer();
-    str = data->reduce(reducer, 0, data->size() - 1, 1);
-    user->println(str);
-
-    reducer = new ArrayToMarkedListReducer(3);
     str = data->reduce(reducer, 0, data->size() - 1, 1);
     user->println(str);
 
@@ -1106,7 +1094,7 @@ static void cmd_test(object user, string cmd, string str) {
     number = v1->dot(v2);
     user->println("Dot product: " + number->toString());
 
-    poly = new Polynomial(({ -1., 0., 0., 0., 1. }));
+    poly = new Polynomial(({ -1.0, 0.0, 0.0, 0.0, 1.0 }));
     roots = poly->roots();
 
     user->println("" + roots[0]->toString());
@@ -1518,11 +1506,10 @@ static void cmd_tree(object user, string cmd, string str) {
 }
 
 static void cmd_integrate(object user, string cmd, string str) {
-    Integrator simpson, gaussLegendre, romberg;
+    Integrator gaussLegendre, romberg;
     Polynomial poly;
     Function f;
 
-    simpson = new SimpsonIntegrator();
     gaussLegendre = new GaussLegendreIntegrator();
     romberg = new RombergIntegrator();
     f = new Exponential();
@@ -1532,17 +1519,13 @@ static void cmd_integrate(object user, string cmd, string str) {
     user->println("Integrate exp(x) dx from -3..3");
     user->println("Target:         20.03574985");
     user->println("Direct:         " + (f->evaluate(3) - f->evaluate(-3)));
-    user->println("Simpson:        " + (simpson->integrate(f, -3.0, 3.0)));
     user->println("Gauss-Legendre: " + (gaussLegendre->integrate(f, -3.0, 3.0)));
     user->println("Romberg:        " + (romberg->integrate(f, -3.0, 3.0)));
 
     poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
     user->println("\nIntegrate " + poly->toString() + "dx from 0..15");
     user->println("Target:         68148.75");
-    user->println("Simpson:        " + poly->integrate(0.0, 15.0));
-    user->println("Also Simpson:   " + poly->integrate(0.0, 15.0, simpson));
-    user->println("Gauss-Legendre: " + poly->integrate(0.0, 15.0, gaussLegendre));
-    user->println("Romberg:        " + poly->integrate(0.0, 15.0, romberg));
+	user->println("Romberg:        " + poly->integrate(0.0, 15.0));
 }
 
 static void cmd_complex(object user, string cmd, string str) {

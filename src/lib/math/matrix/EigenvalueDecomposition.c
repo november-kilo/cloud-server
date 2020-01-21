@@ -15,8 +15,8 @@ private void cdiv(float xr, float xi, float yr, float yi) {
 
     z = new Complex(xr, xi) / new Complex(yr, yi);
 
-    cdivr = z->re();
-    cdivi = z->im();
+    cdivr = z->re()->toFloat();
+    cdivi = z->im()->toFloat();
 }
 
 /* Symmetric Householder reduction to tridiagonal form. */

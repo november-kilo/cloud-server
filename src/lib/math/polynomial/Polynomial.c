@@ -37,11 +37,8 @@ float evaluate(float at) {
     return total;
 }
 
-float integrate(float from, float to, varargs Integrator integrator) {
-    if (!integrator) {
-        integrator = new SimpsonIntegrator();
-    }
-    return integrator->integrate(this_object(), from, to);
+float integrate(float from, float to) {
+    return new RombergIntegrator()->integrate(this_object(), from, to);
 }
 
 Polynomial differentiate(void) {
@@ -51,7 +48,7 @@ Polynomial differentiate(void) {
 
     sz = sizeof(coeffs);
     if (sz == 1) {
-	return new Polynomial(({ 0. }));
+		return new Polynomial(({ 0. }));
     }
 
     i = degree();

@@ -20,7 +20,6 @@
 #define Integrator object "/lib/math/integration/Integrator"
 #define GaussLegendreIntegrator object "/lib/math/integration/GaussLegendreIntegrator"
 #define RombergIntegrator object "/lib/math/integration/RombergIntegrator"
-#define SimpsonIntegrator object "/lib/math/integration/SimpsonIntegrator"
 
 #define Matrix object "/lib/math/matrix/Matrix"
 #define EigenvalueDecomposition object "/lib/math/matrix/EigenvalueDecomposition"
@@ -34,7 +33,6 @@
 #define PolynomialStringReducer object "/lib/math/polynomial/StringReducer"
 
 #define Quadrature object "/lib/math/quadrature/Quadrature"
-#define SimpsonQuad object "/lib/math/quadrature/Simpson"
 #define TrapezoidQuadrature object "/lib/math/quadrature/Trapezoid"
 
 #define Rational object "/lib/math/Rational"
