@@ -67,14 +67,14 @@ static void kf_replace(LPC_frame frame, int nargs, LPC_value returnValue) {
 }
 
 static char kf_replace_proto[] = {
-	LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
-	LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
-	LPC_TYPE_STRING, LPC_TYPE_STRING,
-	LPC_TYPE_INT, LPC_TYPE_INT, 0
+		LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
+		LPC_TYPE_ARRAY_OF(LPC_TYPE_STRING),
+		LPC_TYPE_STRING, LPC_TYPE_STRING,
+		LPC_TYPE_INT, LPC_TYPE_INT, 0
 };
 
 static LPC_ext_kfun kf[STRING_KFUNS_COUNT] = {
-	{ "replace", kf_replace_proto, &kf_replace }
+		{"replace", kf_replace_proto, &kf_replace}
 };
 
 int lpc_ext_init(int major, int minor, const char *config) {
