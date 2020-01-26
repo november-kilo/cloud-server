@@ -6,19 +6,15 @@ inherit ArrayToListReducer;
 
 private int order;
 
-private string fmtVal(mixed first, mixed second) {
-    return toString(first) +
-        (order > 0 ? (order++) + ")" : pointer()) +
-        LIST_GAP +
-        toString(second) + "\n";
-}
-
 static string ifNotNextValue(mixed currentValue, varargs int isLast) {
-    return fmtVal("", currentValue);
+	return (order > 0 ? (order++) + ")" : pointer()) + LIST_GAP + currentValue + "\n";
 }
 
 static string ifNextValue(mixed nextValue, mixed currentValue, varargs int isLast) {
-    return fmtVal(currentValue, nextValue);
+	return currentValue +
+			(order > 0 ? (order++) + ")" : pointer()) +
+			LIST_GAP +
+			nextValue + "\n";
 }
 
 void apply(int order) {

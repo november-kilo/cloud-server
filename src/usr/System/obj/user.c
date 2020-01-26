@@ -613,7 +613,9 @@ static int command(string str)
     case "cls":
     case "time":
     case "who":
-    case "test":
+    case "statstest":
+    case "arraytest":
+    case "matrixtest":
     case "config":
     case "aristotle":
     case "match":
@@ -1008,107 +1010,72 @@ void cmd_who(object user, string cmd, string arg) {
     user->message(arg);
 }
 
-static void cmd_test(object user, string cmd, string str) {
-    Array data;
-    Complex *roots;
-    Function reducer;
-    EigenvalueDecomposition Eig;
-    Matrix A, D, V, M;
-    MergeSort mergeSort;
-    Number number;
-    Polynomial poly;
-    Stats stats;
-    Vector v1, v2, v3;
-    float *violentCrimeRateUsa1997;
-    mapping moments;
-    int i, n;
-    float k1, k2, median;
-    mapping probs;
+static void cmd_arraytest(object user, string cmd, string str) {
+	Array data;
+	Function reducer;
 
-    violentCrimeRateUsa1997 = ({ 611.0, 567.6, 523.0, 506.5, 504.5, 494.4, 475.8, 463.2, 469.0, 479.3,
-                                 471.8, 458.6, 431.9, 404.5, 387.1, 387.8, 369.1, 361.6, 373.7, 386.3 });
-    mergeSort = new MergeSort();
-    mergeSort->sort(violentCrimeRateUsa1997);
-    n = sizeof(violentCrimeRateUsa1997);
+	data = new Array(({
+		1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
+		148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0
+	}));
+	data->sort();
+	user->println("Sorted: " + data->toString());
 
-    stats = new Stats();
-
-    moments = stats->get(violentCrimeRateUsa1997);
-
-    user->println(
-        "Sum:                " + moments["sum"] + "\n" +
-        "Average:            " + moments["average"] + "\n" +
-        "Standard deviation: " + moments["standardDeviation"] + "\n" +
-        "Variance:           " + moments["variance"]);
-
-    if (n % 2) {
-        median = violentCrimeRateUsa1997[((n + 1) / 2) - 1];
-    } else {
-        k1 = violentCrimeRateUsa1997[(n / 2) - 1];
-        k2 = violentCrimeRateUsa1997[n / 2];
-        median = (k1 + k2) / 2.0;
-    }
-
-    user->println("Median:             " + median);
-
-    number = new Number(pi());
-    user->println("number: " + number->toString());
-
-    poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
-    user->println("Polynomial: " + poly->toString());
-    user->println("Integrated polynomial: " + poly->integrate(0.0, 15.0));
-
-    poly = poly->differentiate();
-    user->println("Differentiated poly: " + poly->toString());
-
-    poly = new Polynomial(({
-        0.0, 0.0, 0.0, 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
-        148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0 })
-    );
-
-    reducer = new PolynomialProbabilityReducer(poly, 6, 4);
-    reducer->apply(10);
-    user->println("Probability 3D6: " + poly->toString());
-    probs = reducer->evaluate();
-    user->println("P(10): " + dump_value(probs));
-
-    data = new Array(({ 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
-                148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0 }));
-    data->sort();
-    user->println("Sorted: " + data->toString());
-
-    reducer = new ArrayTabularReducer();
-    str = reducer->evaluate(data->getArray());
-    user->println(str);
+	reducer = new ArrayTabularReducer();
+	str = reducer->evaluate(data->getArray());
+	user->println(str);
 
 	user->println("Data (" + data->size() + "):");
-    reducer = new ArrayToListReducer();
-    str = data->reduce(reducer, 0, data->size() - 1, 1);
-    user->println(str);
+	user->println(data->toOrderedList(1));
 
-    v1 = new Vector(({ new Number(2), new Number(4), new Number(6) }));
-    v2 = new Vector(({ new Number(3), new Number(5), new Number(7) }));
-    v3 = v1->cross(v2);
-    user->println("Cross product: " + v3->toString());
+	user->println("Data (" + data->size() + "):");
+	user->println(data->toList());
+}
 
-    number = v1->dot(v2);
-    user->println("Dot product: " + number->toString());
+static void cmd_statstest(object user, string cmd, string str) {
+	Stats stats;
+	MergeSort mergeSort;
+	Polynomial poly;
+	Function reducer;
+	float *violentCrimeRateUsa1997;
+	mapping moments, probs;
+	int n;
 
-    poly = new Polynomial(({ -1.0, 0.0, 0.0, 0.0, 1.0 }));
-    roots = poly->roots();
+	violentCrimeRateUsa1997 = ({
+		611.0, 567.6, 523.0, 506.5, 504.5, 494.4, 475.8, 463.2, 469.0, 479.3,
+				471.8, 458.6, 431.9, 404.5, 387.1, 387.8, 369.1, 361.6, 373.7, 386.3
+	});
+	mergeSort = new MergeSort();
+	mergeSort->sort(violentCrimeRateUsa1997);
+	n = sizeof(violentCrimeRateUsa1997);
 
-    user->println("" + roots[0]->toString());
-    user->println("" + roots[1]->toString());
-    user->println("" + roots[2]->toString());
-    user->println("" + roots[3]->toString());
+	stats = new Stats();
+	moments = stats->get(violentCrimeRateUsa1997);
 
-    poly = new Polynomial(({ 5.0, 4.0, 3.0, 2.0, 1.0 }));
-    roots = poly->roots();
+	user->println(
+			"Sum:                " + moments["sum"] + "\n" +
+			"Average:            " + moments["average"] + "\n" +
+			"Standard deviation: " + moments["standardDeviation"] + "\n" +
+			"Variance:           " + moments["variance"] + "\n" +
+			"Median:             " + moments["median"]
+	);
 
-    user->println("" + roots[0]->toString());
-    user->println("" + roots[1]->toString());
-    user->println("" + roots[2]->toString());
-    user->println("" + roots[3]->toString());
+	poly = new Polynomial(({
+		           0.0, 0.0, 0.0, 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
+				           148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0
+	           })
+	);
+
+	reducer = new PolynomialProbabilityReducer(poly, 6, 4);
+	reducer->apply(10);
+	user->println("Probability 3D6: " + poly->toString());
+	probs = reducer->evaluate();
+	user->println("P(10): " + dump_value(probs));
+}
+
+static void cmd_matrixtest(object user, string cmd, string str) {
+	Matrix A, V, D;
+	EigenvalueDecomposition Eig;
 
     A = new Matrix(3, 3);
     A->setMatrix(({ ({ 4.0, 6.0, 7.0 }), ({ 6.0, 3.0, 2.0 }), ({ 7.0, 2.0, 1.0 }) }));
@@ -1269,11 +1236,12 @@ static void cmd_config(object user, string cmd, string str) {
 }
 
 private string absPath(object user, string str) {
-return DRIVER->normalize_path(str, user->query_directory(), query_owner());
+	return DRIVER->normalize_path(str, user->query_directory(), query_owner());
 }
 
 static void cmd_vector(object user, string cmd, string str) {
     Vector a, b, c;
+    Number number;
     mapping cylindrical, polar, spherical;
 
     user->println("This command tests some functionality of the Vector lib.\n");
@@ -1297,6 +1265,14 @@ static void cmd_vector(object user, string cmd, string str) {
     user->println("A in spherical:\n\tradial: " + spherical["radial"]->toString() + "\n" +
                   "\tpolar: " + spherical["polar"]["deg"]->toString() + " deg\n" +
                   "\tazimuthal: " + spherical["azimuthal"]["deg"]->toString() + " deg");
+
+	a = new Vector(({ new Number(2), new Number(4), new Number(6) }));
+	b = new Vector(({ new Number(3), new Number(5), new Number(7) }));
+	c = a->cross(b);
+	user->println("Cross product: " + c->toString());
+
+	number = a->dot(b);
+	user->println("Dot product: " + number->toString());
 }
 
 static void cmd_regex(object user, string cmd, string str) {
@@ -1459,6 +1435,22 @@ static void cmd_proots(object user, string cmd, string str) {
     while (!iterator->end()) {
         user->println("root: " + r[iterator->next()]->toString());
     }
+
+	e = new Polynomial(({ -1.0, 0.0, 0.0, 0.0, 1.0 }));
+	r = e->roots();
+	iterator = new IntIterator(0, sizeof(r) - 1);
+
+	while (!iterator->end()) {
+		user->println("root: " + r[iterator->next()]->toString());
+	}
+
+	e = new Polynomial(({ 5.0, 4.0, 3.0, 2.0, 1.0 }));
+	r = e->roots();
+	iterator = new IntIterator(0, sizeof(r) - 1);
+
+	while (!iterator->end()) {
+		user->println("root: " + r[iterator->next()]->toString());
+	}
 }
 
 static void cmd_tree(object user, string cmd, string str) {
@@ -1468,32 +1460,7 @@ static void cmd_tree(object user, string cmd, string str) {
     mapping *map;
 
     jp = new JsonParser();
-
-    /*
-[{
-	"key": "one",
-	"children": [{
-		"key": "two"
-	}, {
-		"key": "three"
-	}]
-}, {
-	"key": "five",
-	"children": [{
-		"key": "six",
-		"children": [{
-			"key": "seven",
-			"children": [{
-				"key": "eight"
-			}]
-		}]
-	}, {
-		"key": "nine"
-	}]
-}]
-     */
     json = "[{ \"key\": \"one\", \"children\": [{ \"key\": \"two\" }, { \"key\": \"three\" }] }, { \"key\": \"five\", \"children\": [{ \"key\": \"six\", \"children\": [{ \"key\": \"seven\", \"children\": [{ \"key\": \"eight\" }] }] }, { \"key\": \"nine\" } ] }]";
-
 
     user->println("This command tests tree printing. Currently, the tree lib provides no tree-building functions.\n");
 
@@ -1509,18 +1476,6 @@ static void cmd_integrate(object user, string cmd, string str) {
     Integrator gaussLegendre, romberg;
     Polynomial poly;
     Function f;
-
-    gaussLegendre = new GaussLegendreIntegrator();
-    romberg = new RombergIntegrator();
-    f = new Exponential();
-
-    user->println("This command tests integration of univariate functions.\n");
-
-    user->println("Integrate exp(x) dx from -3..3");
-    user->println("Target:         20.03574985");
-    user->println("Direct:         " + (f->evaluate(3) - f->evaluate(-3)));
-    user->println("Gauss-Legendre: " + (gaussLegendre->integrate(f, -3.0, 3.0)));
-    user->println("Romberg:        " + (romberg->integrate(f, -3.0, 3.0)));
 
     poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
     user->println("\nIntegrate " + poly->toString() + "dx from 0..15");

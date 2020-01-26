@@ -15,11 +15,12 @@
 #define Complex object "/lib/math/Complex"
 
 #define Exponential object "/lib/math/functions/Exponential"
-#define OneOverXSquared object "/lib/math/functions/OneOverXSquared"
 
 #define Integrator object "/lib/math/integration/Integrator"
 #define GaussLegendreIntegrator object "/lib/math/integration/GaussLegendreIntegrator"
 #define RombergIntegrator object "/lib/math/integration/RombergIntegrator"
+#define Quadrature object "/lib/math/integration/Quadrature"
+#define TrapezoidQuadrature object "/lib/math/integration/Trapezoid"
 
 #define Matrix object "/lib/math/matrix/Matrix"
 #define EigenvalueDecomposition object "/lib/math/matrix/EigenvalueDecomposition"
@@ -31,9 +32,6 @@
 #define PolynomialInterpolator object "/lib/math/polynomial/Interpolator"
 #define PolynomialProbabilityReducer object "/lib/math/polynomial/ProbabilityReducer"
 #define PolynomialStringReducer object "/lib/math/polynomial/StringReducer"
-
-#define Quadrature object "/lib/math/quadrature/Quadrature"
-#define TrapezoidQuadrature object "/lib/math/quadrature/Trapezoid"
 
 #define Rational object "/lib/math/Rational"
 

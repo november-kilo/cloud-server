@@ -137,6 +137,14 @@ string toList(void) {
     return reduce(new ArrayToListReducer(), 0, size() - 1, 1);
 }
 
+string toBulletList(void) {
+	return reduce(new ArrayToMarkedListReducer(), 0, size() - 1, 1);
+}
+
+string toOrderedList(int order) {
+	return reduce(new ArrayToMarkedListReducer(order), 0, size() - 1, 1);
+}
+
 void sort(void) {
     new MergeSort()->sort(elements);
 }
