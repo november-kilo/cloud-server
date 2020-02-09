@@ -1475,12 +1475,16 @@ static void cmd_tree(object user, string cmd, string str) {
 static void cmd_integrate(object user, string cmd, string str) {
     Integrator gaussLegendre, romberg;
     Polynomial poly;
+    Number n;
     Function f;
+    float x;
 
     poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
+    x = poly->integrate(0.0, 15.0);
+    n = new Number(x);
     user->println("\nIntegrate " + poly->toString() + "dx from 0..15");
-    user->println("Target:         68148.75");
-	user->println("Romberg:        " + poly->integrate(0.0, 15.0));
+    user->println("Target:         68148.75 (272595/4)");
+	user->println("Romberg:        " + x + " (" + (new Rational(n))->toString() + ")");
 }
 
 static void cmd_complex(object user, string cmd, string str) {

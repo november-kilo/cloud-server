@@ -20,7 +20,7 @@
 #define GaussLegendreIntegrator object "/lib/math/integration/GaussLegendreIntegrator"
 #define RombergIntegrator object "/lib/math/integration/RombergIntegrator"
 #define Quadrature object "/lib/math/integration/Quadrature"
-#define TrapezoidQuadrature object "/lib/math/integration/Trapezoid"
+#define TrapezoidQuadrature object "/lib/math/integration/TrapezoidQuadrature"
 
 #define Matrix object "/lib/math/matrix/Matrix"
 #define EigenvalueDecomposition object "/lib/math/matrix/EigenvalueDecomposition"

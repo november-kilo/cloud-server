@@ -74,7 +74,7 @@ static void create()
     compile_object("/lib/math/Complex");
     compile_object("/lib/math/integration/GaussLegendreIntegrator");
     compile_object("/lib/math/integration/RombergIntegrator");
-	compile_object("/lib/math/integration/Trapezoid");
+	compile_object("/lib/math/integration/TrapezoidQuadrature");
     compile_object("/lib/math/matrix/Matrix");
     compile_object("/lib/math/matrix/EigenvalueDecomposition");
     compile_object("/lib/math/polynomial/Polynomial");
