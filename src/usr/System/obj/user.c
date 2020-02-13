@@ -1575,12 +1575,19 @@ static void cmd_dq(object user, string cmd, string str) {
 
 static cmd_xyz(object user, string cmd, string str) {
     float a, b, c, value;
+    Number n;
 
     value = sin(3600030.0 * (pi() / 180.0));
-    user->println("xyz: " + value);
+    n = new Number(sin(3600030.0 * (pi() / 180.0)));
+    user->println("xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
+
+    value = sin(degreeToRadian(3600030.0));
+    n = new Number(sin(degreeToRadian(3600030.0)));
+    user->println("xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
 
     value = 6.9273649 - 6.9273451;
-    user->println("xyz: " + value);
+    n = new Number(6.9273649 - 6.9273451);
+    user->println("xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
 
     value = 2.0 + 0.2 + 0.2 + 0.2 + 0.2 + 0.2 - 3.0;
     user->println("xyz: " + value);
