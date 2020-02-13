@@ -629,6 +629,7 @@ static int command(string str)
     case "libstring":
     case "dq":
     case "eq":
+    case "xyz":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -1570,4 +1571,65 @@ static void cmd_dq(object user, string cmd, string str) {
 	c = SystemQueue->consumer();
 	c >>= new ChainedContinuation("reportMessage", user);
 	c->runNext();
+}
+
+static cmd_xyz(object user, string cmd, string str) {
+    float a, b, c, value;
+
+    value = sin(3600030.0 * (pi() / 180.0));
+    user->println("xyz: " + value);
+
+    value = 6.9273649 - 6.9273451;
+    user->println("xyz: " + value);
+
+    value = 2.0 + 0.2 + 0.2 + 0.2 + 0.2 + 0.2 - 3.0;
+    user->println("xyz: " + value);
+
+    value = 2.0 + (5.0 * 0.2) - 3.0;
+    user->println("xyz: " + value);
+
+    a = 0.2 + 0.2 + 0.2 + 0.2 + 0.2;
+    b = 2.0 + a;
+    value = b - 3.0;
+    user->println("xyz: " + value);
+
+    a = 42.0;
+    b = a / 10.0;
+    c = 10.0 * b;
+    value = a - c;
+    user->println("xyz: " + value);
+
+    value = 3.0 * (1.0 / 3.0);
+    user->println("xyz: " + value);
+    user->println("xyz: " + (int) value);
+
+    value = sqrt(25.0) - 5.0;
+    user->println("xyz: " + value);
+
+    value = 0.0;
+    for (a = 0.0; a < 10000.0; a += 0.1) {
+        value += a;
+    }
+    user->println("xyz: " + value);
+
+    value = 0.0;
+    for (a = 0.0; a < 1000.0; a += 0.1) {
+        value += a;
+    }
+    user->println("xyz: " + value);
+
+    value = 0.0;
+    for (a = 0.0; a < 100.0; a += 0.1) {
+        value += a;
+    }
+    user->println("xyz: " + value);
+
+    value = pi();
+    user->println("xyz: " + value);
+
+    value = sin(0.61);
+    user->println("xyz: " + value);
+
+    value = 1.0 / 3.0;
+    user->println("xyz: " + value);
 }
