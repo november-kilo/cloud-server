@@ -1577,66 +1577,59 @@ static cmd_xyz(object user, string cmd, string str) {
     float a, b, c, value;
     Number n;
 
-    value = sin(3600030.0 * (pi() / 180.0));
-    n = new Number(sin(3600030.0 * (pi() / 180.0)));
-    user->println("xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
+    value = sin(3600030.0 * pi() / 180.0);
+    n = new Number(sin(3600030.0 * pi() / 180.0));
+    user->println("1) xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
 
     value = sin(degreeToRadian(3600030.0));
     n = new Number(sin(degreeToRadian(3600030.0)));
-    user->println("xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
+    user->println("2) xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
 
     value = 6.9273649 - 6.9273451;
     n = new Number(6.9273649 - 6.9273451);
-    user->println("xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
+    user->println("3) xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
 
     value = 2.0 + 0.2 + 0.2 + 0.2 + 0.2 + 0.2 - 3.0;
-    user->println("xyz: " + value);
+    user->println("4) xyz: " + value);
 
     value = 2.0 + (5.0 * 0.2) - 3.0;
-    user->println("xyz: " + value);
+    user->println("5) xyz: " + value);
 
     a = 0.2 + 0.2 + 0.2 + 0.2 + 0.2;
     b = 2.0 + a;
     value = b - 3.0;
-    user->println("xyz: " + value);
+    user->println("6) xyz: " + value);
 
     a = 42.0;
     b = a / 10.0;
     c = 10.0 * b;
     value = a - c;
-    user->println("xyz: " + value);
-
-    value = 3.0 * (1.0 / 3.0);
-    user->println("xyz: " + value);
-    user->println("xyz: " + (int) value);
-
-    value = sqrt(25.0) - 5.0;
-    user->println("xyz: " + value);
+    user->println("7) xyz: " + value);
 
     value = 0.0;
     for (a = 0.0; a < 10000.0; a += 0.1) {
         value += a;
     }
-    user->println("xyz: " + value);
+    user->println("8) xyz: " + value);
 
     value = 0.0;
     for (a = 0.0; a < 1000.0; a += 0.1) {
         value += a;
     }
-    user->println("xyz: " + value);
+    user->println("9) xyz: " + value);
 
     value = 0.0;
     for (a = 0.0; a < 100.0; a += 0.1) {
         value += a;
     }
-    user->println("xyz: " + value);
+    user->println("10) xyz: " + value);
 
     value = pi();
-    user->println("xyz: " + value);
+    user->println("11) xyz: " + value);
 
     value = sin(0.61);
-    user->println("xyz: " + value);
+    user->println("12) xyz: " + value);
 
     value = 1.0 / 3.0;
-    user->println("xyz: " + value);
+    user->println("13) xyz: " + value);
 }
