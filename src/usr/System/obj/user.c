@@ -1607,20 +1607,20 @@ static cmd_xyz(object user, string cmd, string str) {
     user->println("7) xyz: " + value);
 
     value = 0.0;
-    for (a = 0.0; a < 10000.0; a += 0.1) {
-        value += a;
+    for (a = 0.0; a < 10000.0; a += 1.0) {
+        value += 0.1;
     }
     user->println("8) xyz: " + value);
 
     value = 0.0;
-    for (a = 0.0; a < 1000.0; a += 0.1) {
-        value += a;
+    for (a = 0.0; a < 1000.0; a += 1.0) {
+        value += 0.1;
     }
     user->println("9) xyz: " + value);
 
     value = 0.0;
-    for (a = 0.0; a < 100.0; a += 0.1) {
-        value += a;
+    for (a = 0.0; a < 100.0; a += 1.0) {
+        value += 0.1;
     }
     user->println("10) xyz: " + value);
 
