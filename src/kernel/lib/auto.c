@@ -1549,12 +1549,10 @@ static float degreeToRadian(float degree) {
     return degree * pi() / 180.0;
 }
 
+static mapping regexp(string str, int global) {
 #ifndef KF_REGEXP
-static mapping regexp(string str, int global) {
     error("regexp() unavailable\n");
-}
 #else
-static mapping regexp(string str, int global) {
     string path, pattern;
     mixed * found;
     int *offsets;
@@ -1600,8 +1598,8 @@ static mapping regexp(string str, int global) {
             "pattern": pattern,
             "found": found
         ]);
-}
 #endif
+}
 
 #ifndef KF_PERL_MATCH
 static string *perl_match(string text, string pattern) {
@@ -1626,10 +1624,35 @@ static mixed log1p(mixed x) {
 static string *replace(string *strings, string replaceThis, string withThis) {
 #ifndef KF_REPLACE
 	error("replace() unavailable");
-#endif
+#else
 	mixed *s;
 
 	s = status();
 
 	return ::replace(strings, replaceThis, withThis, s[ST_ARRAYSIZE], s[ST_STRSIZE]);
+#endif
 }
+
+#ifndef KF_DEFLATE
+static string *deflate(varargs string str, int mode) {
+    error("deflate() unavailable");
+}
+#endif
+
+#ifndef KF_GUNZIP
+static string *gunzip(varargs string str, int flag) {
+    error("gunzip() unavailable");
+}
+#endif
+
+#ifndef KF_GZIP
+static string *gzip(varargs string str, int mode) {
+    error("gzip() unavailable");
+}
+#endif
+
+#ifndef KF_INFLATE
+static string *inflate(varargs string str, int flag) {
+    error("inflate() unavailable");
+}
+#endif

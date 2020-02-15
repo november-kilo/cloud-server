@@ -60,7 +60,7 @@ Number absSquared(void) {
 Number logAbs(void) {
 #ifndef KF_LOG1P
     error("Complex->logAbs() is unavailable");
-#endif
+#else
 
     Number xa, ya, max, u;
 
@@ -76,6 +76,7 @@ Number logAbs(void) {
     }
 
     return max->_log() + new Number((log1p(u->toFloat() * u->toFloat()) / 2.0));
+#endif
 }
 
 Complex conj(void) {
