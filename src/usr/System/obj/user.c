@@ -1502,6 +1502,7 @@ static void cmd_complex(object user, string cmd, string str) {
     user->println(z1->sec()->toString());
     user->println(z1->csc()->toString());
     user->println(z1->cot()->toString());
+    user->println(z1->log()->toString());
 }
 
 static void cmd_libstring(object user, string cmd, string str) {
