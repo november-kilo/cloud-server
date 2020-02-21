@@ -88,9 +88,10 @@ private int consolidateChars(int **chunks)
 	}
 
 	/* consolidate characters */
-	chunk = allocate_int(size);
-	k = 0;
-	for (i = chunkFilled; i <= chunkBuffered; i++) {
+	chunk = chunks[chunkFilled];
+	k = sizeof(chunk);
+	chunk += allocate_int(size - k);
+	for (i = chunkFilled; ++i <= chunkBuffered; ) {
 	    fragment = chunks[i];
 	    for (j = 0, size = sizeof(fragment); j < size; j++) {
 		chunk[k++] = fragment[j];
@@ -145,9 +146,13 @@ private void prepareType(int type)
 		if (size > bufMax - size) {
 		    size = bufMax - size;
 		}
-		ringBuffer = ringBuffer[.. ringStart - 1] + allocate(size) +
-			     ringBuffer[ringStart ..];
-		ringStart += size;
+		if (ringStart < ringEnd) {
+		    ringBuffer += allocate(size);
+		} else {
+		    ringBuffer = ringBuffer[.. ringStart - 1] + allocate(size) +
+				 ringBuffer[ringStart ..];
+		    ringStart += size;
+		}
 	    }
 	}
 	ringEnd = (ringEnd + 1) % sizeof(ringBuffer);
