@@ -1656,3 +1656,23 @@ static string *inflate(varargs string str, int flag) {
     error("inflate() unavailable");
 }
 #endif
+
+float sizeOfAWithSignOfB(float a, float b) {
+    float x;
+
+    x = ((b) < 0.0 ? -fabs(a) : fabs(a));
+}
+
+float normaliseAngle(float angle) {
+    float x;
+    float dpi, d2pi;
+
+    dpi = pi();
+    d2pi = dpi * 2.0;
+    x = fmod(angle, d2pi);
+    if (fabs(x) >= dpi) {
+        x -= sizeOfAWithSignOfB(d2pi, angle);
+    }
+
+    return x;
+}

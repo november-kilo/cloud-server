@@ -1580,57 +1580,70 @@ static cmd_xyz(object user, string cmd, string str) {
 
     value = sin(3600030.0 * pi() / 180.0);
     n = new Number(sin(3600030.0 * pi() / 180.0));
-    user->println("1) xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
+    user->println("1a) xyz: " + value + ", " + (new Rational(n))->toString());
 
     value = sin(degreeToRadian(3600030.0));
     n = new Number(sin(degreeToRadian(3600030.0)));
-    user->println("2) xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
+    user->println("1b) xyz: " + value + ", " + (new Rational(n))->toString());
+
+    value = sin(normaliseAngle(3600030.0 * 3.141592653589793238462643 / 180.0));
+    user->println("1c) xyz: " + value);
+
+    value = sin(normaliseAngle(degreeToRadian(3600030.0)));
+    user->println("1d) xyz: " + value);
+
+    value = sin(normaliseAngle(3600030.0 * pi() / 180.0));
+    user->println("1e) xyz: " + value);
+
+    value = 6.92736 - 6.92735;
+    n = new Number(6.92736 - 6.92735);
+    user->println("2a) xyz: " + value + ", " + (new Rational(n))->toString());
 
     value = 6.9273649 - 6.9273451;
     n = new Number(6.9273649 - 6.9273451);
-    user->println("3) xyz: " + value + ", " + n->toFloat() + ", " + (new Rational(n))->toString());
+    user->println("2b) xyz: " + value + ", " + (new Rational(n))->toString());
 
     value = 2.0 + 0.2 + 0.2 + 0.2 + 0.2 + 0.2 - 3.0;
-    user->println("4) xyz: " + value);
+    user->println("3a) xyz: " + value);
 
     value = 2.0 + (5.0 * 0.2) - 3.0;
-    user->println("5) xyz: " + value);
+    user->println("3b) xyz: " + value);
 
     a = 0.2 + 0.2 + 0.2 + 0.2 + 0.2;
     b = 2.0 + a;
     value = b - 3.0;
-    user->println("6) xyz: " + value);
+    user->println("3c) xyz: " + value);
 
     a = 42.0;
     b = a / 10.0;
     c = 10.0 * b;
     value = a - c;
-    user->println("7) xyz: " + value);
+    user->println("4) xyz: " + value);
 
     value = 0.0;
     for (a = 0.0; a < 10000.0; a += 1.0) {
         value += 0.1;
     }
-    user->println("8) xyz: " + value);
+    user->println("5a) xyz: " + value);
 
     value = 0.0;
     for (a = 0.0; a < 1000.0; a += 1.0) {
         value += 0.1;
     }
-    user->println("9) xyz: " + value);
+    user->println("5b) xyz: " + value);
 
     value = 0.0;
     for (a = 0.0; a < 100.0; a += 1.0) {
         value += 0.1;
     }
-    user->println("10) xyz: " + value);
+    user->println("5c) xyz: " + value);
 
     value = pi();
-    user->println("11) xyz: " + value);
+    user->println("6) xyz: " + value);
 
     value = sin(0.61);
-    user->println("12) xyz: " + value);
+    user->println("7) xyz: " + value);
 
-    value = 1.0 / 3.0;
-    user->println("13) xyz: " + value);
+    value = pow(1.0000001, pow(2.0, 27.0));
+    user->println("8) xyz: " + value);
 }
