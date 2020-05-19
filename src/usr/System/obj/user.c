@@ -4,15 +4,12 @@
 # include <status.h>
 # include <type.h>
 # include <kfun.h>
-#include <Array.h>
 #include <Continuation.h>
-#include <File.h>
-#include <Function.h>
 #include <Json.h>
 #include <Math.h>
 #include <Queue.h>
-#include <Sort.h>
 #include <String.h>
+#include <Terminal.h>
 #include <Time.h>
 
 inherit auto	"~/lib/auto";
@@ -613,23 +610,10 @@ static int command(string str)
     case "cls":
     case "time":
     case "who":
-    case "statstest":
-    case "arraytest":
-    case "matrixtest":
     case "config":
-    case "aristotle":
-    case "match":
-    case "integrate":
-    case "lsr":
-    case "tree":
-    case "proots":
-    case "regex":
-    case "vector":
-    case "complex":
-    case "libstring":
+    case "poly":
     case "dq":
     case "eq":
-    case "xyz":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -1002,152 +986,13 @@ void cmd_who(object user, string cmd, string arg) {
     }
     list = allocate(sz);
     i = new IntIterator(0, sz - 1);
+    arg = "Users logged in:\n";
     while (!i->end()) {
-        list[i->next()] = users[i->current()]->query_name() + " " + idleTime(users[i->current()]);
+        arg += users[i->current()]->query_name() + " " + idleTime(users[i->current()]) + "\n";
     }
-    arg = "Users logged in:\n" +
-          new Array(list)->reduce(new ArrayToListReducer(), 0, sz - 1, 1);
 
     user->message(arg);
 }
-
-static void cmd_arraytest(object user, string cmd, string str) {
-	Array data;
-	Function reducer;
-
-	data = new Array(({
-		1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
-		148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0
-	}));
-	data->sort();
-	user->println("Sorted: " + data->toString());
-
-	reducer = new ArrayTabularReducer();
-	str = reducer->evaluate(data->getArray());
-	user->println(str);
-
-	user->println("Data (" + data->size() + "):");
-	user->println(data->toOrderedList(1));
-
-	user->println("Data (" + data->size() + "):");
-	user->println(data->toList());
-}
-
-static void cmd_statstest(object user, string cmd, string str) {
-	Stats stats;
-	MergeSort mergeSort;
-	Polynomial poly;
-	Function reducer;
-	float *violentCrimeRateUsa1997;
-	mapping moments, probs;
-	int n;
-
-	violentCrimeRateUsa1997 = ({
-		611.0, 567.6, 523.0, 506.5, 504.5, 494.4, 475.8, 463.2, 469.0, 479.3,
-				471.8, 458.6, 431.9, 404.5, 387.1, 387.8, 369.1, 361.6, 373.7, 386.3
-	});
-	mergeSort = new MergeSort();
-	mergeSort->sort(violentCrimeRateUsa1997);
-	n = sizeof(violentCrimeRateUsa1997);
-
-	stats = new Stats();
-	moments = stats->get(violentCrimeRateUsa1997);
-
-	user->println(
-			"Sum:                " + moments["sum"] + "\n" +
-			"Average:            " + moments["average"] + "\n" +
-			"Standard deviation: " + moments["standardDeviation"] + "\n" +
-			"Variance:           " + moments["variance"] + "\n" +
-			"Median:             " + moments["median"]
-	);
-
-	poly = new Polynomial(({
-		           0.0, 0.0, 0.0, 1.0, 4.0, 10.0, 21.0, 38.0, 62.0, 91.0, 122.0,
-				           148.0, 167.0, 172.0, 160.0, 131.0, 94.0, 54.0, 21.0
-	           })
-	);
-
-	reducer = new PolynomialProbabilityReducer(poly, 6, 4);
-	reducer->apply(10);
-	user->println("Probability 3D6: " + poly->toString());
-	probs = reducer->evaluate();
-	user->println("P(10): " + dump_value(probs));
-}
-
-static void cmd_matrixtest(object user, string cmd, string str) {
-	Matrix A, V, D;
-	EigenvalueDecomposition Eig;
-
-    A = new Matrix(3, 3);
-    A->setMatrix(({ ({ 4.0, 6.0, 7.0 }), ({ 6.0, 3.0, 2.0 }), ({ 7.0, 2.0, 1.0 }) }));
-    Eig = A->eig();
-    V = Eig->getV();
-    D = Eig->getD();
-
-    user->println("Nonsymmetric A\n" + A->toString());
-    user->println("V\n" + V->toString());
-    user->println("D\n" + D->toString());
-
-    A = new Matrix(3, 3);
-    A->setMatrix(({ ({ 5.0, 1.0, 3.0 }), ({ 2.0, 0.0, 2.0 }), ({ 3.0, 1.0, 5.0 }) }));
-    Eig = A->eig();
-    V = Eig->getV();
-    D = Eig->getD();
-
-    user->println("Symmetric A\n" + A->toString());
-    user->println("V\n" + V->toString());
-    user->println("D\n" + D->toString());
-}
-
-/*
->> nonsymmetric = [ [4,6,7]; [6,3,2]; [7,2,1] ]
-
-nonsymmetric =
-
-     4     6     7
-     6     3     2
-     7     2     1
-
->> symmetric = [ [5,1,3]; [2,0,2]; [3,1,5] ]
-
-symmetric =
-
-     5     1     3
-     2     0     2
-     3     1     5
-
->> [Vn,Dn]=eig(nonsymmetric)
-
-Vn =
-
-    0.6887    0.1638    0.7063
-   -0.3367   -0.7905    0.5116
-   -0.6421    0.5902    0.4893
-
-
-Dn =
-
-   -5.4594         0         0
-         0    0.2637         0
-         0         0   13.1957
-
-
-
->> [Vs,Ds]=eig(symmetric)
-
-Vs =
-
-   -0.6707   -0.7071    0.1164
-   -0.3167    0.0000   -0.9864
-   -0.6707    0.7071    0.1164
-
-
-Ds =
-
-    8.4721         0         0
-         0    2.0000         0
-         0         0   -0.4721
- */
 
 private int setSetting(string key, mixed value) {
     int returnValue;
@@ -1204,7 +1049,7 @@ private string listSettings(void) {
         values[iterator->current()] = "" + key + " = " + settings[key];
     }
 
-    return "Settings:\n" + (new Array(values)->toList());
+    return "Settings:\n ...\n";
 }
 
 static void cmd_config(object user, string cmd, string str) {
@@ -1236,224 +1081,6 @@ static void cmd_config(object user, string cmd, string str) {
     user->println("usage: config set <setting-name> <setting-value>");
 }
 
-private string absPath(object user, string str) {
-	return DRIVER->normalize_path(str, user->query_directory(), query_owner());
-}
-
-static void cmd_vector(object user, string cmd, string str) {
-    Vector a, b, c;
-    Number number;
-    mapping cylindrical, polar, spherical;
-
-    user->println("This command tests some functionality of the Vector lib.\n");
-
-    a = new Vector(({ new Number(3), new Number(5), new Number(7) }));
-    b = new Vector(({ new Number(4), new Number(6), new Number(8) }));
-
-    c = a->cross(b);
-    user->println("A x B = " + c->toString());
-
-    cylindrical = a->cylindrical();
-    user->println("A in cylindrical:\n\tradial: " + cylindrical["radial"]->toString() + "\n" +
-                  "\tazimuthal: " + cylindrical["azimuthal"]["deg"]->toString() + " deg\n" +
-                  "\tvertical: " + cylindrical["vertical"]->toString());
-
-    polar = a->polar();
-    user->println("A in polar:\n\tradial: " + polar["radial"]->toString() + "\n" +
-                  "\tangular: " + polar["angular"]["deg"]->toString() + " deg");
-
-    spherical = a->spherical();
-    user->println("A in spherical:\n\tradial: " + spherical["radial"]->toString() + "\n" +
-                  "\tpolar: " + spherical["polar"]["deg"]->toString() + " deg\n" +
-                  "\tazimuthal: " + spherical["azimuthal"]["deg"]->toString() + " deg");
-
-	a = new Vector(({ new Number(2), new Number(4), new Number(6) }));
-	b = new Vector(({ new Number(3), new Number(5), new Number(7) }));
-	c = a->cross(b);
-	user->println("Cross product: " + c->toString());
-
-	number = a->dot(b);
-	user->println("Dot product: " + number->toString());
-}
-
-static void cmd_regex(object user, string cmd, string str) {
-    mapping results;
-
-    user->println("This command tests regexp extension.\n");
-
-    user->println("find first...");
-    results = regexp(str, FALSE);
-    if (results["error"]) {
-        user->println("regex: " + results["error"]);
-        return;
-    }
-
-    user->println(dump_value(results));
-
-    user->println("find global...");
-    results = regexp(str, TRUE);
-    if (results["error"]) {
-        user->println("regex: " + results["error"]);
-        return;
-    }
-
-    user->println(dump_value(results));
-}
-
-static void cmd_match(object user, string cmd, string str) {
-    string *words, *results;
-    string errorString;
-    int i, sz;
-
-#ifdef KF_PERL_MATCH
-    user->println("This command tests perl_match extension.\n");
-
-    if (!str || str == "") {
-        user->println("usage: match <words>");
-        return;
-    }
-
-    words = explode(str, " ");
-    errorString = catch(results = "/sys/kantlipsum"->matches(words));
-    if (errorString) {
-        user->message("error: " + errorString);
-        return;
-    }
-    if (sizeof(results) == 0) {
-        user->println("matches: no words found");
-        return;
-    }
-    user->println(break_string(implode(results, "\n\n"), 120, 0));
-    user->println("found " + sizeof(results));
-#else
-    user->println("The perl kfuns are not available.\n");
-#endif
-}
-
-static string *fetchAristotle(void) {
-    return "/sys/kantlipsum"->matches(({ "Aristotle" }));
-}
-
-static int transformAristotle(string *aristotle, object user) {
-    int sz;
-    string str, thePhilosopher;
-    Iterator iterator;
-
-    sz = sizeof(aristotle);
-    if (sz) {
-        thePhilosopher = new Terminal->bold("The Philosopher");
-        iterator = new IntIterator(0, sz - 1);
-        while (!iterator->end()) {
-            aristotle[iterator->next()] = perl_sub(
-                    aristotle[iterator->current()],
-                    "s/Aristotle/" + thePhilosopher + "/g"
-            );
-        }
-        str = implode(aristotle, "\n\n");
-        user->println(break_string(str, 120, 0));
-    } else {
-        user->println("no me gusta");
-    }
-
-    user->showPrompt();
-    return 1;
-}
-
-static void cmd_aristotle(object user, string cmd, string str) {
-    Continuation c;
-
-#ifdef KF_PERL_MATCH
-#ifdef KF_PERL_SUB
-    user->println("This command tests perl_sub extension.\n");
-
-    c = new Continuation("fetchAristotle");
-    c >>= new ChainedContinuation("transformAristotle", user);
-    c->runNext();
-#endif
-#endif
-
-#ifndef KF_PERL_MATCH
-#ifndef KF_PERL_SUB
-    user->println("The perl kfuns are not available.\n");
-#endif
-#endif
-}
-
-static void cmd_lsr(object user, string cmd, string str) {
-    Iterator iterator;
-    FileTree fileTree;
-    string pre, post, path, owner, file, err;
-    mixed *finfo;
-
-    user->println("This command is a work in progress, intended to provide -R to the ls command.\n");
-
-    if (!str || str == "") {
-        user->println("usage: lsr <path>");
-        return;
-    }
-
-    owner = query_owner();
-    path = absPath(user, str);
-    user->println(path);
-    err = catch(iterator = new Iterator(new FileTree(path), nil, nil));
-    if (err) {
-        user->println("lsr: invalid path");
-        return;
-    }
-    iterator->next();
-    while (!iterator->end()) {
-        file = iterator->next();
-        finfo = file_info(file);
-        pre = ctime(finfo[1]);
-
-        if (finfo[2] || finfo[2] == 1) {
-            post = "*";
-        } else {
-            post = "";
-        }
-
-        if (path == "/") {
-            file = file[1..];
-        } else {
-            file = file[strlen(path) + 1..];
-        }
-
-        user->println(pre + " " + file + post);
-    }
-}
-
-static void cmd_proots(object user, string cmd, string str) {
-    Polynomial e;
-    Complex *r;
-    Iterator iterator;
-
-    user->println("This command tests polynomial root finding.\n");
-
-    e = new Polynomial(({ 0.0, 2.0, -3.0, 1.0 })); /* 0.0x^0 + 2.0x^1 - 3.0x^2 + 1.0x^3, or x^3 - 3x^2 + 2x */
-    r = e->roots();
-    iterator = new IntIterator(0, sizeof(r) - 1);
-
-    while (!iterator->end()) {
-        user->println("root: " + r[iterator->next()]->toString());
-    }
-
-	e = new Polynomial(({ -1.0, 0.0, 0.0, 0.0, 1.0 }));
-	r = e->roots();
-	iterator = new IntIterator(0, sizeof(r) - 1);
-
-	while (!iterator->end()) {
-		user->println("root: " + r[iterator->next()]->toString());
-	}
-
-	e = new Polynomial(({ 5.0, 4.0, 3.0, 2.0, 1.0 }));
-	r = e->roots();
-	iterator = new IntIterator(0, sizeof(r) - 1);
-
-	while (!iterator->end()) {
-		user->println("root: " + r[iterator->next()]->toString());
-	}
-}
-
 static void cmd_tree(object user, string cmd, string str) {
     JsonTree tree;
     JsonParser jp;
@@ -1473,71 +1100,8 @@ static void cmd_tree(object user, string cmd, string str) {
     user->println("Tree:\n" + tree->toString());
 }
 
-static void cmd_integrate(object user, string cmd, string str) {
-    Integrator gaussLegendre, romberg;
-    Polynomial poly;
-    Number n;
-    Function f;
-    float x;
-
-    poly = new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
-    x = poly->integrate(0.0, 15.0);
-    n = new Number(x);
-    user->println("\nIntegrate " + poly->toString() + "dx from 0..15");
-    user->println("Target:         68148.75 (272595/4)");
-	user->println("Romberg:        " + x + " (" + (new Rational(n))->toString() + ")");
-}
-
-static void cmd_complex(object user, string cmd, string str) {
-    Number z1, z2, z3, x;
-    string err;
-
-    user->println("This command tests complex arithmetic, functions, and properties.\n");
-
-    z1 = new Complex(5, 3);
-    z2 = new Complex(2, 4);
-
-    user->println(z1->cos()->toString());
-    user->println(z1->sin()->toString());
-    user->println(z1->tan()->toString());
-    user->println(z1->sec()->toString());
-    user->println(z1->csc()->toString());
-    user->println(z1->cot()->toString());
-    user->println(z1->log()->toString());
-}
-
-static void cmd_libstring(object user, string cmd, string str) {
-	int len, offset, m;
-	StringBuffer stringBuffer;
-	String testString, replacedString;
-
-	offset = 0;
-	m = status()[ST_STRSIZE];
-	stringBuffer = new StringBuffer();
-
-	while (TRUE) {
-		str = read_file("~nik/kant.txt", offset, m);
-		len = strlen(str);
-		if (len == 0) {
-			break;
-		}
-		stringBuffer->append(str);
-		offset += len;
-	}
-
-	testString = new String(stringBuffer);
-	user->println("original len: " + testString->length());
-
-	replacedString = testString->replace("philosophy", "SCIENCE!");
-	user->println("replaced len: " + replacedString->length());
-
-	stringBuffer = replacedString->buffer();
-	remove_file("~nik/science.txt");
-	while ((str = stringBuffer->chunk()) != nil) {
-		write_file("~nik/science.txt", str);
-	}
-
-	user->println("Done.");
+static void cmd_poly(object user, string cmd, string str) {
+    new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
 }
 
 static void reportMessage(mixed value, object user) {
@@ -1572,78 +1136,4 @@ static void cmd_dq(object user, string cmd, string str) {
 	c = SystemQueue->consumer();
 	c >>= new ChainedContinuation("reportMessage", user);
 	c->runNext();
-}
-
-static cmd_xyz(object user, string cmd, string str) {
-    float a, b, c, value;
-    Number n;
-
-    value = sin(3600030.0 * pi() / 180.0);
-    n = new Number(sin(3600030.0 * pi() / 180.0));
-    user->println("1a) xyz: " + value + ", " + (new Rational(n))->toString());
-
-    value = sin(degreeToRadian(3600030.0));
-    n = new Number(sin(degreeToRadian(3600030.0)));
-    user->println("1b) xyz: " + value + ", " + (new Rational(n))->toString());
-
-    value = sin(normaliseAngle(3600030.0 * 3.141592653589793238462643 / 180.0));
-    user->println("1c) xyz: " + value);
-
-    value = sin(normaliseAngle(degreeToRadian(3600030.0)));
-    user->println("1d) xyz: " + value);
-
-    value = sin(normaliseAngle(3600030.0 * pi() / 180.0));
-    user->println("1e) xyz: " + value);
-
-    value = 6.92736 - 6.92735;
-    n = new Number(6.92736 - 6.92735);
-    user->println("2a) xyz: " + value + ", " + (new Rational(n))->toString());
-
-    value = 6.9273649 - 6.9273451;
-    n = new Number(6.9273649 - 6.9273451);
-    user->println("2b) xyz: " + value + ", " + (new Rational(n))->toString());
-
-    value = 2.0 + 0.2 + 0.2 + 0.2 + 0.2 + 0.2 - 3.0;
-    user->println("3a) xyz: " + value);
-
-    value = 2.0 + (5.0 * 0.2) - 3.0;
-    user->println("3b) xyz: " + value);
-
-    a = 0.2 + 0.2 + 0.2 + 0.2 + 0.2;
-    b = 2.0 + a;
-    value = b - 3.0;
-    user->println("3c) xyz: " + value);
-
-    a = 42.0;
-    b = a / 10.0;
-    c = 10.0 * b;
-    value = a - c;
-    user->println("4) xyz: " + value);
-
-    value = 0.0;
-    for (a = 0.0; a < 10000.0; a += 1.0) {
-        value += 0.1;
-    }
-    user->println("5a) xyz: " + value);
-
-    value = 0.0;
-    for (a = 0.0; a < 1000.0; a += 1.0) {
-        value += 0.1;
-    }
-    user->println("5b) xyz: " + value);
-
-    value = 0.0;
-    for (a = 0.0; a < 100.0; a += 1.0) {
-        value += 0.1;
-    }
-    user->println("5c) xyz: " + value);
-
-    value = pi();
-    user->println("6) xyz: " + value);
-
-    value = sin(0.61);
-    user->println("7) xyz: " + value);
-
-    value = pow(1.0000001, pow(2.0, 27.0));
-    user->println("8) xyz: " + value);
 }

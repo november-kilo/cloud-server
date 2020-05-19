@@ -3,6 +3,7 @@
 # include <kernel/user.h>
 # include <kernel/rsrc.h>
 #include <Math.h>
+#include <Terminal.h>
 
 inherit access API_ACCESS;
 inherit rsrc API_RSRC;
@@ -60,34 +61,12 @@ static void create()
     compile_object("/lib/DelayedContinuation");
     compile_object("/lib/IterativeContinuation");
     compile_object("/lib/DistContinuation");
-    compile_object("/lib/array/Array");
-    compile_object("/lib/array/ArithmeticReducer");
-    compile_object("/lib/array/TabularReducer");
-    compile_object("/lib/array/ToBoxReducer");
-    compile_object("/lib/array/ToListReducer");
-    compile_object("/lib/array/ToMarkedListReducer");
-    compile_object("/lib/file/Tree");
     compile_object("/lib/Queue");
     compile_object("/lib/json/JsonEncoder");
     compile_object("/lib/json/JsonParser");
     compile_object("/lib/json/JsonTree");
-    compile_object("/lib/math/Complex");
-    compile_object("/lib/math/integration/GaussLegendreIntegrator");
-    compile_object("/lib/math/integration/RombergIntegrator");
-	compile_object("/lib/math/integration/TrapezoidQuadrature");
-    compile_object("/lib/math/matrix/Matrix");
-    compile_object("/lib/math/matrix/EigenvalueDecomposition");
-    compile_object("/lib/math/polynomial/Polynomial");
-    compile_object("/lib/math/polynomial/DerivativeIterator");
-    compile_object("/lib/math/polynomial/Interpolator");
-    compile_object("/lib/math/polynomial/ProbabilityReducer");
-    compile_object("/lib/math/polynomial/StringReducer");
-    compile_object("/lib/math/Rational");
-    compile_object("/lib/math/Stats");
-    compile_object("/lib/math/Vector");
-    compile_object("/lib/sort/MergeSort");
+    compile_object("/lib/math/Polynomial");
     compile_object("/sys/jsonparse");
-    compile_object("/sys/kantlipsum");
     compile_object("/sys/systemqueue");
 
     /* Domain stuff */
