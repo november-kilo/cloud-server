@@ -2,7 +2,7 @@ private float *coeffs;
 
 static void create(varargs float *coeffs) {
     if (!coeffs || !sizeof(coeffs)) {
-        error("Polynomial: parameters cannot be empty");
+        error("parameters cannot be empty");
     }
 
     ::coeffs = coeffs;

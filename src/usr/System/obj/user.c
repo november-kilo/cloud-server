@@ -5,11 +5,9 @@
 # include <type.h>
 # include <kfun.h>
 #include <Continuation.h>
-#include <Json.h>
-#include <Math.h>
-#include <Queue.h>
+#include <Iterator.h>
+#include <Foo.h>
 #include <String.h>
-#include <Terminal.h>
 #include <Time.h>
 
 inherit auto	"~/lib/auto";
@@ -607,13 +605,7 @@ static int command(string str)
     case "hotboot":
     case "shutdown":
 
-    case "cls":
-    case "time":
-    case "who":
-    case "config":
-    case "poly":
-    case "dq":
-    case "eq":
+    case "foo":
 	    call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	    break;
 
@@ -960,180 +952,6 @@ int receive_message(string str) {
     }
 }
 
-void cmd_cls(object user, string cmd, string arg) {
-    if (previous_object() != user) {
-        return;
-    }
-
-    user->message(new Terminal()->clear());
-}
-
-void cmd_time(object user, string cmd, string arg) {
-    user->println(ctime(time()));
-}
-
-void cmd_who(object user, string cmd, string arg) {
-    object *users;
-    string *list;
-    int sz;
-    Iterator i;
-
-    users = users() - ({ user });
-    sz = sizeof(users);
-    if (sz == 0) {
-        user->println("One is the loneliest number.");
-        return;
-    }
-    list = allocate(sz);
-    i = new IntIterator(0, sz - 1);
-    arg = "Users logged in:\n";
-    while (!i->end()) {
-        arg += users[i->current()]->query_name() + " " + idleTime(users[i->current()]) + "\n";
-    }
-
-    user->message(arg);
-}
-
-private int setSetting(string key, mixed value) {
-    int returnValue;
-
-    if (!settings) {
-        settings = ([ ]);
-    }
-
-    returnValue = 0;
-
-    if (settings[key]) {
-        returnValue = 1;
-    }
-
-    if (settings[key] != value) {
-        returnValue = 2;
-    }
-
-    settings[key] = value;
-
-    return returnValue;
-}
-
-private mixed getSetting(string key) {
-    if (!settings) {
-        settings = ([ ]);
-    }
-    return settings[key];
-}
-
-private string listSettings(void) {
-    string *keys;
-    string key;
-    mixed *values;
-    int sz;
-    Iterator iterator;
-
-    if (!settings) {
-        settings = ([ ]);
-    }
-
-    keys = map_indices(settings);
-    sz = sizeof(keys);
-
-    if (sz == 0) {
-        return "No settings\n";
-    }
-
-    values = allocate(sz);
-    iterator = new IntIterator(0, sz - 1);
-
-    while (!iterator->end()) {
-        key = keys[iterator->next()];
-        values[iterator->current()] = "" + key + " = " + settings[key];
-    }
-
-    return "Settings:\n ...\n";
-}
-
-static void cmd_config(object user, string cmd, string str) {
-    int x;
-    string s, v;
-
-    if (str) {
-        if (str == "list") {
-            user->message(listSettings());
-            return;
-        }
-
-        if (sscanf(str, "set %s %d", s, x) == 2) {
-            setSetting(s, x);
-            return;
-        } else if (sscanf(str, "set %s %s", s, v) == 2) {
-            setSetting(s, v);
-            return;
-        }
-
-        if (sscanf(str, "get %s", s) == 1) {
-            user->println(s + " = " + getSetting(s));
-            return;
-        }
-    }
-
-    user->println("usage: config list");
-    user->println("usage: config get <setting-name>");
-    user->println("usage: config set <setting-name> <setting-value>");
-}
-
-static void cmd_tree(object user, string cmd, string str) {
-    JsonTree tree;
-    JsonParser jp;
-    string json;
-    mapping *map;
-
-    jp = new JsonParser();
-    json = "[{ \"key\": \"one\", \"children\": [{ \"key\": \"two\" }, { \"key\": \"three\" }] }, { \"key\": \"five\", \"children\": [{ \"key\": \"six\", \"children\": [{ \"key\": \"seven\", \"children\": [{ \"key\": \"eight\" }] }] }, { \"key\": \"nine\" } ] }]";
-
-    user->println("This command tests tree printing. Currently, the tree lib provides no tree-building functions.\n");
-
-    map = jp->parse(json)["json"];
-
-    tree = new JsonTree();
-    tree->traverse(map, !!str);
-
-    user->println("Tree:\n" + tree->toString());
-}
-
-static void cmd_poly(object user, string cmd, string str) {
-    new Polynomial(({ 2.0, 3.0, 4.0, 5.0 }));
-}
-
-static void reportMessage(mixed value, object user) {
-	string str;
-
-	if (typeof(value) == T_OBJECT && function_object("toString", value)) {
-		value = value->toString();
-	}
-	user->println("Message: " + dump_value(value));
-	user->showPrompt();
-}
-
-static string publishMessage(varargs mixed message) {
-	if (!message || (typeof(message) == T_STRING && message == "")) {
-		message = "It's a secret to everybody.";
-	}
-
-	return message;
-}
-
-static void cmd_eq(object user, string cmd, string str) {
-	Continuation c;
-
-	c = new Continuation("publishMessage", str);
-	c >>= SystemQueue->publisher();
-	c->runNext();
-}
-
-static void cmd_dq(object user, string cmd, string str) {
-	Continuation c;
-
-	c = SystemQueue->consumer();
-	c >>= new ChainedContinuation("reportMessage", user);
-	c->runNext();
+static void cmd_foo(object user, string cmd, string str) {
+    new Foo(({ 2.0, 3.0, 4.0, 5.0 }));
 }
