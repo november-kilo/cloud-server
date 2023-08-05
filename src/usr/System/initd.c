@@ -11,6 +11,38 @@ inherit rsrc API_RSRC;
 # define WIZTOOL	"/usr/System/obj/wiztool"
 
 
+mapping resources;	/* saved initial resources at cold boot */
+
+/*
+ * NAME:	restore()
+ * DESCRIPTION:	restore resource maxima for an owner
+ */
+private void restore(string owner)
+{
+    mapping rsrc;
+    mixed max;
+
+    rsrc = resources[owner];
+    if (rsrc) {
+	max = rsrc["fileblocks"];
+	if (max) {
+	    rsrc_set_limit(owner, "fileblocks", max);
+	}
+	max = rsrc["objects"];
+	if (max) {
+	    rsrc_set_limit(owner, "objects", max);
+	}
+	max = rsrc["stack"];
+	if (max) {
+	    rsrc_set_limit(owner, "stack", max);
+	}
+	max = rsrc["ticks"];
+	if (max) {
+	    rsrc_set_limit(owner, "ticks", max);
+	}
+    }
+}
+
 /*
  * NAME:	load()
  * DESCRIPTION:	compile and initialize an object
@@ -26,7 +58,7 @@ private void load(string path)
  */
 static void create()
 {
-    string *domains;
+    string *owners, *domains;
     string domain;
     int i, sz;
 
@@ -61,18 +93,27 @@ static void create()
     compile_object("/lib/DistContinuation");
     compile_object("/lib/Foo");
 
-    /* Domain stuff */
+    resources = ([ ]);
+    restore_object("data/rsrc.dat");
     rsrc_incr(nil, "fileblocks",
 	      DRIVER->file_size("/lib", TRUE) +
 	      DRIVER->file_size("/obj", TRUE));
+    owners = query_owners();
+    for (i = 1, sz = sizeof(owners); i < sz; i++) {
+	restore(owners[i]);
+    }
+
+    /* Domain stuff */
     domains = get_dir("/usr/[A-Z]*")[0];
     for (i = 0, sz = sizeof(domains); i < sz; i++) {
 	domain = domains[i];
-	if (domain != "System" && file_info("/usr/" + domain + "/initd.c")) {
+	if (domain != "System") {
 	    add_owner(domain);
+	    restore(domain);
+
 	    rsrc_incr(domain, "fileblocks",
 		      DRIVER->file_size("/usr/" + domain, TRUE));
-	    rlimits (100; 1000000) {
+	    if (file_info("/usr/" + domain + "/initd.c")) {
 		load("/usr/" + domain + "/initd");
 	    }
 	}

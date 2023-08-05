@@ -7,7 +7,6 @@
 
 inherit auto AUTO;
 inherit SYSTEMAUTO;
-private inherit "/lib/util/string";
 
 
 object driver;
@@ -20,6 +19,49 @@ static void create()
 {
     driver = find_object(DRIVER);
     driver->set_error_manager(this_object());
+}
+
+/*
+ * NAME:	spaces()
+ * DESCRIPTION:	returns the number of spaces requested
+ */
+private string spaces(int width)
+{
+    string str;
+
+    /* 63 spaces */
+    str = "                                                               ";
+    while (strlen(str) < width) {
+        str += str;
+    }
+    return str[.. width - 1];
+}
+
+/*
+ * NAME:	pad_left()
+ * DESCRIPTION:	pad with spaces to the left
+ */
+private string pad_left(mixed str, int width)
+{
+    str = (string) str;
+    if (strlen(str) >= width) {
+	return str;
+    }
+    str = spaces(width) + str;
+    return str[strlen(str) - width ..];
+}
+
+/*
+ * NAME:	pad_right()
+ * DESCRIPTION:	pad with spaces to the right
+ */
+private string pad_right(mixed str, int width)
+{
+    str = (string) str;
+    if (strlen(str) >= width) {
+	return str;
+    }
+    return (str + spaces(width))[.. width - 1];
 }
 
 /*

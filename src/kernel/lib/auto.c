@@ -5,7 +5,6 @@
 # include <status.h>
 # include <type.h>
 # include <trace.h>
-# include <kfun.h>
 
 # define TLS()			::call_trace()[1][TRACE_FIRSTARG]
 # define CHECKARG(arg, n, func)	if (!(arg)) badarg((n), (func))
@@ -137,12 +136,11 @@ static int destruct_object(mixed obj)
      */
     oname = object_name(obj);
     clone = sscanf(oname, "%s#%d", oname, lib);
-    if (clone && lib < 0) {
+    if (lib < 0) {
 	error("Cannot destruct non-persistent object");
     }
     lib = sscanf(oname, "%*s/lib/");
-    oowner = (lib || sscanf(oname, "%*s#") == 0) ?
-	      driver->creator(oname) : obj->query_owner();
+    oowner = (lib || !clone) ? driver->creator(oname) : obj->query_owner();
     if ((sscanf(oname, "/kernel/%*s") != 0 && !lib && !KERNEL()) ||
 	(creator != "System" && owner != oowner)) {
 	error("Cannot destruct object: not owner");
@@ -188,7 +186,7 @@ private atomic object _compile(object driver, string path, string uid,
  */
 static object compile_object(string path, string source...)
 {
-    string uid, err;
+    string uid;
     object driver, obj;
     int lib, kernel;
 
@@ -218,8 +216,9 @@ static object compile_object(string path, string source...)
      * do the compiling
      */
     rlimits (-1; -1) {
-	err = catch(obj = _compile(driver, path, uid, source));
-	if (err) {
+	try {
+	    obj = _compile(driver, path, uid, source);
+	} catch (err) {
 	    driver->compile_failed(path, uid);
 	    error(err);
 	}
@@ -295,15 +294,6 @@ static object clone_object(string path, varargs string uid)
 }
 
 /*
- * NAME:	_new()
- * DESCRIPTION:	reversible low-level new
- */
-private atomic object _new(object obj)
-{
-    return ::new_object(obj);
-}
-
-/*
  * NAME:	new_object()
  * DESCRIPTION:	create a new non-persistent object
  */
@@ -367,7 +357,7 @@ static object new_object(mixed obj, varargs string uid)
 
 	TLSVAR(TLS(), TLS_ARGUMENT) = uid;
     }
-    return _new(obj);
+    return ::new_object(obj);
 }
 
 /*
@@ -579,11 +569,7 @@ static void connect_datagram(int dgram, string address, int port)
     if (previous_program() != DATAGRAM_CONN) {
 	error("Permission denied");
     }
-# ifdef KF_CONNECT_DATAGRAM
     ::connect_datagram(dgram, address, port);
-# else
-    ::call_out("unconnected", 0, 0);
-# endif
 }
 
 /*
@@ -592,7 +578,7 @@ static void connect_datagram(int dgram, string address, int port)
  */
 static void swapout()
 {
-    if (creator != "System") {
+    if (creator != "System" || !this_object()) {
 	error("Permission denied");
     }
     ::swapout();
@@ -624,10 +610,16 @@ static void shutdown(varargs int hotboot)
     }
     rlimits (-1; -1) {
 	::shutdown(hotboot);
+<<<<<<< HEAD
 #ifdef KF_PERL_TERM
 	::perl_term();
 #endif
 	::find_object(DRIVER)->message("System halted.\n");
+=======
+	::find_object(DRIVER)->message((hotboot) ?
+					"System hotbooting...\n\n" :
+					"System halted.\n\n");
+>>>>>>> 466d2aaad9055c67265fa673dd1370c53476c254
     }
 }
 
@@ -637,7 +629,7 @@ static void shutdown(varargs int hotboot)
  */
 static int call_touch(object obj)
 {
-    if (creator != "System") {
+    if (creator != "System" || !this_object()) {
 	error("Permission denied");
     }
     return ::call_touch(obj);
@@ -843,14 +835,16 @@ static int write_file(string path, string str, varargs int offset)
     }
 
     size = driver->file_size(path);
-    catch {
+    try {
 	rlimits (-1; -1) {
 	    result = ::write_file(path, str, offset);
 	    if (result != 0 && (size=driver->file_size(path) - size) != 0) {
 		rsrcd->rsrc_incr(fcreator, "fileblocks", size);
 	    }
 	}
-    } : error(TLSVAR(TLS(), TLS_ERROR));
+    } catch (err) {
+	error(err);
+    }
 
     return result;
 }
@@ -880,7 +874,7 @@ static int remove_file(string path)
     }
 
     size = driver->file_size(path);
-    catch {
+    try {
 	rlimits (-1; -1) {
 	    result = ::remove_file(path);
 	    if (result != 0 && size != 0) {
@@ -888,7 +882,9 @@ static int remove_file(string path)
 						"fileblocks", -size);
 	    }
 	}
-    } : error(TLSVAR(TLS(), TLS_ERROR));
+    } catch (err) {
+	error(err);
+    }
     return result;
 }
 
@@ -933,7 +929,7 @@ static int rename_file(string from, string to)
 	error("File quota exceeded");
     }
 
-    catch {
+    try {
 	rlimits (-1; -1) {
 	    result = ::rename_file(from, to);
 	    if (result != 0 && fcreator != tcreator) {
@@ -941,7 +937,9 @@ static int rename_file(string from, string to)
 		rsrcd->rsrc_incr(fcreator, "fileblocks", -size);
 	    }
 	}
-    } : error(TLSVAR(TLS(), TLS_ERROR));
+    } catch (err) {
+	error(err);
+    }
     return result;
 }
 
@@ -1076,14 +1074,16 @@ static int make_dir(string path)
 	error("File quota exceeded");
     }
 
-    catch {
+    try {
 	rlimits (-1; -1) {
 	    result = ::make_dir(path);
 	    if (result != 0) {
 		rsrcd->rsrc_incr(fcreator, "fileblocks", 1);
 	    }
 	}
-    } : error(TLSVAR(TLS(), TLS_ERROR));
+    } catch (err) {
+	error(err);
+    }
     return result;
 }
 
@@ -1111,7 +1111,7 @@ static int remove_dir(string path)
 	error("Access denied");
     }
 
-    catch {
+    try {
 	rlimits (-1; -1) {
 	    result = ::remove_dir(path);
 	    if (result != 0) {
@@ -1119,7 +1119,9 @@ static int remove_dir(string path)
 						"fileblocks", -1);
 	    }
 	}
-    } : error(TLSVAR(TLS(), TLS_ERROR));
+    } catch (err) {
+	error(err);
+    }
     return result;
 }
 
@@ -1179,14 +1181,16 @@ static void save_object(string path)
     }
 
     size = driver->file_size(path);
-    catch {
+    try {
 	rlimits (-1; -1) {
 	    ::save_object(path);
 	    if ((size=driver->file_size(path) - size) != 0) {
 		rsrcd->rsrc_incr(fcreator, "fileblocks", size);
 	    }
 	}
-    } : error(TLSVAR(TLS(), TLS_ERROR));
+    } catch (err) {
+	error(err);
+    }
 }
 
 /*
@@ -1204,7 +1208,7 @@ static string editor(varargs string cmd)
 	error("Permission denied");
     }
 
-    catch {
+    try {
 	rlimits (-1; -1) {
 	    rsrcd = ::find_object(RSRCD);
 	    if (!query_editor(this_object())) {
@@ -1224,7 +1228,9 @@ static string editor(varargs string cmd)
 				 driver->file_size(info[0]) - info[1]);
 	    }
 	}
-    } : error(TLSVAR(TLS(), TLS_ERROR));
+    } catch (err) {
+	error(err);
+    }
     return result;
 }
 

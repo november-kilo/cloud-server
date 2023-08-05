@@ -36,6 +36,8 @@ static void create(varargs string func, mixed args...)
 {
     if (func) {
 	createContinuation(FALSE, 0, func, args);
+    } else {
+	continued = ({ });
     }
 }
 
@@ -62,7 +64,8 @@ private void addCont(Continuation cont)
     }
 
     continuation = cont->continued();
-    if (continuation[CONT_DELAY] != 0 && continuation[CONT_OBJS] == TRUE &&
+    if (sizeof(continuation) != 0 && continuation[CONT_DELAY] != 0 &&
+	continuation[CONT_OBJS] == TRUE &&
 	continuation[CONT_FUNC] == "_F_return" &&
 	continued[i=(sizeof(continued) - CONT_SIZE + CONT_DELAY)] == 0) {
 	/*
@@ -170,12 +173,14 @@ atomic void runNext(varargs mixed arg)
     if (started) {
 	error("Continuation already started");
     }
-    if (!continued[CONT_ORIGIN]) {
-	error("No environment for Continuation");
-    }
+    if (sizeof(continued) != 0) {
+	if (!continued[CONT_ORIGIN]) {
+	    error("No environment for Continuation");
+	}
 
-    continued[CONT_VAL] = arg;
-    ::startContinuation(continued, FALSE);
+	continued[CONT_VAL] = arg;
+	::startContinuation(continued, FALSE);
+    }
     started = TRUE;
 }
 
@@ -187,12 +192,14 @@ atomic void runParallel(varargs mixed arg)
     if (started) {
 	error("Continuation already started");
     }
-    if (!continued[CONT_ORIGIN]) {
-	error("No environment for Continuation");
-    }
+    if (sizeof(continued) != 0) {
+	if (!continued[CONT_ORIGIN]) {
+	    error("No environment for Continuation");
+	}
 
-    continued[CONT_VAL] = arg;
-    ::startContinuation(continued, TRUE);
+	continued[CONT_VAL] = arg;
+	::startContinuation(continued, TRUE);
+    }
     started = TRUE;
 }
 

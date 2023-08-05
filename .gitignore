@@ -1,4 +1,4 @@
-bin/
+src/include/connect.h
 src/include/float.h
 src/include/kfun.h
 src/include/limits.h
@@ -12,3 +12,4 @@ nkcloud.dgd
 **/.vscode
 extensions/**/*.o
 extensions/*.1.*
+extensions/jit

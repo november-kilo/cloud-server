@@ -211,14 +211,15 @@ void compiling(string path)
 {
     if (previous_program() == AUTO) {
 	mapping tls;
-	string err, *mesg, *messages;
+	string *mesg, *messages;
 
 	tls = TLS();
 	if (path != AUTO && path != DRIVER && !find_object(AUTO)) {
 	    TLSVAR(tls, TLS_SOURCE) = ([ AUTO + ".c": AUTO + ".c" ]);
 	    TLSVAR(tls, TLS_INHERIT) = ({ AUTO });
-	    err = catch(compile_object(AUTO));
-	    if (err) {
+	    try {
+		compile_object(AUTO);
+	    } catch (err) {
 		mesg = ({ "c" + AUTO });
 		messages = TLSVAR(tls, TLS_PUT_ATOMIC);
 		if (messages) {
@@ -312,10 +313,10 @@ void message(string str)
 }
 
 /*
- * NAME:	load()
+ * NAME:	_compile()
  * DESCRIPTION:	find or compile object
  */
-private object load(string path)
+private atomic object _compile(string path)
 {
     object obj;
     mapping tls;
@@ -343,13 +344,13 @@ private void _initialize(mapping tls)
     message("Initializing...\n");
 
     /* load initial objects */
-    load(AUTO);
-    call_other(rsrcd = load(RSRCD), "???");
-    load(RSRCOBJ);
+    _compile(AUTO);
+    call_other(rsrcd = _compile(RSRCD), "???");
+    _compile(RSRCOBJ);
 
     /* initialize some resources */
-    rsrcd->set_rsrc("stack",     100, 0, 0);
-    rsrcd->set_rsrc("ticks", 5000000, 0, 0);
+    rsrcd->set_rsrc("stack",     100,  0,    0);
+    rsrcd->set_rsrc("ticks", 5000000, 10, 3600);
 
     /* create initial resource owners */
     rsrcd->add_owner("System");
@@ -361,9 +362,9 @@ private void _initialize(mapping tls)
 		     file_size("/doc", TRUE) + file_size("/include", TRUE));
 
     /* load remainder of manager objects */
-    call_other(accessd = load(ACCESSD), "???");
-    call_other(userd = load(USERD), "???");
-    call_other(load(DEFAULT_WIZTOOL), "???");
+    call_other(accessd = _compile(ACCESSD), "???");
+    call_other(userd = _compile(USERD), "???");
+    call_other(_compile(DEFAULT_WIZTOOL), "???");
 
     /* correct object count */
     rsrcd->rsrc_incr("System", "objects", 7);
@@ -389,10 +390,10 @@ private void _initialize(mapping tls)
  */
 static void initialize()
 {
-    catch {
+    try {
 	_initialize(([ ]));
 	message("Initialization complete.\n\n");
-    } : {
+    } catch (...) {
 	message("Initialization failed.\n");
 	shutdown();
     }
@@ -505,7 +506,7 @@ static object call_object(string path)
 	path = normalize_path(path);
     }
     if (sscanf(path, "%*s/lib/") != 0 ||
-	(objectd && objectd->forbid_call(path))) {
+	(objectd && !(path=objectd->call_object(path)))) {
 	error("Illegal use of call_other");
     }
     return find_object(path);
@@ -599,20 +600,13 @@ static object inherit_program(string from, string path, int priv)
     tls = TLS();
     obj = find_object(path);
     if (!obj) {
-	int *rsrc;
-	string err, *mesg, *messages;
-
-	creator = creator(path);
-	rsrc = rsrcd->rsrc_get(creator, "objects");
-	if (rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] && rsrc[RSRC_MAX] >= 0) {
-	    error("Too many objects");
-	}
+	string *mesg, *messages;
 
 	TLSVAR(tls, TLS_SOURCE) = ([ ]);
 	TLSVAR(tls, TLS_INHERIT) = ({ path });
-	err = catch(obj = (str) ?
-			   compile_object(path, str...) : compile_object(path));
-	if (err) {
+	try {
+	    obj = (str) ? compile_object(path, str...) : compile_object(path);
+	} catch (err) {
 	    mesg = ({ "c" + path });
 	    messages = TLSVAR(tls, TLS_PUT_ATOMIC);
 	    if (messages) {
@@ -623,6 +617,7 @@ static object inherit_program(string from, string path, int priv)
 	    TLSVAR(tls, TLS_PUT_ATOMIC) = messages;
 	    error(err);
 	}
+	creator = creator(path);
 	rsrcd->rsrc_incr(creator, "objects", 1);
 	if (objectd) {
 	    TLSVAR(tls, TLS_SOURCE)[path + ".c"] = (str) ? str : path + ".c";
@@ -644,9 +639,18 @@ static object inherit_program(string from, string path, int priv)
  */
 static mixed include_file(string from, string path)
 {
+    string user, file;
     mapping source;
     mixed result;
 
+    if (sscanf(path, "~%s/%s", user, file) != 0 && strlen(user) != 0 &&
+	sscanf(file, "include/%*s") == 0 &&
+	sscanf(file, "api/include/%*s") == 0) {
+	/*
+	 * ~System/file.h => ~System/api/include/file.h
+	 */
+	path = "~" + user + "/api/include/" + file;
+    }
     if (strlen(path) != 0 && path[0] != '~' && sscanf(path, "%*s/../") == 0 &&
 	(sscanf(path, "/include/%*s") != 0 || sscanf(path, "%*s/") == 0)) {
 	/*
@@ -797,7 +801,9 @@ private void _runtime_error(mapping tls, string str, int caught, int ticks,
     }
 
     if (errord) {
-	errord->runtime_error(str, caught, trace);
+	catch {
+	    errord->runtime_error(str, caught, trace);
+	}
     } else {
 	if (caught != 0) {
 	    str += " [caught]";
@@ -843,7 +849,9 @@ private void _runtime_error(mapping tls, string str, int caught, int ticks,
 
 	message(str);
 	if (caught == 0 && user) {
-	    user->message(str);
+	    catch {
+		user->message(str);
+	    }
 	}
     }
 }
@@ -917,7 +925,7 @@ static string runtime_error(string str, int caught, int ticks)
     } else if (ticks < 0 && sscanf(trace[caught - 1][TRACE_PROGNAME],
 				   "/kernel/%*s") != 0 &&
 	       trace[caught - 1][TRACE_FUNCTION] != "cmd_code") {
-	return TLSVAR(tls, TLS_ERROR) = str;
+	return str;
     }
 
     _runtime_error(tls, str, caught, ticks, trace, user);
@@ -945,7 +953,8 @@ static string atomic_error(string str, int atom, int ticks)
     }
 
     if (trace[atom][TRACE_FUNCTION] != "_compile" ||
-	trace[atom][TRACE_PROGNAME] != AUTO) {
+	((progname=trace[atom][TRACE_PROGNAME]) != AUTO && progname != DRIVER))
+    {
 	if (errord) {
 	    errord->atomic_error(str, atom, trace);
 	} else {

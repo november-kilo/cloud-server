@@ -1,6 +1,6 @@
-# include "compiler.h"
-# include "code.h"
+# include "Code.h"
 # include "expression.h"
+# include "compiler.h"
 
 inherit LPC_PARSE_UTIL;
 
@@ -119,35 +119,45 @@ ListDcltr: Dcltr							\
 ListDcltr: ListDcltr ',' Dcltr						\
 Locals: ListLocal					? list		\
 ListLocal:								\
+Exception: ident							\
+Exception: '...'							\
 ListLocal: ListLocal DataDecl						\
 ListStmt:								\
 ListStmt: ListStmt Stmt					? listStmt	" +
 "\
-OptElse: 'else' Stmt					? parsed_1_	\
-OptElse:						? opt		\
-Stmt: ListExp ';'					? expStmt	\
-Stmt: CompoundStmt							\
-Stmt: 'if' '(' ListExp ')' Stmt OptElse			? ifStmt	\
-Stmt: 'do' Stmt 'while' '(' ListExp ')' ';'		? doWhileStmt	\
-Stmt: 'while' '(' ListExp ')' Stmt			? whileStmt	\
-Stmt: 'for' '(' OptListExp ';' OptListExp ';' OptListExp ')' Stmt	\
+IfStmt: 'if' '(' ListExp ')' Stmt			? ifStmt	\
+Stmt: BStmt								\
+Stmt: IfStmt								\
+Stmt: Entries IfStmt					? entryStmt	\
+BStmt: EStmt								\
+BStmt: Entries EStmt					? entryStmt	\
+EStmt: ListExp ';'					? expStmt	\
+EStmt: CompoundStmt							\
+EStmt: 'if' '(' ListExp ')' BStmt 'else' Stmt		? ifElseStmt	\
+EStmt: 'do' Stmt 'while' '(' ListExp ')' ';'		? doWhileStmt	\
+EStmt: 'while' '(' ListExp ')' Stmt			? whileStmt	\
+EStmt: 'for' '(' OptListExp ';' OptListExp ';' OptListExp ')' Stmt	\
 							? forStmt	\
-Stmt: 'rlimits' '(' ListExp ';' ListExp ')' CompoundStmt		\
+EStmt: 'rlimits' '(' ListExp ';' ListExp ')' CompoundStmt		\
 							? rlimitsStmt	\
-Stmt: 'catch' CompoundStmt ':' Stmt			? catchErrStmt	\
-Stmt: 'catch' CompoundStmt				? catchStmt	" +
+EStmt: 'try' CompoundStmt 'catch' '(' Exception ')' CompoundStmt	\
+							? tryCatchStmt	\
+EStmt: 'catch' CompoundStmt ':' Stmt			? catchErrStmt	\
+EStmt: 'catch' CompoundStmt				? catchStmt	" +
 "\
-Stmt: 'switch' '(' ListExp ')' CompoundStmt		? switchStmt	\
-Stmt: 'case' Exp ':' Stmt				? caseStmt	\
-Stmt: 'case' Exp '..' Exp ':' Stmt			? caseRangeStmt	\
-Stmt: 'default' ':' Stmt				? defaultStmt	\
-Stmt: ident ':' Stmt					? labelStmt	\
-Stmt: 'goto' ident ';'					? gotoStmt	\
-Stmt: 'break' ';'					? breakStmt	\
-Stmt: 'continue' ';'					? continueStmt	\
-Stmt: 'return' ListExp ';'				? returnExpStmt	\
-Stmt: 'return' ';'					? returnStmt	\
-Stmt: ';'						? emptyStmt	\
+EStmt: 'switch' '(' ListExp ')' CompoundStmt		? switchStmt	\
+EStmt: 'goto' ident ';'					? gotoStmt	\
+EStmt: 'break' ';'					? breakStmt	\
+EStmt: 'continue' ';'					? continueStmt	\
+EStmt: 'return' ListExp ';'				? returnExpStmt	\
+EStmt: 'return' ';'					? returnStmt	\
+EStmt: ';'						? emptyStmt	\
+Entries: Entry								\
+Entries: Entries Entry							\
+Entry: 'case' Exp ':'					? caseEntry	\
+Entry: 'case' Exp '..' Exp ':'				? rangeEntry	\
+Entry: 'default' ':'					? defaultEntry	\
+Entry: ident ':'					? labelEntry	\
 CompoundStmt: '{' Locals ListStmt '}'			? compoundStmt	" +
 "\
 FunctionCall: FunctionName						\
@@ -963,11 +973,19 @@ static mixed *expComma(mixed *parsed)
 }
 
 /*
- * ({ "if", "(", LPCExpression, ")", LPCStatement, nil })
+ * ({ "if", "(", LPCExpression, ")", LPCStatement })
  */
 static mixed *ifStmt(mixed *parsed)
 {
-    return ({ new LPCStmtCond(parsed[2], parsed[4], parsed[5]) });
+    return ({ new LPCStmtConditional(parsed[2], parsed[4], nil) });
+}
+
+/*
+ * ({ "if", "(", LPCExpression, ")", LPCStatement, 'else', LPCStatement })
+ */
+static mixed *ifElseStmt(mixed *parsed)
+{
+    return ({ new LPCStmtConditional(parsed[2], parsed[4], parsed[6]) });
 }
 
 /*
@@ -1004,11 +1022,19 @@ static mixed *rlimitsStmt(mixed *parsed)
 }
 
 /*
+ * ({ "try", LPCBlockStmt, "catch", "(", "...", ")", LPCBlockStmt })
+ */
+static mixed *tryCatchStmt(mixed *parsed)
+{
+    return ({ new LPCStmtTryCatch(parsed[1], parsed[4], parsed[6]) });
+}
+
+/*
  * ({ "catch", LPCBlockStmt, ":", LPCStatement })
  */
 static mixed *catchErrStmt(mixed *parsed)
 {
-    return ({ new LPCStmtCatch(parsed[1], parsed[3]) });
+    return ({ new LPCStmtTryCatch(parsed[1], "...", parsed[3]) });
 }
 
 /*
@@ -1016,7 +1042,7 @@ static mixed *catchErrStmt(mixed *parsed)
  */
 static mixed *catchStmt(mixed *parsed)
 {
-    return ({ new LPCStmtCatch(parsed[1], nil) });
+    return ({ new LPCStmtTryCatch(parsed[1], "...", nil) });
 }
 
 /*
@@ -1028,35 +1054,46 @@ static mixed *switchStmt(mixed *parsed)
 }
 
 /*
- * ({ "case", LPCExpression, ":", LPCStatement })
+ * ({ LPCEntry, LPCEntry, ... LPCEntry, LPCStatement })
  */
-static mixed *caseStmt(mixed *parsed)
+static mixed *entryStmt(mixed *parsed)
 {
-    return ({ new LPCStmtCase(parsed[1], parsed[3]) });
+    int size;
+
+    size = sizeof(parsed);
+    return ({ new LPCEntryStmt(parsed[.. size - 2], parsed[size - 1]) });
 }
 
 /*
- * ({ "case", LPCExpression, "..", LPCExpression, ":", LPCStatement })
+ * ({ "case", LPCExpression, ":" })
  */
-static mixed *caseRangeStmt(mixed *parsed)
+static mixed *caseEntry(mixed *parsed)
 {
-    return ({ new LPCStmtCaseRange(parsed[1], parsed[3], parsed[5]) });
+    return ({ new LPCCase(parsed[1]) });
 }
 
 /*
- * ({ "default", ":", LPCStatement })
+ * ({ "case", LPCExpression, "..", LPCExpression, ":" })
  */
-static mixed *defaultStmt(mixed *parsed)
+static mixed *caseRangeEntry(mixed *parsed)
 {
-    return ({ new LPCStmtDefault(parsed[2]) });
+    return ({ new LPCCaseRange(parsed[1], parsed[3]) });
 }
 
 /*
- * ({ "label", ":", LPCStatement })
+ * ({ "default", ":" })
  */
-static mixed *labelStmt(mixed *parsed)
+static mixed *defaultEntry(mixed *parsed)
 {
-    return ({ new LPCStmtLabel(parsed[0], parsed[2]) });
+    return ({ new LPCDefault() });
+}
+
+/*
+ * ({ "label", ":" })
+ */
+static mixed *labelEntry(mixed *parsed)
+{
+    return ({ new LPCLabel(parsed[0]) });
 }
 
 /*

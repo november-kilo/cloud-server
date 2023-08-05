@@ -11,6 +11,7 @@ object rsrcd;		/* resource manager */
 mapping resources;	/* registered resources */
 string owner;		/* owner of these resources */
 int maxticks;		/* maximum number of ticks currently allowed */
+float maxusage;		/* maximum tick usage */
 
 /*
  * NAME:	create()
@@ -20,21 +21,22 @@ static void create()
 {
     resources = ([
       "stack" :		({   0, -1, 0 }),
-      "ticks" :		({   0, -1, 0 }),
-      "tick usage" :	({ 0.0, -1, 0 })
+      "ticks" :		({ 0.0, -1, 0 })
     ]);
     maxticks = -1;
+    maxusage = -1.0;
     rsrcd = find_object(RSRCD);
 }
 
 /*
- * NAME:	set_owner()
- * DESCRIPTION:	set the owner of this resource
+ * NAME:	init()
+ * DESCRIPTION:	initialize resource
  */
-void set_owner(string name)
+void init(string name, int time)
 {
     if (previous_object() == rsrcd) {
 	owner = name;
+	resources["ticks"][RSRC_DECAYTIME] = time;
     }
 }
 
@@ -85,9 +87,7 @@ private void set_rlimits(mixed *rsrc, int update)
 {
     int max;
 
-    max = rsrc[RSRC_MAX];
-    max = (max < 0 || rsrc[RSRC_USAGE] < (float) max) ?
-	   resources["ticks"][RSRC_MAX] : 1;
+    max = (maxusage > 0.0 && rsrc[RSRC_USAGE] >= maxusage) ? 1 : rsrc[RSRC_MAX];
     if (update || maxticks != max) {
 	maxticks = max;
 	rsrcd->set_rlimits(owner,
@@ -110,13 +110,27 @@ void rsrc_set_limit(string name, int max, int decay)
 
 	if ((rsrc=resources[name])) {
 	    rsrc[RSRC_MAX] = max;
-	    if (name == "stack" || name == "ticks" || name == "tick usage") {
+	    if (name == "stack" || name == "ticks") {
 		rlimits (-1; -1) {
-		    set_rlimits(resources["tick usage"], TRUE);
+		    set_rlimits(resources["ticks"], TRUE);
 		}
 	    }
 	} else {
 	    resources[name] = ({ (decay == 0) ? 0 : 0.0, max, 0 });
+	}
+    }
+}
+
+/*
+ * NAME:	rsrc_set_maxtickusage()
+ * DESCRIPTION:	set the maximum tick usage
+ */
+void rsrc_set_maxtickusage(float tickusage)
+{
+    if (previous_object() == rsrcd) {
+	rlimits (-1; -1) {
+	    maxusage = tickusage;
+	    set_rlimits(resources["ticks"], FALSE);
 	}
     }
 }
@@ -143,7 +157,7 @@ mixed *rsrc_get(string name, int *grsrc)
 		rlimits (-1; -1) {
 		    /* decay resource */
 		    decay_rsrc(rsrc, grsrc, time);
-		    if (name == "tick usage") {
+		    if (name == "ticks") {
 			set_rlimits(rsrc, TRUE);
 		    }
 		}
@@ -154,6 +168,17 @@ mixed *rsrc_get(string name, int *grsrc)
 	    }
 	    return rsrc;
 	}
+    }
+}
+
+/*
+ * NAME:	rsrc_get_maxtickusage()
+ * DESCRIPTION:	get maximum tick usage
+ */
+float rsrc_get_maxtickusage()
+{
+    if (previous_object() == rsrcd) {
+	return maxusage;
     }
 }
 
@@ -220,7 +245,7 @@ static void delayed_incr(mapping map)
 	    }
 	    rsrc[RSRC_USAGE] += incr;
 
-	    if (name == "tick usage") {
+	    if (name == "ticks") {
 		set_rlimits(rsrc, time == 0);
 	    }
 	} else {
@@ -243,11 +268,10 @@ void decay_ticks(int *limits, int time, mixed *grsrc)
 	mixed *rsrc;
 
 	rlimits (-1; -1) {
-	    rsrc = resources["tick usage"];
+	    rsrc = resources["ticks"];
 	    decay_rsrc(rsrc, grsrc, time);
-	    maxticks = rsrc[RSRC_MAX];
-	    maxticks = (maxticks < 0 || rsrc[RSRC_USAGE] < (float) maxticks) ?
-			resources["ticks"][RSRC_MAX] : 1;
+	    maxticks = (maxusage > 0.0 && rsrc[RSRC_USAGE] >= maxusage) ?
+			1 : rsrc[RSRC_MAX];
 	    limits[LIM_MAX_TICKS] = maxticks;
 	    limits[LIM_MAX_TIME] = rsrc[RSRC_DECAYTIME];
 	}
@@ -272,9 +296,9 @@ void update_ticks(int ticks, mixed *grsrc)
 static void incr_ticks(int ticks, int *grsrc)
 {
     mixed *rsrc;
-    int time, max;
+    int time;
 
-    rsrc = resources["tick usage"];
+    rsrc = resources["ticks"];
     time = time();
     if (time - (int) rsrc[RSRC_DECAYTIME] >= grsrc[GRSRC_PERIOD]) {
 	/* decay resource */

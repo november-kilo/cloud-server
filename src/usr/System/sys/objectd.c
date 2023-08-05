@@ -12,8 +12,6 @@
 
 
 object driver;		/* driver object */
-int factor;		/* 2nd level divisor */
-mapping index2db;	/* ([ index / factor : dbase object ]) */
 mapping creator2db;	/* ([ creator : dbase object ]) */
 
 private void preregister_objects();
@@ -25,8 +23,6 @@ private void preregister_objects();
 static void create()
 {
     driver = find_object(DRIVER);
-    factor = status(ST_ARRAYSIZE);
-    index2db = ([ ]);
     creator2db = ([ ]);
 
     compile_object(OBJDBASE);
@@ -39,7 +35,7 @@ static void create()
  * NAME:	register_included()
  * DESCRIPTION:	register included files
  */
-private void register_included(int index, string *includes)
+private void register_included(int index, object obj, string *includes)
 {
     int i;
     string creator;
@@ -52,7 +48,7 @@ private void register_included(int index, string *includes)
 	    creator2db[creator] = dbobj = clone_object(OBJDBASE);
 	    dbobj->set_creator(creator);
 	}
-	dbobj->add_included(index, includes[i]);
+	dbobj->add_included(index, obj, includes[i]);
     }
 }
 
@@ -74,14 +70,17 @@ private void unregister_included(int index, string *includes)
  * NAME:	register_inherited()
  * DESCRIPTION:	register inherited objects
  */
-private void register_inherited(int issue, int *inherits)
+private void register_inherited(int issue, object dbobj, mapping inherits)
 {
-    int i, index;
+    int *indices, i;
+    object *objects;
 
     /* register inherited objects */
-    for (i = sizeof(inherits); --i >= 0; ) {
-	index = inherits[i];
-	index2db[index / factor][index]->add_inherited(issue, index);
+    indices = map_indices(inherits);
+    objects = map_values(inherits);
+
+    for (i = sizeof(indices); --i >= 0; ) {
+	objects[i]->add_inherited(issue, dbobj, indices[i]);
     }
 }
 
@@ -89,21 +88,15 @@ private void register_inherited(int issue, int *inherits)
  * NAME:	unregister_inherited()
  * DESCRIPTION:	unregister inherited objects
  */
-private void unregister_inherited(int issue, int *inherits)
+private void unregister_inherited(int issue, mapping inherits)
 {
-    int i, index;
-    mapping dbase;
+    int *indices, i;
+    object *objects;
 
-    for (i = sizeof(inherits); --i >= 0; ) {
-	index = inherits[i];
-	dbase = index2db[index / factor];
-	if (dbase[index]->del_inherited(issue, index)) {
-	    /* index completely removed */
-	    dbase[index] = nil;
-	    if (map_sizeof(dbase) == 0) {
-		index2db[index / factor] = nil;
-	    }
-	}
+    indices = map_indices(inherits);
+    objects = map_values(inherits);
+    for (i = sizeof(indices); --i >= 0; ) {
+	objects[i]->del_inherited(issue, indices[i]);
     }
 }
 
@@ -114,10 +107,9 @@ private void unregister_inherited(int issue, int *inherits)
 private void register_object(string creator, string path, string *includes,
 			     string *inherits)
 {
-    int index, i;
     object dbobj;
-    mapping dbase;
-    int *issues;
+    int index, i;
+    mapping issues;
 
     /* get creator's dbase object */
     dbobj = creator2db[creator];
@@ -126,24 +118,21 @@ private void register_object(string creator, string path, string *includes,
 	dbobj->set_creator(creator);
     }
 
-    /* update index mapping */
     index = status(path, O_INDEX);
-    dbase = index2db[index / factor];
-    if (dbase) {
-	if (dbase[index]) {
-	    /* object recompiled: unregister old inherited and included */
-	    unregister_inherited(index, dbobj->query_inherits(index));
-	    unregister_included(index, dbobj->query_includes(index));
-	} else {
-	    dbase[index] = dbobj;
-	}
-    } else {
-	index2db[index / factor] = ([ index : dbobj ]);
+    if (dbobj->query_object(index)) {
+	/* object recompiled: unregister old inherited and included */
+	unregister_inherited(index, dbobj->query_inherits(index));
+	unregister_included(index, dbobj->query_includes(index));
     }
 
     /* obtain list of inherited issues */
-    for (i = sizeof(inherits), issues = allocate_int(i); --i >= 0; ) {
-	issues[i] = status(inherits[i], O_INDEX);
+    if ((i=sizeof(inherits)) > 1 && creator != "System") {
+	inherits = inherits[1 ..];
+	--i;
+    }
+    for (issues = ([ ]); --i >= 0; ) {
+	issues[status(inherits[i], O_INDEX)] =
+				    creator2db[driver->creator(inherits[i])];
     }
 
     /* register object in dbase object */
@@ -151,8 +140,8 @@ private void register_object(string creator, string path, string *includes,
 		      index, issues);
 
     /* register included and inherited */
-    register_included(index, includes);
-    register_inherited(index, issues);
+    register_included(index, dbobj, includes);
+    register_inherited(index, dbobj, issues);
 }
 
 /*
@@ -161,24 +150,16 @@ private void register_object(string creator, string path, string *includes,
  */
 private void unregister_object(string path, int index)
 {
-    mapping dbase;
     object dbobj;
 
-    dbase = index2db[index / factor];
-    dbobj = dbase[index];
+    dbobj = creator2db[driver->creator(path)];
 
     /* unregister inherited and included */
     unregister_inherited(index, dbobj->query_inherits(index));
     unregister_included(index, dbobj->query_includes(index));
 
     /* unregister object */
-    if (dbobj->del_object(index)) {
-	/* dbase object removed */
-	dbase[index] = nil;
-	if (map_sizeof(dbase) == 0) {
-	    index2db[index / factor] = nil;
-	}
-    }
+    dbobj->del_object(index);
 }
 
 /*
@@ -196,7 +177,6 @@ private string *preregister_includes(string path)
 	    "/include/kernel/kernel.h",
 	    "/include/kernel/rsrc.h",
 	    "/include/kernel/user.h",
-	    "/include/kfun.h",
 	    "/include/status.h",
 	    "/include/trace.h",
 	    "/include/type.h"
@@ -240,6 +220,7 @@ private string *preregister_includes(string path)
     case LIB_USER:
     case BINARY_CONN:
     case TELNET_CONN:
+    case DATAGRAM_CONN:
     case DEFAULT_WIZTOOL:
 	return ({
 	    "/include/config.h",
@@ -335,6 +316,7 @@ private string *preregister_inherits(string path)
 
     case BINARY_CONN:
     case TELNET_CONN:
+    case DATAGRAM_CONN:
 	return ({ LIB_CONN });
 
     case DEFAULT_USER:
@@ -364,7 +346,8 @@ private void preregister_objects()
 	RSRCD, ACCESSD, USERD,
 	API_RSRC, API_ACCESS, API_USER, 
 	LIB_CONN, LIB_USER, LIB_WIZTOOL,
-	RSRCOBJ, BINARY_CONN, TELNET_CONN, DEFAULT_USER, DEFAULT_WIZTOOL,
+	RSRCOBJ, BINARY_CONN, TELNET_CONN, DATAGRAM_CONN, DEFAULT_USER,
+	DEFAULT_WIZTOOL,
 	INIT, OBJECTSERVER, OBJDBASE
     });
 
@@ -376,17 +359,33 @@ private void preregister_objects()
 }
 
 /*
+ * NAME:	dbobject()
+ * DESCRIPTION:	find database object for index
+ */
+private object dbobject(int index)
+{
+    object *dbobjects;
+    int i;
+
+    dbobjects = map_values(creator2db);
+    for (i = sizeof(dbobjects); i > 0; ) {
+	if (dbobjects[--i]->query_object(index)) {
+	    return dbobjects[i];
+	}
+    }
+}
+
+/*
  * NAME:	query_path()
  * DESCRIPTION:	return the name of an object given by index
  */
 string query_path(int index)
 {
     if (SYSTEM()) {
-	mapping dbase;
 	object dbobj;
 
-	dbase = index2db[index / factor];
-	if (dbase && (dbobj=dbase[index])) {
+	dbobj = dbobject(index);
+	if (dbobj) {
 	    return dbobj->query_path(index);
 	}
     }
@@ -423,15 +422,13 @@ int *query_issues(string path)
  * NAME:	query_includes()
  * DESCRIPTION:	return the files included by a given object
  */
-
 string *query_includes(int index)
 {
     if (SYSTEM()) {
-	mapping dbase;
 	object dbobj;
 
-	dbase = index2db[index / factor];
-	if (dbase && (dbobj=dbase[index])) {
+	dbobj = dbobject(index);
+	if (dbobj) {
 	    return dbobj->query_includes(index);
 	}
     }
@@ -446,10 +443,16 @@ int **query_included(string path)
 {
     if (SYSTEM()) {
 	object dbobj;
+	mixed *indices;
+	int i;
 
 	dbobj = creator2db[driver->creator(path)];
 	if (dbobj) {
-	    return map_values(dbobj->query_included(path));
+	    indices = map_values(dbobj->query_included(path));
+	    for (i = sizeof(indices); --i >= 0; ) {
+		indices[i] = map_indices(indices[i]);
+	    }
+	    return indices;
 	}
     }
     return ({ });
@@ -462,12 +465,11 @@ int **query_included(string path)
 int *query_inherits(int index)
 {
     if (SYSTEM()) {
-	mapping dbase;
 	object dbobj;
 
-	dbase = index2db[index / factor];
-	if (dbase && (dbobj=dbase[index])) {
-	    return dbobj->query_inherits(index);
+	dbobj = dbobject(index);
+	if (dbobj) {
+	    return map_indices(dbobj->query_inherits(index));
 	}
     }
     return ({ });
@@ -480,11 +482,17 @@ int *query_inherits(int index)
 int **query_inherited(int index)
 {
     if (SYSTEM()) {
-	mapping dbase;
 	object dbobj;
+	mixed *indices;
+	int i;
 
-	if ((dbase=index2db[index / factor]) && (dbobj=dbase[index])) {
-	    return map_values(dbobj->query_inherited(index));
+	dbobj = dbobject(index);
+	if (dbobj) {
+	    indices = map_values(dbobj->query_inherited(index));
+	    for (i = sizeof(indices); --i >= 0; ) {
+		indices[i] = map_indices(indices[i]);
+	    }
+	    return indices;
 	}
     }
     return ({ });
@@ -492,13 +500,13 @@ int **query_inherited(int index)
 
 
 /*
- * NAME:	forbid_call()
+ * NAME:	call_object()
  * DESCRIPTION:	block instantiation of clone masters and generated leaf objects
  */
-int forbid_call(string path)
+string call_object(string path)
 {
-    return (sscanf(path, "%*s/obj/%*s#") == 1 ||
-	    sscanf(path, "%*s/@@@/%*s#") == 1);
+    return (sscanf(path, "%*s/obj/%*s#") != 1 &&
+	    sscanf(path, "%*s/@@@/%*s#") != 1) ? path : nil;
 }
 
 /*
@@ -526,9 +534,11 @@ void compile(string owner, string path, mapping source, string inherits...)
 	    inherits = ({ AUTO });
 	}
 
-	catch {
+	try {
 	    register_object(owner, path, includes, inherits);
-	} : error("Out of space for object \"" + path + "\"");
+	} catch (...) {
+	    error("Out of space for object \"" + path + "\"");
+	}
     }
 }
 
@@ -607,10 +617,7 @@ mixed include_file(string compiled, string from, string path)
 	    /*
 	     * special include file
 	     */
-	    return ({ "inherit \"/usr/System/lib/auto\";\n\n" +
-		      "# define PathOfobject /**/\n" +
-		      "# define PATHOFOBJECT(o) PathOf##o\n" +
-		      "# define OBJECT_PATH(o) PATHOFOBJECT(o)\n" });
+	    return ({ "inherit \"/usr/System/lib/auto\";\n" });
 	} else {
 	    return ({ "" });
 	}

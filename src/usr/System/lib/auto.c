@@ -26,11 +26,11 @@ static nomask int _F_init()
 	mixed *args;
 
 	args = ::tls_get(TLS_ARGUMENTS);
-	::tls_set(TLS_ARGUMENTS, nil);
 	if (args) {
+	    ::tls_set(TLS_ARGUMENTS, nil);
 	    create(args...);
 	} else {
-	    create();
+	    call_limited("create");
 	}
     }
     return TRUE;
@@ -167,7 +167,7 @@ static object compile_object(string path)
 
 /*
  * NAME:	tls_set()
- * DESCRIPTION:	set TLS value
+ * DESCRIPTION:	set Task Local Storage value
  */
 static void tls_set(string index, mixed value)
 {
@@ -185,7 +185,7 @@ static void tls_set(string index, mixed value)
 
 /*
  * NAME:	tls_get()
- * DESCRIPTION:	get TLS value
+ * DESCRIPTION:	get Task Local Storage value
  */
 static mixed tls_get(string index)
 {
@@ -215,8 +215,6 @@ nomask int _F_touch()
 }
 
 
-# define TLS_CONT	"cont::"
-
 # define REF_CONT	0	/* continuation */
 # define REF_COUNT	1	/* callback countdown */
 # define REF_TIMEOUT	2	/* timeout handle */
@@ -230,13 +228,13 @@ static void startContinuation(mixed *continuation, int parallel)
     if (previous_program() == CONTINUATION) {
 	mixed *ref;
 
-	if (parallel || !(ref=::tls_get(TLS_CONT))) {
+	if (parallel || !(ref=::tls_get(TLS_CONTINUATION))) {
 	    /*
 	     * schedule first continuation
 	     */
 	    ref = ({ ({ }), 0, 0 });
 	    if (!parallel) {
-		::tls_set(TLS_CONT, ref);
+		::tls_set(TLS_CONTINUATION, ref);
 	    }
 	    ::call_out_other(continuation[CONT_ORIGIN], "_F_continued", 0, ref);
 	}
@@ -257,7 +255,7 @@ static object suspendContinuation()
     mixed *ref, *continued;
     object continuation;
 
-    ref = ::tls_get(TLS_CONT);
+    ref = ::tls_get(TLS_CONTINUATION);
     if (!ref || sizeof(continued=ref[REF_CONT]) == 0 || !continued[CONT_ORIGIN])
     {
 	error("No continuation");
@@ -291,14 +289,14 @@ private void continued(mixed *ref)
 	::call_out_other(origin, "_F_continued", 0, ref);
 	return;
     }
-    ::tls_set(TLS_CONT, ref);
+    ::tls_set(TLS_CONTINUATION, ref);
 
     switch (typeof(objs)) {
     case T_INT:
 	ref[REF_CONT] = continued[CONT_SIZE ..];
 	if (objs) {
 	    /* chained */
-	    val = call_other(this_object(), func, val, args...);
+	    val = call_other(this_object(), func, (args + ({ val }))...);
 	} else {
 	    /* standard */
 	    val = call_other(this_object(), func, args...);

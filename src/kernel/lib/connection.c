@@ -9,6 +9,7 @@ private string conntype;	/* connection type */
 private int mode;		/* connection mode */
 private int blocked;		/* connection blocked? */
 private string buffer;		/* buffered output string */
+private int timeout;		/* callout handle */
 
 /*
  * NAME:	create()
@@ -29,22 +30,26 @@ static void create(string type, int mode)
  */
 static void set_mode(int newmode)
 {
-    if (newmode != mode && newmode != MODE_NOCHANGE) {
-	if (newmode == MODE_DISCONNECT) {
-	    destruct_object(this_object());
-	} else {
-	    rlimits (-1; -1) {
-		if (newmode >= MODE_UNBLOCK) {
-		    if (newmode - MODE_UNBLOCK != blocked) {
-			block_input(blocked = newmode - MODE_UNBLOCK);
-		    }
-		} else {
-		    if (blocked) {
-			block_input(blocked = FALSE);
-		    }
-		    mode = newmode;
+    if (newmode != MODE_NOCHANGE && mode != MODE_DISCONNECT &&
+	(newmode != mode || blocked)) {
+	rlimits (-1; -1) {
+	    if (newmode == MODE_DISCONNECT) {
+		send_close();
+		if (timeout != 0) {
+		    remove_call_out(timeout);
 		}
+		timeout = call_out("timeout", DISCONNECT_TIMEOUT);
+	    } else if (newmode >= MODE_UNBLOCK) {
+		if (newmode - MODE_UNBLOCK != blocked) {
+		    block_input(blocked = newmode - MODE_UNBLOCK);
+		}
+		return;
 	    }
+
+	    if (blocked) {
+		block_input(blocked = FALSE);
+	    }
+	    mode = newmode;
 	}
     }
 }
@@ -65,33 +70,36 @@ int query_mode()
  */
 static void open(mapping tls)
 {
-    int mode, timeout;
-    string banner;
+    if (user) {
+	set_mode(user->login(nil));
+    } else {
+	int mode, delay;
+	string banner;
 
-    mode = call_other(userd, "query_" + conntype + "_mode", port,
-		      this_object());
-    if (mode != MODE_NOCHANGE) {
-	set_mode(mode);
-	if (mode == MODE_DISCONNECT) {
-	    return;	/* disconnect immediately */
+	mode = call_other(userd, "query_" + conntype + "_mode", port,
+			  this_object());
+	if (mode != MODE_NOCHANGE) {
+	    set_mode(mode);
+	    if (mode == MODE_DISCONNECT) {
+		return;	/* disconnect immediately */
+	    }
 	}
-    }
 
-    if (conntype != "datagram") {
-	banner = call_other(userd, "query_" + conntype + "_banner", port,
-			    this_object());
-	if (banner) {
-	    send_message(banner);
+	if (conntype != "datagram") {
+	    banner = call_other(userd, "query_" + conntype + "_banner", port,
+				this_object());
+	    if (banner) {
+		send_message(banner);
+	    }
 	}
-    }
 
-    timeout = call_other(userd, "query_" + conntype + "_timeout", port,
-			 this_object());
-    if (!user) {
-	if (timeout > 0) {
-	    call_out("timeout", timeout);
-	} else if (timeout < 0) {
+	delay = call_other(userd, "query_" + conntype + "_timeout", port,
+			   this_object());
+	if (delay > 0) {
+	    timeout = call_out("timeout", delay);
+	} else if (delay < 0) {
 	    /* disconnect immediately */
+	    mode = MODE_DISCONNECT;
 	    destruct_object(this_object());
 	}
     }
@@ -106,6 +114,7 @@ static void unconnected(mapping tls, int errcode)
     if (user) {
 	user->connect_failed(errcode);
     }
+    mode = MODE_DISCONNECT;
     destruct_object(this_object());
 }
 
@@ -122,6 +131,7 @@ static void close(mapping tls, int dest)
 	    }
 	}
 	if (!dest) {
+	    mode = MODE_DISCONNECT;
 	    destruct_object(this_object());
 	}
     }
@@ -133,7 +143,8 @@ static void close(mapping tls, int dest)
  */
 void disconnect()
 {
-    if (previous_program() == LIB_USER) {
+    if (previous_program() == LIB_USER && mode != MODE_DISCONNECT) {
+	mode = MODE_DISCONNECT;
 	destruct_object(this_object());
     }
 }
@@ -150,6 +161,7 @@ void reboot()
 		user->logout(FALSE);
 	    }
 	}
+	mode = MODE_DISCONNECT;
 	destruct_object(this_object());
     }
 }
@@ -182,7 +194,9 @@ void set_user(object obj, string str)
 {
     if (KERNEL()) {
 	user = obj;
-	set_mode(obj->login(str));
+	if (str) {
+	    set_mode(obj->login(str));
+	}
     }
 }
 
@@ -202,6 +216,7 @@ nomask object query_user()
 static void timeout(mapping tls)
 {
     if (!user || user->query_conn() != this_object()) {
+	mode = MODE_DISCONNECT;
 	destruct_object(this_object());
     }
 }
@@ -210,17 +225,16 @@ static void timeout(mapping tls)
  * NAME:	receive_message()
  * DESCRIPTION:	forward a message to user object
  */
-static int receive_message(mapping tls, string str)
+static void receive_message(mapping tls, string str)
 {
-    int mode;
-
-    if (!user) {
-	user = call_other(userd, conntype + "_user", port, str);
-	set_mode(mode = user->login(str));
-    } else {
-	set_mode(mode = user->receive_message(str));
+    if (mode != MODE_DISCONNECT) {
+	if (!user) {
+	    user = call_other(userd, conntype + "_user", port, str);
+	    set_mode(user->login(str));
+	} else {
+	    set_mode(user->receive_message(str));
+	}
     }
-    return mode;
 }
 
 /*
@@ -256,11 +270,13 @@ int message(string str)
  */
 static void message_done(mapping tls)
 {
-    if (buffer) {
-	send_message(buffer);
-	buffer = nil;
-    } else if (user) {
-	set_mode(user->message_done());
+    if (mode != MODE_DISCONNECT) {
+	if (buffer) {
+	    send_message(buffer);
+	    buffer = nil;
+	} else if (user) {
+	    set_mode(user->message_done());
+	}
     }
 }
 
@@ -281,7 +297,7 @@ void datagram_challenge(string str)
  */
 static void datagram_attach(mapping tls)
 {
-    if (user) {
+    if (mode != MODE_DISCONNECT && user) {
 	user->datagram_attach();
     }
 }
@@ -292,7 +308,7 @@ static void datagram_attach(mapping tls)
  */
 static void receive_datagram(mapping tls, string str)
 {
-    if (user) {
+    if (mode != MODE_DISCONNECT && user) {
 	user->receive_datagram(str);
     }
 }

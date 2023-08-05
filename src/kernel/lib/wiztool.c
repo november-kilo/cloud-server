@@ -201,6 +201,19 @@ static void rsrc_set_limit(string rowner, string name, int max)
 }
 
 /*
+ * NAME:	rsrc_set_maxtickusage()
+ * DESCRIPTION:	set maximum tick usage
+ */
+static void rsrc_set_maxtickusage(string rowner, float tickusage)
+{
+    if (!access(owner, "/", FULL_ACCESS)) {
+	message("Permission denied.\n");
+    } else {
+	::rsrc_set_maxtickusage(rowner, tickusage);
+    }
+}
+
+/*
  * NAME:	rsrc_get()
  * DESCRIPTION:	get individual resource usage
  */
@@ -288,7 +301,7 @@ static int destruct_object(mixed obj)
     case T_STRING:
 	path = obj = driver->normalize_path(obj, directory, owner);
 	lib = sscanf(path, "%*s/lib/");
-	if (lib) {
+	if (lib || sscanf(path, "%*s#") == 0) {
 	    oowner = driver->creator(path);
 	} else {
 	    obj = ::find_object(path);
@@ -301,7 +314,8 @@ static int destruct_object(mixed obj)
 
     case T_OBJECT:
 	path = object_name(obj);
-	oowner = obj->query_owner();
+	oowner = (sscanf(path, "%*s#") == 0) ?
+		  driver->creator(path) : obj->query_owner();
 	break;
     }
 
@@ -345,15 +359,16 @@ static object new_object(mixed obj)
  */
 static mixed read_file(string path, varargs int offset, int size)
 {
-    string result, err;
+    string result;
 
     path = driver->normalize_path(path, directory, owner);
     if (!access(owner, path, READ_ACCESS)) {
 	message(path + ": Access denied.\n");
 	return -1;
     }
-    err = catch(result = ::read_file(path, offset, size));
-    if (err) {
+    try {
+	result = ::read_file(path, offset, size);
+    } catch (err) {
 	message(path + ": " + err + ".\n");
 	return -1;
     }
@@ -367,15 +382,15 @@ static mixed read_file(string path, varargs int offset, int size)
 static int write_file(string path, string str, varargs int offset)
 {
     int result;
-    string err;
 
     path = driver->normalize_path(path, directory, owner);
     if (!access(owner, path, WRITE_ACCESS)) {
 	message(path + ": Access denied.\n");
 	return -1;
     }
-    err = catch(result = ::write_file(path, str, offset));
-    if (err) {
+    try {
+	result = ::write_file(path, str, offset);
+    } catch (err) {
 	message(path + ": " + err + ".\n");
 	return -1;
     }
@@ -389,15 +404,15 @@ static int write_file(string path, string str, varargs int offset)
 static int remove_file(string path)
 {
     int result;
-    string err;
 
     path = driver->normalize_path(path, directory, owner);
     if (!access(owner, path, WRITE_ACCESS)) {
 	message(path + ": Access denied.\n");
 	return -1;
     }
-    err = catch(result = ::remove_file(path));
-    if (err) {
+    try {
+	result = ::remove_file(path);
+    } catch (err) {
 	message(path + ": " + err + ".\n");
 	return -1;
     }
@@ -411,7 +426,6 @@ static int remove_file(string path)
 static int rename_file(string from, string to)
 {
     int result;
-    string err;
 
     from = driver->normalize_path(from, directory, owner);
     if (!access(owner, from, WRITE_ACCESS)) {
@@ -423,8 +437,9 @@ static int rename_file(string from, string to)
 	message(to + ": Access denied.\n");
 	return -1;
     }
-    err = catch(result = ::rename_file(from, to));
-    if (err) {
+    try {
+	result = ::rename_file(from, to);
+    } catch (err) {
 	message(to + ": " + err + ".\n");
 	return -1;
     }
@@ -465,15 +480,15 @@ static mixed **get_dir(string path)
 static int make_dir(string path)
 {
     int result;
-    string err;
 
     path = driver->normalize_path(path, directory, owner);
     if (!access(owner, path, WRITE_ACCESS)) {
 	message(path + ": Access denied.\n");
 	return -1;
     }
-    err = catch(result = ::make_dir(path));
-    if (err) {
+    try {
+	result = ::make_dir(path);
+    } catch (err) {
 	message(path + ": " + err + ".\n");
 	return -1;
     }
@@ -487,15 +502,15 @@ static int make_dir(string path)
 static int remove_dir(string path)
 {
     int result;
-    string err;
 
     path = driver->normalize_path(path, directory, owner);
     if (!access(owner, path, WRITE_ACCESS)) {
 	message(path + ": Access denied.\n");
 	return -1;
     }
-    err = catch(result = ::remove_dir(path));
-    if (err) {
+    try {
+	result = ::remove_dir(path);
+    } catch (err) {
 	message(path + ": " + err + ".\n");
 	return -1;
     }
@@ -844,12 +859,12 @@ static void cmd_code(object user, string cmd, string str)
 	  "mixed exec(object user, mixed argv...) {\n" +
 	  "    mixed a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z;\n\n" +
 	  "    " + parsed[0] + "\n}\n";
-    str = catch(obj = compile_object(name, str),
-		result = obj->exec(user, parsed[1 ..]...));
-    if (str) {
-	message("Error: " + str + ".\n");
-    } else {
+    try {
+	obj = compile_object(name, str);
+	result = obj->exec(user, parsed[1 ..]...);
 	store(result);
+    } catch (err) {
+	message("Error: " + err + ".\n");
     }
 
     if (obj) {
@@ -960,11 +975,13 @@ static void cmd_clone(object user, string cmd, string str)
     } else if (status(str, O_INDEX) == nil) {
 	message("No such object.\n");
     } else {
-	str = catch(obj = clone_object(str));
-	if (str) {
-	    message(str + ".\n");
-	} else if (obj) {
-	    store(obj);
+	try {
+	    obj = clone_object(str);
+	    if (obj) {
+		store(obj);
+	    }
+	} catch (err) {
+	    message(err + ".\n");
 	}
     }
 }
@@ -976,7 +993,6 @@ static void cmd_clone(object user, string cmd, string str)
 static void cmd_destruct(object user, string cmd, string str)
 {
     mixed obj;
-    int flag;
 
     obj = parse_obj(str);
     switch (typeof(obj)) {
@@ -986,11 +1002,12 @@ static void cmd_destruct(object user, string cmd, string str)
 	return;
     }
 
-    str = catch(flag = destruct_object(obj));
-    if (str) {
-	message(str + ".\n");
-    } else if (flag == 0) {
-	message("No such object.\n");
+    try {
+	if (destruct_object(obj) == 0) {
+	    message("No such object.\n");
+	}
+    } catch (err) {
+	message(err + ".\n");
     }
 }
 
@@ -1028,11 +1045,13 @@ static void cmd_new(object user, string cmd, string str)
 	if (num != -1) {
 	    obj = str;
 	}
-	str = catch(obj = new_object(obj));
-	if (str) {
-	    message(str + ".\n");
-	} else if (obj) {
-	    store(obj);
+	try {
+	    obj = new_object(obj);
+	    if (obj) {
+		store(obj);
+	    }
+	} catch (err) {
+	    message(err + ".\n");
 	}
     }
 }
@@ -1656,6 +1675,28 @@ static string ralign(mixed num, int width)
 }
 
 /*
+ * NAME:	ntoa()
+ * DESCRIPTION:	convert a positive integer (or float) to a string
+ */
+static string ntoa(mixed n, int digits)
+{
+    float num;
+    int exponent;
+
+    num = (float) n;
+    if (num < pow(10.0, (float) digits)) {
+	return ralign(floor(num + 0.5), digits);
+    }
+
+    exponent = (int) floor(log10(num)) - digits + 3;
+    if (exponent >= 10) {
+	exponent++;
+    }
+    num = floor(num / pow(10.0, (float) exponent) + 0.5);
+    return ralign(num + "e" + exponent, digits);
+}
+
+/*
  * NAME:	list_resources()
  * DESCRIPTION:	create a listing of resource usage, limits etc
  */
@@ -1667,8 +1708,8 @@ static string list_resources(string name, string *names, mixed *resources)
 
     for (i = sizeof(names); --i >= 0; ) {
 	rsrc = resources[i];
-	str = (names[i] + SPACE16)[.. 15] + ralign(rsrc[RSRC_USAGE], 14) +
-	      ralign(rsrc[RSRC_MAX], 13);
+	str = (names[i] + SPACE16)[.. 15] + " " + ntoa(rsrc[RSRC_USAGE], 13) +
+	      " " + ntoa(rsrc[RSRC_MAX], 12);
 	if ((int) rsrc[RSRC_DECAY] != 0) {
 	    str += ralign(rsrc[RSRC_DECAY], 6) + "%";
 	}
@@ -1749,9 +1790,10 @@ static void cmd_quota(object user, string cmd, string str)
 		return;
 	    }
 
-	    str = catch(rsrc_set_limit(who, rsrc, limit));
-	    if (str) {
-		message(str + ".\n");
+	    try {
+		rsrc_set_limit(who, rsrc, limit);
+	    } catch (err) {
+		message(err + ".\n");
 	    }
 	}
 	return;
@@ -1805,9 +1847,10 @@ static void cmd_rsrc(object user, string cmd, string str)
 	}
 
 	rsrc = query_rsrc(name);
-	str = catch(set_rsrc(name, limit, rsrc[RSRC_DECAY], rsrc[RSRC_PERIOD]));
-	if (str) {
-	    message(str + ".\n");
+	try {
+	    set_rsrc(name, limit, rsrc[RSRC_DECAY], rsrc[RSRC_PERIOD]);
+	} catch (err) {
+	    message(err + ".\n");
 	}
     } else {
 	if (sizeof(query_resources() & ({ str })) == 0) {
@@ -1875,31 +1918,6 @@ static string swapavg(int num, int div)
 }
 
 /*
- * NAME:	ntoa()
- * DESCRIPTION:	convert a positive integer (or float) to a string
- */
-static string ntoa(mixed num)
-{
-    string str;
-    float mantissa;
-    int exponent;
-
-    num = (float) num;
-    if (num <= 999999999.0) {
-	return ralign((int) num, 9);
-    }
-
-    str = (string) num;
-    sscanf(str, "%*se+%d", exponent);
-    mantissa = num / pow(10.0, (float) exponent);
-    if (strlen(str) > 10) {
-	num = (exponent < 10) ? 100000.0 : 10000.0;
-        mantissa = floor(mantissa * num + 0.5) / num;
-    }
-    return ralign(mantissa + "e" + exponent, 9);
-}
-
-/*
  * NAME:	percentage()
  * DESCRIPTION:	show a percentage
  */
@@ -1929,8 +1947,8 @@ static void cmd_status(object user, string cmd, string str)
 "                                          Server:       " +
   (string) status[ST_VERSION] + "\n" +
 "------------ Swap device -------------\n" +
-"sectors:  " + ntoa(status[ST_SWAPUSED]) + " / " +
-	       ntoa(status[ST_SWAPSIZE]) + " " +
+"sectors:  " + ntoa(status[ST_SWAPUSED], 9) + " / " +
+	       ntoa(status[ST_SWAPSIZE], 9) + " " +
   percentage(status[ST_SWAPUSED], status(ST_SWAPSIZE)) +
   "    Start time:   " + ctime(status[ST_STARTTIME])[4 ..] + "\n" +
 "sector size:   " + (((float) status[ST_SECTORSIZE] / 1024.0) + "K" +
@@ -1960,27 +1978,27 @@ static void cmd_status(object user, string cmd, string str)
 "--------------- Memory ---------------" +
   "    ------------ Callouts ------------\n" +
 "static:   " +
-  ntoa(status[ST_SMEMUSED]) + " / " + ntoa(status[ST_SMEMSIZE]) + " " +
+  ntoa(status[ST_SMEMUSED], 9) + " / " + ntoa(status[ST_SMEMSIZE], 9) + " " +
   percentage(status[ST_SMEMUSED], status[ST_SMEMSIZE]) +
-  "    short: " + ntoa(short) + "            " +
+  "    short: " + ntoa(short, 9) + "            " +
   percentage(short, short + long) + "\n" +
-"dynamic:  " + ntoa(status[ST_DMEMUSED]) + " / " +
-	       ntoa(status[ST_DMEMSIZE]) + " " +
+"dynamic:  " + ntoa(status[ST_DMEMUSED], 9) + " / " +
+	       ntoa(status[ST_DMEMSIZE], 9) + " " +
   percentage(status[ST_DMEMUSED], status[ST_DMEMSIZE]) +
-  " +  other: " + ntoa(long) + "            " +
+  " +  other: " + ntoa(long, 9) + "            " +
   percentage(long, short + long) + " +\n" +
 "          " +
-  ntoa((float) status[ST_SMEMUSED] + (float) status[ST_DMEMUSED]) + " / " +
-  ntoa((float) status[ST_SMEMSIZE] + (float) status[ST_DMEMSIZE]) + " " +
+  ntoa((float) status[ST_SMEMUSED] + (float) status[ST_DMEMUSED], 9) + " / " +
+  ntoa((float) status[ST_SMEMSIZE] + (float) status[ST_DMEMSIZE], 9) + " " +
   percentage((float) status[ST_SMEMUSED] + (float) status[ST_DMEMUSED],
 	     (float) status[ST_SMEMSIZE] + (float) status[ST_DMEMSIZE]) +
   "           " +
-  ntoa(short + long) + " /" + ntoa(status[ST_COTABSIZE]) + " " +
+  ntoa(short + long, 9) + " /" + ntoa(status[ST_COTABSIZE], 9) + " " +
   percentage(short + long, status[ST_COTABSIZE]) + "\n\n" +
 "Objects:  " +
-  ntoa(status[ST_NOBJECTS]) + " / " + ntoa(status[ST_OTABSIZE]) + " " +
+  ntoa(status[ST_NOBJECTS], 9) + " / " + ntoa(status[ST_OTABSIZE], 9) + " " +
   percentage(status[ST_NOBJECTS], status[ST_OTABSIZE]) +
-  "    Users: " + ntoa(i) + " /" + ntoa(status[ST_UTABSIZE]) + " " +
+  "    Users: " + ntoa(i, 9) + " /" + ntoa(status[ST_UTABSIZE], 9) + " " +
   percentage(i, status[ST_UTABSIZE]) + "\n\n";
     } else {
 	i = -1;
@@ -2006,30 +2024,32 @@ static void cmd_status(object user, string cmd, string str)
 	    obj = driver->normalize_path(str, directory, owner);
 	}
 
-	str = catch(status = status(obj));
-	if (str) {
-	    str += ".\n";
-	} else if (!status) {
-	    str = "No such object.\n";
-	} else {
-	    if (typeof(obj) == T_OBJECT) {
-		obj = object_name(obj);
-	    }
-	    str = driver->creator(obj);
-	    if (!str) {
-		str = "Ecru";
-	    }
-	    str = "Object:      <" + obj + ">" +
+	try {
+	    status = status(obj);
+	    if (!status) {
+		str = "No such object.\n";
+	    } else {
+		if (typeof(obj) == T_OBJECT) {
+		    obj = object_name(obj);
+		}
+		str = driver->creator(obj);
+		if (!str) {
+		    str = "Ecru";
+		}
+		str = "Object:      <" + obj + ">" +
 "\nCompiled at: " + ctime(status[O_COMPILETIME])[4 ..] +
   "    Program size: " + (int) status[O_PROGSIZE] +
 "\nCreator:     " + (str + SPACE16)[.. 16] +
   "       Variables:    " + (int) status[O_DATASIZE] +
-"\nOwner:       " + (((obj=find_object(obj)) ?
-		     (obj=obj->query_owner()) ? obj : "Ecru" :
-		     str) + SPACE16)[.. 16] +
+"\nOwner:       " + (((sscanf(obj, "%*s#") != 0) ?
+		       (obj=find_object(obj)->query_owner()) ? obj : "Ecru" :
+		       str) + SPACE16)[.. 16] +
   "       Callouts:     " + sizeof(status[O_CALLOUTS]) +
 "\nMaster ID:   " + ((int) status[O_INDEX] + SPACE16)[.. 16] +
   "       Sectors:      " + (int) status[O_NSECTORS] + "\n";
+	    }
+	} catch (err) {
+	    str = err + ".\n";
 	}
     }
 

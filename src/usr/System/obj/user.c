@@ -1,5 +1,6 @@
 # include <kernel/kernel.h>
 # include <kernel/access.h>
+# include <kernel/rsrc.h>
 # include <kernel/user.h>
 # include <status.h>
 # include <type.h>
@@ -14,7 +15,7 @@ inherit auto	"~/lib/auto";
 inherit user	LIB_USER;
 inherit wiztool	LIB_WIZTOOL;
 
-private inherit	"/lib/util/string";
+private inherit	"/lib/util/ascii";
 
 
 # define USER			"/usr/System/obj/user"
@@ -163,7 +164,7 @@ static void cmd_issues(object user, string cmd, string str)
 		str = implode(issues, ", ");
 	    }
 	}
-	message(indent_string(file + ": ", str));
+	message(file + ": " + str + "\n");
     }
 }
 
@@ -199,14 +200,14 @@ static void cmd_upgrade(object user, string cmd, string str)
 	    if (!atom || sizeof(result) == 0) {
 		sources -= ({ nil });
 		if (sizeof(sources) != 0) {
-		    message("Successfully upgraded:\n" +
-			    break_string(implode(sources, ", "), 0, 2));
+		    message("Successfully upgraded:\n" + implode(sources, ", ") +
+			    "\n");
 		}
 	    }
 
 	    if (sizeof(result) != 0) {
-		message("Errors occured compiling:\n" +
-			break_string(implode(result, ".c, ") + ".c", 0, 2));
+		message("Errors occured compiling:\n" + implode(result, ".c, ") +
+			".c\n");
 	    }
 	}
     }
@@ -434,6 +435,110 @@ static void cmd_ungrant(object user, string cmd, string str)
 	} else {
 	    set_access(who, str, 0);
 	}
+    }
+}
+
+/*
+ * NAME:	list_ticks()
+ * DESCRIPTION:	create a listing of tick quotas
+ */
+private string list_ticks(string *names, mixed *resources, mixed *maxusage)
+{
+    int i, n;
+    mixed *rsrc;
+    string str, unit;
+
+    for (i = sizeof(names); --i >= 0; ) {
+	rsrc = resources[i];
+	str = (names[i] + "                ")[.. 15] + " " +
+	      ntoa(rsrc[RSRC_USAGE], 13) + " " + ntoa(maxusage[i], 12) + " " +
+	      ntoa(rsrc[RSRC_MAX], 12);
+	if ((int) rsrc[RSRC_DECAY] != 0) {
+	    str += ralign(rsrc[RSRC_DECAY], 6) + "%";
+	}
+	if ((int) rsrc[RSRC_PERIOD] != 0) {
+	    switch (n = rsrc[RSRC_PERIOD]) {
+	    case 1 .. 60 - 1:
+		unit = "second";
+		break;
+
+	    case 60 .. 60 * 60 - 1:
+		n /= 60;
+		unit = "minute";
+		break;
+
+	    case 60 * 60 .. 24 * 60 * 60 - 1:
+		n /= 60 * 60;
+		unit = "hour";
+		break;
+
+	    default:
+		n /= 24 * 60 * 60;
+		unit = "day";
+		break;
+	    }
+	    str += " per " + ((n == 1) ? unit : n + " " + unit + "s");
+	}
+	resources[i] = str;
+    }
+
+    return
+"owner                    usage    max usage          max  decay  period\n" +
+"----------------+-------------+------------+------------+------+---------\n" +
+	   implode(resources, "\n") + "\n";
+}
+
+/*
+ * NAME:	cmd_quota()
+ * DESCRIPTION:	resource quota command
+ */
+static void cmd_quota(object user, string cmd, string str)
+{
+    string who;
+    float maxusage;
+
+    if (str && sscanf(str, "%s ticks usage %f", who, maxusage) == 2) {
+	if (who == "Ecru") {
+	    who = nil;
+	}
+	if (sizeof(query_owners() & ({ who })) == 0) {
+	    message("No such resource owner.\n");
+	} else {
+	    try {
+		rsrc_set_maxtickusage(who, maxusage);
+	    } catch (err) {
+		message(err + ".\n");
+	    }
+	}
+    } else {
+	::cmd_quota(user, cmd, str);
+    }
+}
+
+/*
+ * NAME:	cmd_rsrc()
+ * DESCRIPTION:	deal with resources
+ */
+static void cmd_rsrc(object user, string cmd, string str)
+{
+    int i, sz;
+    string *names;
+    mixed *resources, *maxusage, *rsrc;
+
+    if (str == "ticks") {
+	names = query_owners();
+	resources = allocate(i = sz = sizeof(names));
+	maxusage = allocate(sz);
+	while (--i >= 0) {
+	    resources[i] = rsrc_get(names[i], str);
+	    maxusage[i] = rsrc_get_maxtickusage(names[i]);
+	}
+	if (sz != 0 && !names[0]) {
+	    names[0] = "Ecru";
+	}
+	message(list_ticks(names, resources, maxusage));
+    } else {
+	::cmd_rsrc(user, cmd, str);
     }
 }
 
@@ -737,6 +842,41 @@ string query_name()
 }
 
 /*
+ * NAME:	set_password()
+ * DESCRIPTION:	change the password
+ */
+private void set_password(string str)
+{
+    int salt;
+
+    salt = random(0);
+    password = "    ";
+    password[0] = salt;
+    password[1] = salt >> 8;
+    password[2] = salt >> 16;
+    password[3] = salt >> 24;
+    password += hash_string("SHA1", str, password);
+}
+
+/*
+ * NAME:	check_password()
+ * DESCRIPTION:	check the password
+ */
+private int check_password(string str)
+{
+    if (strlen(password) == 13) {
+	if (hash_string("crypt", str, password) != password) {
+	    return FALSE;
+	}
+	set_password(str);
+    } else if (hash_string("SHA1", str, password[.. 3]) != password[4 ..]) {
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*
  * NAME:	receive_message()
  * DESCRIPTION:	process a message from the user
  */
@@ -877,6 +1017,7 @@ int receive_message(string str) {
                             paste_buffer = "";
                             return MODE_ECHO;
 
+<<<<<<< HEAD
                         case "quit":
                             return MODE_DISCONNECT;
                     }
@@ -887,6 +1028,26 @@ int receive_message(string str) {
                     call_limited("command", str);
                 }
                 break;
+=======
+	case STATE_LOGIN:
+	    if (!check_password(str)) {
+		previous_object()->message("\nBad password.\n");
+		return MODE_DISCONNECT;
+	    }
+	    connection(previous_object());
+	    message("\n");
+	    tell_audience(Name + " logs in.\n");
+	    break;
+
+	case STATE_OLDPASSWD:
+	    if (!check_password(str)) {
+		message("\nBad password.\n");
+		break;
+	    }
+	    message("\nNew password:");
+	    state[previous_object()] = STATE_NEWPASSWD1;
+	    return MODE_NOECHO;
+>>>>>>> 466d2aaad9055c67265fa673dd1370c53476c254
 
             case STATE_LOGIN:
                 if (hash_string("crypt", str, password) != password) {
@@ -899,6 +1060,7 @@ int receive_message(string str) {
                 tell_audience(Name + " logs in.\n");
                 break;
 
+<<<<<<< HEAD
             case STATE_OLDPASSWD:
                 if (hash_string("crypt", str, password) != password) {
                     message("\nBad password.\n");
@@ -907,6 +1069,17 @@ int receive_message(string str) {
                 message("\nNew password:");
                 state[previous_object()] = STATE_NEWPASSWD1;
                 return MODE_NOECHO;
+=======
+	case STATE_NEWPASSWD2:
+	    if (newpasswd == str) {
+		set_password(str);
+		message("\nPassword changed.\n");
+	    } else {
+		message("\nMismatch; password not changed.\n");
+	    }
+	    newpasswd = nil;
+	    break;
+>>>>>>> 466d2aaad9055c67265fa673dd1370c53476c254
 
             case STATE_NEWPASSWD1:
                 newpasswd = str;
