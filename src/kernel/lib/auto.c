@@ -8,7 +8,7 @@
 
 # define TLS()			::call_trace()[1][TRACE_FIRSTARG]
 # define CHECKARG(arg, n, func)	if (!(arg)) badarg((n), (func))
-# define PAD "                                                                              "
+
 
 /*
  * NAME:	badarg()
@@ -610,22 +610,9 @@ static void shutdown(varargs int hotboot)
     }
     rlimits (-1; -1) {
 	::shutdown(hotboot);
-<<<<<<< HEAD
-<<<<<<< HEAD
-#ifdef KF_PERL_TERM
-	::perl_term();
-#endif
-	::find_object(DRIVER)->message("System halted.\n");
-=======
 	::find_object(DRIVER)->message((hotboot) ?
 					"System hotbooting...\n\n" :
 					"System halted.\n\n");
->>>>>>> 466d2aaad9055c67265fa673dd1370c53476c254
-=======
-	::find_object(DRIVER)->message((hotboot) ?
-					"System hotbooting...\n\n" :
-					"System halted.\n\n");
->>>>>>> 466d2aaad9055c67265fa673dd1370c53476c254
     }
 }
 
@@ -965,16 +952,10 @@ static mixed **get_dir(string path)
     }
 
     path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
-    if (creator != "System") {
-        if (this_user() != nil) {
-            if (!::find_object(ACCESSD)->access(this_user()->query_name(), path, READ_ACCESS)) {
-                error("Access denied");
-            }
-        } else {
-            if (!::find_object(ACCESSD)->access(object_name(this_object()), path, READ_ACCESS)) {
-                error("Access denied");
-            }
-        }
+    if (creator != "System" &&
+	!::find_object(ACCESSD)->access(object_name(this_object()), path,
+					READ_ACCESS)) {
+	error("Access denied");
     }
 
     list = ::get_dir(path);
@@ -1022,17 +1003,11 @@ static mixed *file_info(string path)
     }
 
     obj = ::find_object(DRIVER);
-    path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
-    if (creator != "System") {
-        if (this_user() != nil) {
-            if (!::find_object(ACCESSD)->access(this_user()->query_name(), path, READ_ACCESS)) {
-                error("Access denied");
-            }
-        } else {
-            if (!::find_object(ACCESSD)->access(object_name(this_object()), path, READ_ACCESS)) {
-                error("Access denied");
-            }
-        }
+    path = obj->normalize_path(path, nil, creator);
+    if (creator != "System" &&
+	!::find_object(ACCESSD)->access(object_name(this_object()), path,
+					READ_ACCESS)) {
+	error("Access denied");
     }
 
     info = ::get_dir(obj->escape_path(path));
@@ -1316,375 +1291,4 @@ static void error(string str)
     ::error(str);
 }
 
-static mixed min(mixed a, mixed b) {
-    return ((a) < (b) ? (a) : (b));
-}
 
-static mixed max(mixed a, mixed b) {
-    return ((a) > (b) ? (a) : (b));
-}
-
-static int gcd(int a, int b) {
-    a = (a > 0) ? a : -a;
-    b = (b > 0) ? b : -b;
-
-    while (a != b) {
-        if (a > b) {
-            a -= b;
-        } else {
-            b -= a;
-        }
-    }
-
-    return a;
-}
-
-static float pi(void) {
-    return atan(1.0) * 4.0;
-}
-
-static string dump_value(mixed value, varargs mapping seen)
-{
-    string str;
-    int i, sz;
-    mixed *indices, *values;
-
-    if (seen == nil) {
-        seen = ([]);
-    }
-
-    switch (typeof(value)) {
-        case T_FLOAT:
-            str = (string) value;
-        if (sscanf(str, "%*s.") == 0 && sscanf(str, "%*se") == 0) {
-            if (value >= 0.0) {
-                value += .05;
-                str = (string) floor(value);
-            } else {
-                value -= .05;
-                str = (string) ceil(value);
-            }
-            str += "." + floor(fmod(fabs(value) * 10.0, 10.0));
-        }
-        return str;
-
-        case T_INT:
-            return (string) value;
-
-        case T_STRING:
-            str = value;
-        if (sscanf(str, "%*s\\") != 0) {
-            str = implode(explode("\\" + str + "\\", "\\"), "\\\\");
-        }
-        if (sscanf(str, "%*s\"") != 0) {
-            str = implode(explode("\"" + str + "\"", "\""), "\\\"");
-        }
-        if (sscanf(str, "%*s\n") != 0) {
-            str = implode(explode("\n" + str + "\n", "\n"), "\\n");
-        }
-        if (sscanf(str, "%*s\t") != 0) {
-            str = implode(explode("\t" + str + "\t", "\t"), "\\t");
-        }
-        return "\"" + str + "\"";
-
-        case T_OBJECT:
-            return "<" + object_name(value) + ">";
-
-        case T_ARRAY:
-            if (seen[value]) {
-                return "#" + (seen[value] - 1);
-            }
-
-        seen[value] = map_sizeof(seen) + 1;
-        sz = sizeof(value);
-        if (sz == 0) {
-            return "({ })";
-        }
-
-        str = "({ ";
-        for (i = 0, --sz; i < sz; i++) {
-            str += dump_value(value[i], seen) + ", ";
-        }
-        return str + dump_value(value[i], seen) + " })";
-
-        case T_MAPPING:
-            if (seen[value]) {
-                return "@" + (seen[value] - 1);
-            }
-
-        seen[value] = map_sizeof(seen) + 1;
-        sz = map_sizeof(value);
-        if (sz == 0) {
-            return "([ ])";
-        }
-
-        str = "([ ";
-        indices = map_indices(value);
-        values = map_values(value);
-        for (i = 0, --sz; i < sz; i++) {
-            str += dump_value(indices[i], seen) + ":" +
-                   dump_value(values[i], seen) + ", ";
-        }
-        return str + dump_value(indices[i], seen) + ":" +
-               dump_value(values[i], seen) + " ])";
-
-        case T_NIL:
-            return "nil";
-    }
-}
-
-static string toString(varargs mixed value) {
-    if (T_OBJECT == typeof(value) && function_object("toString", value)) {
-        return value->toString();
-    }
-
-    return dump_value(value);
-}
-
-static int longestString(mixed *args) {
-    int x, y;
-    int i, sz;
-
-    x = 0;
-    y = 0;
-    sz = sizeof(args);
-    for (i = 0; i < sz; i++) {
-        x = strlen(toString(args[i]));
-        if (x > y) {
-            y = x;
-        }
-    }
-
-    return y;
-}
-
-static string trimString(string str) {
-    string *parsed;
-
-    parsed = parse_string("whitespace = /[\n\b\r\t ]+/ " +
-                          "word = /[^\n\b\r\t ]+/ S: word S: S word", str);
-    parsed -= ({ "" });
-
-    return implode(parsed, " ");
-}
-
-static string lalign(mixed str, int pad) {
-    int x;
-    string s;
-
-    s = toString(str);
-    x = pad - strlen(s);
-    if (x > 0) {
-        s = s + PAD[0..x-1];
-    }
-    return s;
-}
-
-static string centre(mixed str, int pad) {
-    int x, l;
-    string s;
-
-    s = toString(str);
-    l = strlen(s);
-    x = (pad - l) / 2;
-    if (x > -1) {
-        s = PAD[0..x] + s;
-    }
-    x = l - x;
-    if (x > -1) {
-        s = s + PAD[0..x];
-    }
-    return s;
-}
-
-static string ralign(mixed str, int pad) {
-    int x;
-    string s;
-
-    s = toString(str);
-    x = pad - strlen(s);
-    if (x > 0) {
-        s = PAD[0..x-1] + s;
-    }
-    return s;
-}
-
-string spaces(int x) {
-    if (x < 1) {
-        return "";
-    }
-
-    return PAD[0 .. x - 1];
-}
-
-string repeat(string x, int y) {
-    int i;
-    string str;
-
-    str = "";
-    if (y < 1) {
-        return str;
-    }
-
-    if (y == 1) {
-        return x;
-    }
-
-    while (i++ < y) {
-        str += x;
-    }
-
-    return str;
-}
-
-static float hypot(float a, float b) {
-    float c;
-
-    if (fabs(a) > fabs(b)) {
-        c = b / a;
-        c = fabs(a) * sqrt(1.0 + c * c);
-    } else if (b != 0.0) {
-        c = a / b;
-        c = fabs(b) * sqrt(1.0 + c * c);
-    } else {
-        c = 0.0;
-    }
-
-    return c;
-}
-
-static float radianToDegree(float radian) {
-    return radian * 180.0 / pi();
-}
-
-static float degreeToRadian(float degree) {
-    return degree * pi() / 180.0;
-}
-
-static mapping regexp(string str, int global) {
-#ifndef KF_REGEXP
-    error("regexp() unavailable\n");
-#else
-    string path, pattern;
-    mixed * found;
-    int *offsets;
-
-    if (!str || sscanf(str, "%s %s", path, pattern) != 2) {
-        return ([
-            "error": "usage: regexp <filename> <pattern>\nexample: regex ~System/obj/user.c ad\\w*"
-        ]);
-    }
-
-    path = ::find_object(DRIVER)->normalize_path(path, nil);
-
-    if (!file_info(path)) {
-        return ([ "error": "file not found" ]);
-    }
-
-    if (!pattern || pattern == "") {
-        return ([ "error": "invalid pattern" ]);
-    }
-
-    if (!::find_object(ACCESSD)->access(object_name(this_object()), path, READ_ACCESS)) {
-        return ([ "error": "Access denied" ]);
-    }
-
-    str = read_file(path);
-    found = ({});
-
-    while (TRUE) {
-        offsets = ::regexp(pattern, str);
-        if (offsets == nil) {
-            break;
-        }
-        found += ({ str[offsets[0]..offsets[1]] });
-        str = str[offsets[1]..];
-        if (!global) {
-            break;
-        }
-    }
-
-    return ([
-            "error": FALSE,
-            "path": path,
-            "pattern": pattern,
-            "found": found
-        ]);
-#endif
-}
-
-#ifndef KF_PERL_MATCH
-static string *perl_match(string text, string pattern) {
-    error("perl_match() unavailable\n");
-}
-#endif
-
-#ifndef KF_PERL_SUB
-static string perl_sub(string replace, string with) {
-    error("perl_sub() unavailable\n");
-}
-#endif
-
-void perl_term(void) {}
-
-#ifndef KF_LOG1P
-static mixed log1p(mixed x) {
-    error("log1p() unavailable");
-}
-#endif
-
-static string *replace(string *strings, string replaceThis, string withThis) {
-#ifndef KF_REPLACE
-	error("replace() unavailable");
-#else
-	mixed *s;
-
-	s = status();
-
-	return ::replace(strings, replaceThis, withThis, s[ST_ARRAYSIZE], s[ST_STRSIZE]);
-#endif
-}
-
-#ifndef KF_DEFLATE
-static string *deflate(varargs string str, int mode) {
-    error("deflate() unavailable");
-}
-#endif
-
-#ifndef KF_GUNZIP
-static string *gunzip(varargs string str, int flag) {
-    error("gunzip() unavailable");
-}
-#endif
-
-#ifndef KF_GZIP
-static string *gzip(varargs string str, int mode) {
-    error("gzip() unavailable");
-}
-#endif
-
-#ifndef KF_INFLATE
-static string *inflate(varargs string str, int flag) {
-    error("inflate() unavailable");
-}
-#endif
-
-float sizeOfAWithSignOfB(float a, float b) {
-    float x;
-
-    x = ((b) < 0.0 ? -fabs(a) : fabs(a));
-}
-
-float normaliseAngle(float angle) {
-    float x;
-    float dpi, d2pi;
-
-    dpi = pi();
-    d2pi = dpi * 2.0;
-    x = fmod(angle, d2pi);
-    if (fabs(x) >= dpi) {
-        x -= sizeOfAWithSignOfB(d2pi, angle);
-    }
-
-    return x;
-}
