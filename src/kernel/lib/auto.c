@@ -611,10 +611,16 @@ static void shutdown(varargs int hotboot)
     rlimits (-1; -1) {
 	::shutdown(hotboot);
 <<<<<<< HEAD
+<<<<<<< HEAD
 #ifdef KF_PERL_TERM
 	::perl_term();
 #endif
 	::find_object(DRIVER)->message("System halted.\n");
+=======
+	::find_object(DRIVER)->message((hotboot) ?
+					"System hotbooting...\n\n" :
+					"System halted.\n\n");
+>>>>>>> 466d2aaad9055c67265fa673dd1370c53476c254
 =======
 	::find_object(DRIVER)->message((hotboot) ?
 					"System hotbooting...\n\n" :
