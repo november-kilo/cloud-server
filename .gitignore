@@ -10,6 +10,10 @@ src/usr/System/data/*.pwd
 nkcloud.dgd
 **/.idea
 **/.vscode
+**/.DS_Store
 extensions/**/*.o
 extensions/*.1.*
 extensions/jit
+extensions/**/bin
+extensions/discord_bot/bot/no_export.h
+
