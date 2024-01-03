@@ -86,14 +86,15 @@ static object get_user(string name)
 object select(string name)
 {
     if (previous_object() == userd) {
-	object obj;
+        object obj;
 
-    if (name == "discord_bot") {
-        discord_bot = clone_object("~System/obj/discord_bot");
-        return discord_bot;
-    }
+        if (name == "discord_bot") {
+            discord_bot = clone_object("~System/obj/discord_bot");
+            return discord_bot;
+        }
+
         obj = get_user(name);
-	return (obj) ? obj : this_object();
+        return (obj) ? obj : this_object();
     }
 }
 
