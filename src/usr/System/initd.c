@@ -78,6 +78,7 @@ static void create()
 
     /* clonables */
     compile_object("obj/user");
+    compile_object("obj/discord_bot");
 
     /* global objects */
     compile_object("/sys/utf8encode");

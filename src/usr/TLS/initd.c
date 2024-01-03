@@ -1,3 +1,6 @@
+#include <kfun.h>
+#ifdef KF_SECURE_RANDOM
+
 # include "asn1.h"
 # include "x509.h"
 # include "Record.h"
@@ -38,3 +41,4 @@ static void create()
     compile_object(OBJECT_PATH(RemoteKeyShareRetry));
     compile_object(OBJECT_PATH(UnknownExtension));
 }
+#endif

@@ -116,6 +116,17 @@ static object ident(string str)
     return USERSERVER->find_user(str);
 }
 
+static void cmd_disco(object user, string cmd, string str) {
+    object discord_bot;
+
+    discord_bot = ident("discord_bot");
+    if (discord_bot == nil) {
+        message("The Discord bot is not connected.\n");
+        return;
+    }
+    discord_bot->send(str);
+    message("Message sent to Discord bot.\n");
+}
 
 /*
  * NAME:	cmd_issues()
@@ -524,6 +535,8 @@ static int command(string str)
     case "snapshot":
     case "reboot":
     case "hotboot":
+
+    case "disco":
 	call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	break;
 

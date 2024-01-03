@@ -14,6 +14,7 @@ private inherit "/lib/util/ascii";
 object userd;		/* kernel user daemon */
 mapping users;		/* mapping for user objects */
 string banner;		/* login message */
+object discord_bot;
 
 /*
  * NAME:	create()
@@ -42,6 +43,9 @@ static void create()
  */
 object find_user(string name)
 {
+    if (name == "discord_bot") {
+        return discord_bot;
+    }
     return users[lower_case(name)];
 }
 
@@ -52,6 +56,10 @@ object find_user(string name)
 static object get_user(string name)
 {
     object obj;
+
+    if (name == "discord_bot") {
+        return discord_bot;
+    }
 
     if (!parse_string("word = /[A-Za-z][A-Za-z]+/ junk = /./ name: word",
 		      name)) {
@@ -80,7 +88,11 @@ object select(string name)
     if (previous_object() == userd) {
 	object obj;
 
-	obj = get_user(name);
+    if (name == "discord_bot") {
+        discord_bot = clone_object("~System/obj/discord_bot");
+        return discord_bot;
+    }
+        obj = get_user(name);
 	return (obj) ? obj : this_object();
     }
 }
