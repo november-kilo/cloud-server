@@ -1,19 +1,33 @@
 #include <kernel/user.h>
 #include <kernel/kernel.h>
+#include <Iterator.h>
 
 inherit "~System/lib/discord_bot";
 
 int login(string str) {
     if (previous_program() == LIB_CONN && str == "discord_bot") {
         ::connection(previous_object());
-        DRIVER->message("Bot logged in.\n");
+        DRIVER->message("Bot logged in from " + ip_number() + "\n");
         return MODE_NOCHANGE;
     }
 }
 
 int receive_message(string str) {
     if (previous_program() == LIB_CONN) {
-        DRIVER->message("Bot received: '" + str + "'\n");
+        object *users;
+        int i;
+        IntIterator iter;
+
+        users = users();
+        i = sizeof(users);
+        if (i > 0) {
+            iter = new
+            IntIterator(0, i - 1);
+            while (!iter->end()) {
+                users[iter->next()]->message("[Discord] " + str + "\n");
+            }
+        }
+
         return MODE_NOCHANGE;
     }
 }
