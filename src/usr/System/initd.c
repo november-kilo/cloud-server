@@ -75,6 +75,7 @@ static void create()
     load("sys/errord");
     load("sys/upgraded");
     load("sys/userd");
+    load("sys/discord_botd");
 
     /* clonables */
     compile_object("obj/user");

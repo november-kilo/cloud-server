@@ -21,8 +21,7 @@ int receive_message(string str) {
         users = users();
         i = sizeof(users);
         if (i > 0) {
-            iter = new
-            IntIterator(0, i - 1);
+            iter = new IntIterator(0, i - 1);
             while (!iter->end()) {
                 users[iter->next()]->message("[Discord] " + str + "\n");
             }

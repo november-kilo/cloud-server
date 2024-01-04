@@ -10,3 +10,4 @@ src/kernel/data/access.data
 **/.idea/
 **/.vscode/
 nkcloud.dgd
+src/kernel/data/*.pwd

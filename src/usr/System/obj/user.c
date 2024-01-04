@@ -119,7 +119,7 @@ static object ident(string str)
 static void cmd_disco(object user, string cmd, string str) {
     object discord_bot;
 
-    discord_bot = ident("discord_bot");
+    discord_bot = "/usr/System/sys/discord_botd"->get_discord_bot();
     if (discord_bot == nil) {
         message("The Discord bot is not connected.\n");
         return;
