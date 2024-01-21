@@ -75,11 +75,11 @@ static void create()
     load("sys/errord");
     load("sys/upgraded");
     load("sys/userd");
-    load("sys/discord_botd");
+    load("discord/sys/discord_botd");
 
     /* clonables */
     compile_object("obj/user");
-    compile_object("obj/discord_bot");
+    compile_object("discord/obj/discord_bot");
 
     /* global objects */
     compile_object("/sys/utf8encode");

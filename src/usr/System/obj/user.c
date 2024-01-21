@@ -11,6 +11,7 @@ inherit wiztool	LIB_WIZTOOL;
 
 private inherit	"/lib/util/ascii";
 
+inherit terminal "/lib/util/terminal";
 
 # define USER			"/usr/System/obj/user"
 # define USERSERVER		"/usr/System/sys/userd"
@@ -31,6 +32,7 @@ string password;		/* user password */
 static string newpasswd;	/* new password */
 static string paste_buffer;	/* buffer holding text being pasted */
 static int nconn;		/* # of connections */
+static object local_wiztool;
 
 /*
  * NAME:	create()
@@ -40,6 +42,14 @@ static create()
 {
     wiztool::create(200);
     state = ([ ]);
+}
+
+private string show_prompt(void) {
+    if (local_wiztool && function_object("get_prompt", local_wiztool)) {
+        message(local_wiztool->get_prompt());
+    } else {
+        message("> ");
+    }
 }
 
 /*
@@ -116,16 +126,31 @@ static object ident(string str)
     return USERSERVER->find_user(str);
 }
 
-static void cmd_disco(object user, string cmd, string str) {
-    object discord_bot;
+void println(string str) {
+    message(str + "\n");
+}
 
-    discord_bot = "/usr/System/sys/discord_botd"->get_discord_bot();
-    if (discord_bot == nil) {
-        message("The Discord bot is not connected.\n");
-        return;
+private void load_local_wiztool(void) {
+    string path;
+
+    path = "/usr/" + name + "/obj/wiztool";
+    if (local_wiztool == nil) {
+        try
+        {
+            compile_object(path);
+            local_wiztool = clone_object(path);
+        } catch (err) {
+            println(err);
+        }
     }
-    discord_bot->send(str);
-    message("Message sent to Discord bot.\n");
+}
+
+static void cmd_wiztool(object user, string cmd, string str) {
+    if (local_wiztool != nil) {
+        destruct_object(local_wiztool);
+    }
+    load_local_wiztool();
+    println("Done.");
 }
 
 /*
@@ -536,7 +561,7 @@ static int command(string str)
     case "reboot":
     case "hotboot":
 
-    case "disco":
+    case "wiztool":
 	call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 	break;
 
@@ -545,8 +570,12 @@ static int command(string str)
 	break;
 
     default:
-	message("No command: " + str + "\n");
-	break;
+        if (local_wiztool && function_object("cmd_" + str, local_wiztool)) {
+            call_other(local_wiztool, "cmd_" + str, arg);
+            break;
+        }
+	    message("No command: " + str + "\n");
+	    break;
     }
 
     return TRUE;
@@ -600,8 +629,9 @@ int login(string str)
 	    /* no password; login immediately */
 	    connection(previous_object());
 	    tell_audience(Name + " logs in.\n");
+        load_local_wiztool();
 	    if (str != "admin" && sizeof(query_users() & ({ str })) == 0) {
-		message("> ");
+            show_prompt();
 		state[previous_object()] = STATE_NORMAL;
 		return MODE_ECHO;
 	    }
@@ -626,6 +656,9 @@ void logout(int quit)
 		tell_audience(Name + " disconnected.\n");
 	    }
 	}
+    if (local_wiztool != nil) {
+        destruct_object(local_wiztool);
+    }
 	::logout(name);
     }
 }
@@ -841,7 +874,7 @@ int receive_message(string str)
 	if (str) {
 	    message((str == "insert") ? "*\b" : ":");
 	} else {
-	    message("> ");
+        show_prompt();
 	}
 	state[previous_object()] = STATE_NORMAL;
 	return MODE_ECHO;

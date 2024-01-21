@@ -6,8 +6,13 @@ src/include/status.h
 src/include/trace.h
 src/include/type.h
 src/kernel/data/access.data
+src/kernel/data/*.pwd
+**/no_export.h
+extensions/bin/*
+extensions/kfun/*.o
 
 **/.idea/
 **/.vscode/
 nkcloud.dgd
-src/kernel/data/*.pwd
+.DS_Store
+**/tmp/

@@ -7,7 +7,7 @@ object userd;
 
 static void create(void) {
     userd = find_object(USERD);
-    userd->set_telnet_manager(1, this_object());
+    userd->set_binary_manager(1, this_object());
 }
 
 object get_discord_bot(void) {
@@ -16,7 +16,7 @@ object get_discord_bot(void) {
 
 object select(string name) {
     if (previous_object() == userd && name == "discord_bot") {
-        discord_bot = clone_object("~System/obj/discord_bot");
+        discord_bot = clone_object("~System/discord/obj/discord_bot");
         return discord_bot;
     }
 }
