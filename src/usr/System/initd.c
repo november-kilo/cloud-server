@@ -4,6 +4,10 @@
 # include <kernel/rsrc.h>
 # include <status.h>
 
+#include <Array.h>
+#include <Function.h>
+#include <Sort.h>
+
 inherit access API_ACCESS;
 inherit rsrc API_RSRC;
 
@@ -93,6 +97,10 @@ static void create()
     compile_object("/lib/DelayedContinuation");
     compile_object("/lib/IterativeContinuation");
     compile_object("/lib/DistContinuation");
+
+    compile_object(FUNCTION_LIB);
+    compile_object(MERGESORT_LIB);
+    compile_object(ARRAY_LIB);
 
     resources = ([ ]);
     restore_object("data/rsrc.dat");

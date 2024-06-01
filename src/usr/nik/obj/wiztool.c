@@ -1,4 +1,6 @@
 #include <kfun.h>
+#include <Array.h>
+#include <Iterator.h>
 
 inherit terminal "/lib/util/terminal";
 inherit format "/lib/util/format";
@@ -72,4 +74,35 @@ void cmd_pi(string str) {
         pi = format::sprintf(template, 4.0 * atan(1.0));
         me->println(format::format("%s %s", ({ prefix, pi })));
     }
+}
+
+void cmd_colors(string str) {
+    if (valid(previous_program())) {
+        Iterator iterator;
+        int *heatMap;
+
+        heatMap = allocate_int(7);
+        heatMap[0] = 46;
+        heatMap[1] = 226;
+        heatMap[2] = 220;
+        heatMap[3] = 214;
+        heatMap[4] = 208;
+        heatMap[5] = 202;
+        heatMap[6] = 196;
+        iterator = new IntIterator(0, 6);
+
+        while (!iterator->end()) {
+            me->message(terminal::color256(heatMap[iterator->next()], "x"));
+        }
+
+        me->println("\n Done.");
+    }
+}
+
+void cmd_arrays(string str) {
+    Array a;
+    a = new Array(({ 3, 1, 2 }));
+    me->println(a->stringify());
+    a->sort();
+    me->println(a->stringify());
 }

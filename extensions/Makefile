@@ -8,9 +8,6 @@ MATH_LDFLAGS=-lm
 CC=cc
 LD=$(CC)
 
-clean:
-	rm -f bin/* kfun/*.o
-
 all:	bin/uuid_kfun$(EXT) bin/math_kfun$(EXT) bin/string_kfun$(EXT)
 
 kfun/uuid_kfun.o:	kfun/uuid_kfun.c $(H)
@@ -30,3 +27,6 @@ kfun/string_kfun.o:	kfun/string_kfun.c $(H)
 
 bin/string_kfun$(EXT):	kfun/string_kfun.o $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $+
+
+clean:
+	rm -f bin/* kfun/*.o
