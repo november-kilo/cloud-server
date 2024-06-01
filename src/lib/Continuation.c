@@ -64,10 +64,11 @@ private void addCont(Continuation cont)
     }
 
     continuation = cont->continued();
-    if (sizeof(continuation) != 0 && continuation[CONT_DELAY] != 0 &&
+    if ((i=sizeof(continued)) != 0 && sizeof(continuation) != 0 &&
+	continuation[CONT_DELAY] != 0 &&
 	continuation[CONT_OBJS] == TRUE &&
 	continuation[CONT_FUNC] == "_F_return" &&
-	continued[i=(sizeof(continued) - CONT_SIZE + CONT_DELAY)] == 0) {
+	continued[i+=CONT_DELAY - CONT_SIZE] == 0) {
 	/*
 	 * merge delayed continuation with preceding
 	 */
@@ -80,40 +81,46 @@ private void addCont(Continuation cont)
 /*
  * add continuation or function to current one
  */
-void add(mixed func, mixed args...)
+object add(mixed func, mixed args...)
 {
     object origin;
     int clone;
 
     if (sizeof(args) == 0 && typeof(func) == T_OBJECT) {
 	addCont(func);
-	return;
-    }
-    if (started) {
-	error("Continuation already started");
+    } else {
+	if (started) {
+	    error("Continuation already started");
+	}
+
+	origin = previous_object();
+	sscanf(object_name(origin), "%*s#%d", clone);
+	if (clone < 0) {
+	    error("Continuation in non-persistent object");
+	}
+	if (typeof(func) != T_STRING) {
+	    error("Not a function");
+	}
+	continued += ({ FALSE, 0, origin, func, args, nil });
     }
 
-    origin = previous_object();
-    sscanf(object_name(origin), "%*s#%d", clone);
-    if (clone < 0) {
-	error("Continuation in non-persistent object");
-    }
-    if (typeof(func) != T_STRING) {
-	error("Not a function");
-    }
-    continued += ({ FALSE, 0, origin, func, args, nil });
+    return this_object();
 }
 
 /*
  * chain continuation or function to current one
  */
-void chain(mixed func, mixed args...)
+object chain(mixed func, mixed args...)
 {
+    mixed *continuation;
     object origin;
     int size, clone;
 
     if (sizeof(args) == 0 && typeof(func) == T_OBJECT) {
-	switch (typeof(func->continued()[CONT_OBJS])) {
+	if (sizeof(continuation=func->continued()) == 0) {
+	    error("Cannot chain empty continuation");
+	}
+	switch (typeof(continuation[CONT_OBJS])) {
 	case T_OBJECT:
 	    error("Cannot chain iterative continuation");
 
@@ -122,23 +129,28 @@ void chain(mixed func, mixed args...)
 	}
 
 	size = sizeof(continued);
+	if (size == 0) {
+	    error("Cannot chain to empty continuation");
+	}
 	addCont(func);
 	continued[size + CONT_OBJS] = TRUE;
-	return;
-    }
-    if (started) {
-	error("Continuation already started");
+    } else {
+	if (started) {
+	    error("Continuation already started");
+	}
+
+	origin = previous_object();
+	sscanf(object_name(origin), "%*s#%d", clone);
+	if (clone < 0) {
+	    error("Continuation in non-persistent object");
+	}
+	if (typeof(func) != T_STRING) {
+	    error("Not a function");
+	}
+	continued += ({ TRUE, 0, origin, func, args, nil });
     }
 
-    origin = previous_object();
-    sscanf(object_name(origin), "%*s#%d", clone);
-    if (clone < 0) {
-	error("Continuation in non-persistent object");
-    }
-    if (typeof(func) != T_STRING) {
-	error("Not a function");
-    }
-    continued += ({ TRUE, 0, origin, func, args, nil });
+    return this_object();
 }
 
 /*
@@ -146,11 +158,7 @@ void chain(mixed func, mixed args...)
  */
 static Continuation operator+ (Continuation cont)
 {
-    object obj;
-
-    obj = copy_object();
-    obj->add(cont);
-    return obj;
+    return copy_object()->add(cont);
 }
 
 /*
@@ -158,27 +166,23 @@ static Continuation operator+ (Continuation cont)
  */
 static Continuation operator>> (Continuation cont)
 {
-    object obj;
-
-    obj = copy_object();
-    obj->chain(cont);
-    return obj;
+    return copy_object()->chain(cont);
 }
 
 /*
  * start the continuation
  */
-atomic void runNext(varargs mixed arg)
+atomic void runNext(mixed args...)
 {
     if (started) {
 	error("Continuation already started");
     }
     if (sizeof(continued) != 0) {
 	if (!continued[CONT_ORIGIN]) {
-	    error("No environment for Continuation");
+	    error("No environment for continuation");
 	}
 
-	continued[CONT_VAL] = arg;
+	continued[CONT_ARGS] += args;
 	::startContinuation(continued, FALSE);
     }
     started = TRUE;
@@ -187,17 +191,17 @@ atomic void runNext(varargs mixed arg)
 /*
  * start the continuation concurrently
  */
-atomic void runParallel(varargs mixed arg)
+atomic void runParallel(mixed args...)
 {
     if (started) {
 	error("Continuation already started");
     }
     if (sizeof(continued) != 0) {
 	if (!continued[CONT_ORIGIN]) {
-	    error("No environment for Continuation");
+	    error("No environment for continuation");
 	}
 
-	continued[CONT_VAL] = arg;
+	continued[CONT_ARGS] += args;
 	::startContinuation(continued, TRUE);
     }
     started = TRUE;

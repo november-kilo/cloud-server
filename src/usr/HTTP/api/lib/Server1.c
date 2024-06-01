@@ -3,6 +3,9 @@
 # include "HttpRequest.h"
 # include "HttpField.h"
 # include "HttpResponse.h"
+# include <config.h>
+# include <version.h>
+# include <status.h>
 
 inherit "~/lib/Connection1";
 
@@ -26,20 +29,81 @@ static void create(object server, string requestPath, string headersPath)
 }
 
 /*
- * create internal error response
+ * internal error message
  */
-private HttpResponse httpInternalError()
+static string htmlInternalError()
+{
+    return "<HTML>\n<HEAD><TITLE>" + HTTP_INTERNAL_ERROR +
+	   " Internal Error</TITLE></HEAD>\n<BODY><H1>" +
+	   HTTP_INTERNAL_ERROR + " Internal Error</H1></BODY>\n</HTML>\n";
+}
+
+/*
+ * bad request message
+ */
+static string htmlBadRequest()
+{
+    return "<HTML>\n<HEAD><TITLE>" + HTTP_BAD_REQUEST +
+	   " Bad Request</TITLE></HEAD>\n<BODY><H1>" +
+	   HTTP_BAD_REQUEST + " Bad Request</H1></BODY>\n</HTML>\n";
+}
+
+/*
+ * send internal error response
+ */
+static void sendInternalError()
 {
     HttpResponse response;
     HttpFields headers;
+    string str;
+    StringBuffer message;
 
     response = new HttpResponse(1.1, HTTP_INTERNAL_ERROR, "Internal Error");
     headers = new HttpFields();
     headers->add(new HttpField("Date", new HttpTime));
+    headers->add(new HttpField("Server", ({
+	new HttpProduct(SERVER_NAME, SERVER_VERSION),
+	new HttpProduct(explode(status(ST_VERSION), " ")...)
+    })));
     headers->add(new HttpField("Connection", ({ "close" })));
+
+    str = htmlInternalError();
+    headers->add(new HttpField("Content-Type", "text/html;charset=utf-8"));
+    headers->add(new HttpField("Content-Length", strlen(str)));
     response->setHeaders(headers);
 
-    return response;
+    message = new StringBuffer(response->transport());
+    message->append(str);
+    sendMessage(message);
+}
+
+/*
+ * send internal error response
+ */
+static void sendBadRequest()
+{
+    HttpResponse response;
+    HttpFields headers;
+    string str;
+    StringBuffer message;
+
+    response = new HttpResponse(1.1, HTTP_BAD_REQUEST, "Bad Request");
+    headers = new HttpFields();
+    headers->add(new HttpField("Date", new HttpTime));
+    headers->add(new HttpField("Server", ({
+	new HttpProduct(SERVER_NAME, SERVER_VERSION),
+	new HttpProduct(explode(status(ST_VERSION), " ")...)
+    })));
+    headers->add(new HttpField("Connection", ({ "close" })));
+
+    str = htmlBadRequest();
+    headers->add(new HttpField("Content-Type", "text/html;charset=utf-8"));
+    headers->add(new HttpField("Content-Length", strlen(str)));
+    response->setHeaders(headers);
+
+    message = new StringBuffer(response->transport());
+    message->append(str);
+    sendMessage(message);
 }
 
 /*
@@ -77,13 +141,13 @@ static int receiveHeaders(string str)
 	code = receiveRequestHeaders(request, new_object(headersPath, str));
     } catch (...) {
 	code = HTTP_BAD_REQUEST;
+	sendBadRequest();
     }
 
     switch (receiveRequest(code, request)) {
     case HTTP_INTERNAL_ERROR:
-	message(httpInternalError()->transport());
-	return MODE_DISCONNECT;
-
+	sendInternalError();
+	/* fall through */
     case HTTP_BAD_REQUEST:
 	return MODE_DISCONNECT;
 
@@ -110,9 +174,10 @@ static int receiveFirstLine(string str)
     int code;
 
     try {
-	code = call_limited("receiveRequestLine", str);
+	code = receiveRequestLine(str);
     } catch (...) {
 	code = HTTP_BAD_REQUEST;
+	sendMessage(new StringBuffer(htmlBadRequest()));
     }
 
     if (code != 0 || request->version() < 1.0) {
@@ -120,18 +185,15 @@ static int receiveFirstLine(string str)
 	 * call receiveRequest() early, on error output a raw HTML message
 	 * and disconnect immediately
 	 */
-	switch (call_limited("receiveRequest", code, request)) {
-	case HTTP_OK:
-	    return MODE_NOCHANGE;
-
+	switch (receiveRequest(code, request)) {
 	case HTTP_INTERNAL_ERROR:
-	    message("<HTML>\n<HEAD><TITLE>" + HTTP_INTERNAL_ERROR +
-		    " Internal Error</TITLE></HEAD>\n<BODY><H1>" +
-		    HTTP_INTERNAL_ERROR +
-		    " Internal Error</H1></BODY>\n</HTML>\n");
+	    sendMessage(new StringBuffer(htmlInternalError()));
 	    /* fall through */
-	default:
+	case HTTP_BAD_REQUEST:
 	    return MODE_DISCONNECT;
+
+	default:
+	    return MODE_NOCHANGE;
 	}
     }
 
@@ -147,30 +209,30 @@ static int receiveMessage(string str)
     int code;
 
     if (strlen(str) == 0) {
-        return MODE_NOCHANGE;
+	return MODE_NOCHANGE;
     }
 
     try {
-        code = call_limited("receiveRequestLine", str);
-        if (request->version() < 1.0) {
-            code = HTTP_BAD_REQUEST;
-        }
+	code = receiveRequestLine(str);
+	if (request->version() < 1.0) {
+	    error("Invalid request version");
+	}
     } catch (...) {
-        code = HTTP_BAD_REQUEST;
+	code = HTTP_BAD_REQUEST;
+	sendBadRequest();
     }
 
     if (code != 0) {
-        switch (call_limited("receiveRequest", code, request)) {
-        case HTTP_INTERNAL_ERROR:
-            message(httpInternalError()->transport());
-            return MODE_DISCONNECT;
+	switch (receiveRequest(code, request)) {
+	case HTTP_INTERNAL_ERROR:
+	    sendInternalError();
+	    /* fall through */
+	case HTTP_BAD_REQUEST:
+	    return MODE_DISCONNECT;
 
-        case HTTP_BAD_REQUEST:
-            return MODE_DISCONNECT;
-
-        default:
-            return MODE_NOCHANGE;
-        }
+	default:
+	    return MODE_NOCHANGE;
+	}
     }
 
     startHeaders();
@@ -184,6 +246,8 @@ void sendResponse(HttpResponse response)
 {
     if (previous_object() == server) {
 	::sendResponse(response);
-	sendMessage(new StringBuffer(response->transport()));
+	sendMessage(new StringBuffer(response->transport()), FALSE,
+		    response->headerValue("Transfer-Encoding") ||
+		    response->headerValue("Content-Length"));
     }
 }

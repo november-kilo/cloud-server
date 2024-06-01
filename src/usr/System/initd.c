@@ -89,6 +89,9 @@ static void create()
     /* global objects */
     compile_object("/sys/utf8encode");
     compile_object("/sys/utf8decode");
+    compile_object("/sys/jsonstrdecode");
+    compile_object("/sys/jsonencode");
+    compile_object("/sys/jsondecode");
     compile_object("/lib/IntIterator");
     compile_object("/lib/String");
     compile_object("/lib/StringBuffer");
@@ -97,6 +100,8 @@ static void create()
     compile_object("/lib/DelayedContinuation");
     compile_object("/lib/IterativeContinuation");
     compile_object("/lib/DistContinuation");
+    compile_object("/lib/KVstore");
+    compile_object("/obj/kvnode");
 
     compile_object(FUNCTION_LIB);
     compile_object(MERGESORT_LIB);
@@ -113,18 +118,17 @@ static void create()
     }
 
     /* Domain stuff */
-    domains = get_dir("/usr/[A-Z]*")[0];
+    domains = ({ "TLS", "HTTP" });
+    domains += get_dir("/usr/[A-Z]*")[0] - (domains + ({ "System" }));
     for (i = 0, sz = sizeof(domains); i < sz; i++) {
 	domain = domains[i];
-	if (domain != "System") {
-	    add_owner(domain);
-	    restore(domain);
+	add_owner(domain);
+	restore(domain);
 
-	    rsrc_incr(domain, "fileblocks",
-		      DRIVER->file_size("/usr/" + domain, TRUE));
-	    if (file_info("/usr/" + domain + "/initd.c")) {
-		load("/usr/" + domain + "/initd");
-	    }
+	rsrc_incr(domain, "fileblocks",
+		  DRIVER->file_size("/usr/" + domain, TRUE));
+	if (file_info("/usr/" + domain + "/initd.c")) {
+	    load("/usr/" + domain + "/initd");
 	}
     }
 }

@@ -6,6 +6,8 @@
 inherit Http1Server;
 
 
+private int received;	/* received at least one request */
+
 /*
  * initialize connection object
  */
@@ -27,6 +29,7 @@ static int receiveRequest(int code, HttpRequest request)
 {
     string host;
 
+    received = TRUE;
     code = ::receiveRequest(code, request);
 
     if (request) {
@@ -34,10 +37,12 @@ static int receiveRequest(int code, HttpRequest request)
 	if (!host) {
 	    host = "";
 	}
-	::login("HTTP from " + address() + ", " + code + " " +
-		request->method() + " " + host + request->path() + "\n");
+	::login("HTTP from " + address() + ", " +
+		((code != 0) ? code + " " : "") + request->method() + " " +
+		host + request->path() + "\n");
     } else {
-	::login("HTTP from " + address() + ", " + code + "\n");
+	::login("HTTP from " + address() +
+		((code != 0) ? ", " + code : "") + "\n");
     }
 
     return code;
@@ -50,7 +55,7 @@ int login(string str)
 {
     if (previous_program() == LIB_CONN) {
 	::connection(previous_object());
-	return receiveFirstLine(str);
+	return call_limited("receiveFirstLine", str);
     }
 }
 
@@ -60,7 +65,7 @@ int login(string str)
 int receive_message(string str)
 {
     if (previous_program() == LIB_CONN) {
-	return ::receive_message(str);
+	return call_limited("receiveBytes", str);
     }
 }
 
@@ -70,7 +75,7 @@ int receive_message(string str)
 void logout(int quit)
 {
     if (previous_program() == LIB_CONN) {
-	::logout(quit);
+	call_limited("close", quit);
 	destruct_object(this_object());
     }
 }
@@ -81,6 +86,16 @@ void logout(int quit)
 int message_done()
 {
     if (previous_program() == LIB_CONN) {
-	return ::message_done();
+	return call_limited("messageDone");
+    }
+}
+
+/*
+ * time out if no request was received in time
+ */
+int timeout()
+{
+    if (previous_program() == LIB_CONN) {
+	return !received;
     }
 }

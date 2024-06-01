@@ -9,6 +9,7 @@ inherit buffered "~/lib/BufferedConnection1";
 
 private TlsServerSession session;	/* TLS session */
 private int connected;			/* TLS connection established */
+private StringBuffer outbuf;		/* output buffer */
 
 
 /*
@@ -41,7 +42,7 @@ static int tlsAccept(string str, varargs int reqCert, string hosts...)
 	set_mode(MODE_LINE);
     }
     if (input) {
-	::receive_message(input);
+	receiveBytes(input);
     }
     return (status && status != "connecting") ? MODE_DISCONNECT : MODE_NOCHANGE;
 }
@@ -57,7 +58,7 @@ static int receiveFirstMessage(string str)
 /*
  * receive a message
  */
-static int receive_message(string str)
+static int tlsReceive(string str)
 {
     StringBuffer input, output;
     string warning, status;
@@ -71,7 +72,7 @@ static int receive_message(string str)
 	set_mode(MODE_LINE);
     }
     if (input) {
-	::receive_message(input);
+	receiveBytes(input);
     }
     return (status && status != "connecting") ? MODE_DISCONNECT : MODE_NOCHANGE;
 }
@@ -79,11 +80,11 @@ static int receive_message(string str)
 /*
  * terminate connection
  */
-static void logout(int quit)
+static void tlsClose(int quit)
 {
     StringBuffer output;
 
-    ::logout(quit);
+    close(quit);
     output = session->close();
     if (output) {
 	::sendMessage(output, TRUE);
@@ -93,9 +94,19 @@ static void logout(int quit)
 /*
  * send an encrypted message
  */
-static void sendMessage(StringBuffer str)
+static void sendMessage(StringBuffer str, varargs int quiet, int hold)
 {
-    ::sendMessage(session->sendMessage(str));
+    if (outbuf) {
+	outbuf->append(str);
+	str = outbuf;
+	outbuf = nil;
+    }
+
+    if (hold) {
+	outbuf = str;
+    } else {
+	::sendMessage(session->sendMessage(str), quiet);
+    }
 }
 
 

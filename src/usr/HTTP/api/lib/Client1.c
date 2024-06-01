@@ -73,7 +73,9 @@ void sendRequest(HttpRequest request)
 {
     if (previous_object() == client) {
 	::sendRequest(request);
-	sendMessage(new StringBuffer(request->transport()));
+	sendMessage(new StringBuffer(request->transport()), FALSE,
+		    request->headerValue("Transfer-Encoding") ||
+		    request->headerValue("Content-Length"));
     }
 }
 
@@ -84,7 +86,7 @@ static int receiveMessage(string str)
 {
     try {
 	response = new_object(responsePath, str);
-        call_limited("receiveStatusLine", response);
+        receiveStatusLine(response);
     } catch (...) {
         return MODE_DISCONNECT;
     }

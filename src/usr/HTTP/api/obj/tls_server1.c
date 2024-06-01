@@ -10,6 +10,7 @@ inherit Http1TlsServer;
 
 int reqCert;		/* request client certificate */
 string *hosts;		/* server hostnames */
+private int received;	/* received at least one request */
 
 /*
  * initialize connection object
@@ -40,6 +41,7 @@ static int receiveRequest(int code, HttpRequest request)
 {
     string host;
 
+    received = TRUE;
     code = ::receiveRequest(code, request);
 
     if (request) {
@@ -47,10 +49,12 @@ static int receiveRequest(int code, HttpRequest request)
 	if (!host) {
 	    host = "";
 	}
-	::login("HTTPS from " + address() + ", " + code + " " +
-		request->method() + " " + host + request->path() + "\n");
+	::login("HTTPS from " + address() + ", " +
+		((code != 0) ? code + " " : "") + request->method() + " " +
+		host + request->path() + "\n");
     } else {
-	::login("HTTPS from " + address() + ", " + code + "\n");
+	::login("HTTPS from " + address() +
+		((code != 0) ? ", " + code : "") + "\n");
     }
 
     return code;
@@ -63,7 +67,8 @@ int login(string str)
 {
     if (previous_program() == LIB_CONN) {
 	::connection(previous_object());
-	return tlsAccept(str, reqCert, ((hosts) ? hosts : ({ }))...);
+	return call_limited("tlsAccept", str, reqCert,
+			    ((hosts) ? hosts : ({ }))...);
     }
 }
 
@@ -73,7 +78,7 @@ int login(string str)
 int receive_message(string str)
 {
     if (previous_program() == LIB_CONN) {
-	return ::receive_message(str);
+	return call_limited("tlsReceive", str);
     }
 }
 
@@ -83,7 +88,7 @@ int receive_message(string str)
 void logout(int quit)
 {
     if (previous_program() == LIB_CONN) {
-	::logout(quit);
+	call_limited("tlsClose", quit);
 	destruct_object(this_object());
     }
 }
@@ -94,6 +99,26 @@ void logout(int quit)
 int message_done()
 {
     if (previous_program() == LIB_CONN) {
-	return ::message_done();
+	return call_limited("messageDone");
+    }
+}
+
+/*
+ * reprocess pending input
+ */
+void restart_input()
+{
+    if (previous_program() == BINARY_CONN) {
+	call_limited("restartInput");
+    }
+}
+
+/*
+ * time out if no request was received in time
+ */
+int timeout()
+{
+    if (previous_program() == LIB_CONN) {
+	return !received;
     }
 }
