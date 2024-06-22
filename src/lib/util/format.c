@@ -1,7 +1,7 @@
 #include <kfun.h>
 #include <type.h>
 
-string spaces(int width) {
+static string spaces(int width) {
     string str;
 
     str = "                                                               ";
@@ -12,7 +12,7 @@ string spaces(int width) {
     return str[.. width - 1];
 }
 
-string sprintf(string template, mixed value) {
+static string sprintf(string template, mixed value) {
 #ifdef KF_SNPRINTF
     return snprintf(template, value);
 #else
@@ -20,7 +20,7 @@ string sprintf(string template, mixed value) {
 #endif
 }
 
-string format(string template, mixed *values) {
+static string format(string template, mixed *values) {
     int i, sz, idx;
     string *output;
 
@@ -56,7 +56,7 @@ string format(string template, mixed *values) {
     return implode(output, "");
 }
 
-string to_string(mixed value, varargs mapping seen) {
+static string to_string(mixed value, varargs mapping seen) {
     string str;
     int i, sz;
     mixed *indices, *values;

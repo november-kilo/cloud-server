@@ -1,27 +1,21 @@
 #include <kernel/user.h>
-#include <kernel/kernel.h>
-#include <Iterator.h>
 
 inherit "~System/lib/bot";
 
 static int receive_message(string str) {
     if (previous_program() == LIB_CONN) {
-        object *users;
-        int i;
-        IntIterator iter;
+        mapping map;
+        object user;
 
-        users = users();
-        i = sizeof(users);
-        if (i > 0) {
-            iter = new IntIterator(0, i - 1);
-            while (!iter->end()) {
-                object user;
+        map = "/sys/jsondecode"->decode(str);
+        user = "/usr/System/sys/userd"->find_user(map["name"]);
 
-                user = users[iter->next()];
-                user->println("[Discord] " + str);
-                user->show_prompt();
-            }
+        if (!user) {
+            return MODE_NOCHANGE;
         }
+
+        user->println("[Discord] " + map["message"]);
+        user->show_prompt();
 
         return MODE_NOCHANGE;
     }

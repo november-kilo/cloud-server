@@ -1,6 +1,6 @@
 #include <kfun.h>
 
-string uuid(varargs int strip_dashes) {
+static string uuid(varargs int strip_dashes) {
 #ifndef KF_UUID
     error("uuid() not implemented");
 #else

@@ -4,6 +4,9 @@
 
 inherit terminal "/lib/util/terminal";
 inherit format "/lib/util/format";
+inherit base64 "/lib/util/base64";
+
+#define JSONENCODE	"/sys/jsonencode"
 
 private object me;
 
@@ -48,16 +51,54 @@ void cmd_cls(string arg) {
     }
 }
 
+private string base64_encode(string str) {
+    return base64::encode(str);
+}
+
+private string json_encode(mapping map) {
+    return JSONENCODE->encode(map);
+}
+
+private string encode_discord_message(string str) {
+    mapping map;
+    map = ([]);
+    map["name"] = me->query_name();
+    map["command"] = str;
+    return json_encode(map);
+}
+
+private int starts_with(string a, string b) {
+    if (strlen(a) < strlen(b)) {
+        return FALSE;
+    }
+
+    return a[0..strlen(b) - 1] == b;
+}
+
+private int is_command_known_to_discord(string str) {
+    if (!str || str == "") {
+        return FALSE;
+    }
+
+    return str == "mcstatus";
+}
+
 void cmd_disco(string str) {
     if (valid(previous_program())) {
         object discord_bot;
+
+        if (!is_command_known_to_discord(str)) {
+            me->println("Unknown Discord bot command.");
+            return;
+        }
 
         discord_bot = "/usr/System/discord/sys/discord_botd"->get_discord_bot();
         if (discord_bot == nil) {
             me->println("The Discord bot is not connected.");
             return;
         }
-        if (discord_bot->send(str)) {
+
+        if (discord_bot->send(encode_discord_message(str))) {
             me->println("Message sent to Discord bot.");
         }
     }
@@ -95,14 +136,16 @@ void cmd_colors(string str) {
             me->message(terminal::color256(heatMap[iterator->next()], "x"));
         }
 
-        me->println("\n Done.");
+        me->println("\nDone.");
     }
 }
 
 void cmd_arrays(string str) {
-    Array a;
-    a = new Array(({ 3, 1, 2 }));
-    me->println(a->stringify());
-    a->sort();
-    me->println(a->stringify());
+    if (valid(previous_program())) {
+        Array a;
+        a = new Array(({ 3, 1, 2 }));
+        me->println(a->stringify());
+        a->sort();
+        me->println(a->stringify());
+    }
 }

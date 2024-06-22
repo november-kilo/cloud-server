@@ -1,7 +1,6 @@
 #include <Array.h>
 
 inherit Iterable;
-inherit "/lib/util/equals";
 inherit "/lib/util/format";
 
 private mixed *elements;
