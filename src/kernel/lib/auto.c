@@ -31,6 +31,86 @@ nomask string query_owner()
     return owner;
 }
 
+/*
+ * NAME:	creator()
+ * DESCRIPTION:	get creator of file
+ */
+private string creator(string file)
+{
+    return (sscanf(file, "/kernel/%*s") != 0) ? "System" :
+	    (sscanf(file, "/usr/%s/", file) != 0) ? file : nil;
+}
+
+/*
+ * NAME:	normalize_path()
+ * DESCRIPTION:	reduce a path to its minimal absolute form
+ */
+private string normalize_path(string file, varargs string dir)
+{
+    string *path;
+    int i, j, sz;
+
+    if (strlen(file) == 0) {
+	if (!dir) {
+	    dir = object_name(this_object()) + "/..";
+	}
+	file = dir;
+    }
+    switch (file[0]) {
+    case '~':
+	/* ~path */
+	if (creator && (strlen(file) == 1 || file[1] == '/')) {
+	    file = "/usr/" + creator + file[1 ..];
+	} else {
+	    file = "/usr/" + file[1 ..];
+	}
+	/* fall through */
+    case '/':
+	/* absolute path */
+	if (sscanf(file, "%*s//") == 0 && sscanf(file, "%*s/.") == 0) {
+	    return file;	/* no changes */
+	}
+	path = explode(file, "/");
+	break;
+
+    default:
+	/* relative path */
+	if (sscanf(file, "%*s//") == 0 && sscanf(file, "%*s/.") == 0 && dir &&
+	    sscanf(dir, "%*s/..") == 0) {
+	    /*
+	     * simple relative path
+	     */
+	    return dir + "/" + file;
+	}
+	/* fall through */
+    case '.':
+	/*
+	 * complex relative path
+	 */
+	if (!dir) {
+	    dir = object_name(this_object()) + "/..";
+	}
+	path = explode(dir + "/" + file, "/");
+	break;
+    }
+
+    for (i = 0, j = -1, sz = sizeof(path); i < sz; i++) {
+	switch (path[i]) {
+	case "..":
+	    if (j >= 0) {
+		--j;
+	    }
+	    /* fall through */
+	case "":
+	case ".":
+	    continue;
+	}
+	path[++j] = path[i];
+    }
+
+    return "/" + implode(path[.. j], "/");
+}
+
 void create() { }		/* default high-level create function */
 
 # ifdef CREATOR
@@ -45,7 +125,6 @@ nomask void _F_create()
 {
     if (!creator) {
 	string oname;
-	object driver;
 	int clone;
 
 	rlimits (-1; -1) {
@@ -53,15 +132,14 @@ nomask void _F_create()
 	     * set creator and owner
 	     */
 	    oname = object_name(this_object());
-	    driver = ::find_object(DRIVER);
-	    creator = driver->creator(oname);
+	    creator = creator(oname);
 	    if (sscanf(oname, "%s#%d", oname, clone) != 0) {
 		owner = TLSVAR(TLS(), TLS_ARGUMENT);
 		if (clone >= 0) {
 		    /*
 		     * register object
 		     */
-		    driver->clone(this_object(), owner);
+		    ::find_object(DRIVER)->clone(this_object(), owner);
 		}
 	    } else {
 		owner = creator;
@@ -93,7 +171,7 @@ static object find_object(string path)
 	return nil;
     }
 
-    path = ::find_object(DRIVER)->normalize_path(path, nil);
+    path = normalize_path(path);
     if (sscanf(path, "%*s/lib/") != 0) {
 	/*
 	 * It is not possible to find a class object by name, or to call a
@@ -110,17 +188,15 @@ static object find_object(string path)
  */
 static int destruct_object(mixed obj)
 {
-    object driver;
     string oname, oowner;
     int clone, lib;
 
     /* check and translate argument */
-    driver = ::find_object(DRIVER);
     if (typeof(obj) == T_STRING) {
 	if (!this_object()) {
 	    return FALSE;
 	}
-	obj = ::find_object(driver->normalize_path(obj, nil, creator));
+	obj = ::find_object(normalize_path(obj));
 	if (!obj) {
 	    return FALSE;
 	}
@@ -140,7 +216,7 @@ static int destruct_object(mixed obj)
 	error("Cannot destruct non-persistent object");
     }
     lib = sscanf(oname, "%*s/lib/");
-    oowner = (lib || !clone) ? driver->creator(oname) : obj->query_owner();
+    oowner = (lib || !clone) ? creator(oname) : obj->query_owner();
     if ((sscanf(oname, "/kernel/%*s") != 0 && !lib && !KERNEL()) ||
 	(creator != "System" && owner != oowner)) {
 	error("Cannot destruct object: not owner");
@@ -153,7 +229,7 @@ static int destruct_object(mixed obj)
 	     */
 	    ::find_object(RSRCD)->rsrc_incr(oowner, "objects", -1);
 	} else {
-	    driver->destruct(object_name(obj), oowner);
+	    ::find_object(DRIVER)->destruct(object_name(obj), oowner);
 	}
 	::destruct_object(obj);
     }
@@ -198,11 +274,10 @@ static object compile_object(string path, string source...)
     /*
      * check access
      */
-    driver = ::find_object(DRIVER);
-    path = driver->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     lib = sscanf(path, "%*s/lib/");
     kernel = sscanf(path, "/kernel/%*s");
-    uid = driver->creator(path);
+    uid = creator(path);
     if ((sizeof(source) != 0 && kernel) ||
 	(creator != "System" &&
 	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
@@ -215,6 +290,7 @@ static object compile_object(string path, string source...)
     /*
      * do the compiling
      */
+    driver = ::find_object(DRIVER);
     rlimits (-1; -1) {
 	try {
 	    obj = _compile(driver, path, uid, source);
@@ -246,7 +322,6 @@ private atomic object _clone(string path, string uid, object obj)
  */
 static object clone_object(string path, varargs string uid)
 {
-    string creator;
     object obj;
 
     CHECKARG(path, 1, "clone_object");
@@ -262,16 +337,10 @@ static object clone_object(string path, varargs string uid)
     /*
      * check access
      */
-    obj = ::find_object(DRIVER);
-    creator = obj->creator(object_name(this_object()));
-    path = obj->normalize_path(path, nil, creator);
-    if ((sscanf(path, "/kernel/%*s") != 0 && !KERNEL()) ||
-	(creator != "System" &&
-	 !::find_object(ACCESSD)->access(object_name(this_object()), path,
-					 READ_ACCESS))) {
+    path = normalize_path(path);
+    if (sscanf(path, "/kernel/%*s") != 0 && !KERNEL()) {
 	/*
-	 * kernel objects can only be cloned by kernel objects, and cloning
-	 * in general requires read access
+	 * kernel objects can only be cloned by kernel objects
 	 */
 	error("Access denied");
     }
@@ -299,7 +368,7 @@ static object clone_object(string path, varargs string uid)
  */
 static object new_object(mixed obj, varargs string uid)
 {
-    string creator, str;
+    string str;
     int create;
 
     if (!this_object()) {
@@ -307,10 +376,7 @@ static object new_object(mixed obj, varargs string uid)
     }
     switch (typeof(obj)) {
     case T_STRING:
-	str = obj;
-	obj = ::find_object(DRIVER);
-	creator = obj->creator(object_name(this_object()));
-	str = obj->normalize_path(str, nil, creator);
+	str = normalize_path(obj);
 	obj = ::find_object(str);
 	create = TRUE;
 	break;
@@ -338,10 +404,7 @@ static object new_object(mixed obj, varargs string uid)
 	/*
 	 * check access
 	 */
-	if (sscanf(str, "/kernel/%*s") != 0 ||
-	    (creator != "System" &&
-	     !::find_object(ACCESSD)->access(object_name(this_object()), str,
-					     READ_ACCESS))) {
+	if (sscanf(str, "/kernel/%*s") != 0) {
 	    error("Access denied");
 	}
 
@@ -364,10 +427,10 @@ static object new_object(mixed obj, varargs string uid)
  * NAME:	process_trace()
  * DESCRIPTION:	filter out function call arguments from a call trace
  */
-private mixed *process_trace(mixed *trace, string creator, object driver)
+private mixed *process_trace(mixed *trace)
 {
     if (sizeof(trace) > TRACE_FIRSTARG &&
-	creator != driver->creator(trace[TRACE_PROGNAME])) {
+	creator != creator(trace[TRACE_PROGNAME])) {
 	/* remove arguments */
 	return trace[.. TRACE_FIRSTARG - 1];
     }
@@ -380,12 +443,8 @@ private mixed *process_trace(mixed *trace, string creator, object driver)
  */
 static mixed *call_trace(varargs mixed index)
 {
-    object driver;
-    string creator;
     mixed *trace;
 
-    driver = ::find_object(DRIVER);
-    creator = driver->creator(object_name(this_object()));
     if (index == nil) {
 	trace = ::call_trace();
 	if (previous_program() != RSRCOBJ) {
@@ -395,16 +454,16 @@ static mixed *call_trace(varargs mixed index)
 	    int i;
 
 	    for (i = sizeof(trace) - 1; --i >= 0; ) {
-		trace[i] = process_trace(trace[i], creator, driver);
+		trace[i] = process_trace(trace[i]);
 	    }
 	}
     } else {
-	trace = ::call_trace()[index];
+	trace = ::call_trace()[(int) index];
 	if (index == 1 && previous_program() != RSRCOBJ) {
 	    trace[TRACE_FIRSTARG] = nil;
 	}
 	if (creator != "System") {
-	    trace = process_trace(trace, creator, driver);
+	    trace = process_trace(trace);
 	}
     }
 
@@ -432,16 +491,23 @@ private mixed **process_callouts(object obj, mixed **callouts)
 	    do {
 		--i;
 		co = callouts[i];
-		callouts[i] = ({ co[CO_HANDLE], co[CO_FIRSTXARG],
+		callouts[i] = ({ co[CO_HANDLE],
+				 (typeof(co[CO_FIRSTXARG]) == T_STRING) ?
+				  co[CO_FIRSTXARG] : co[CO_FIRSTXARG + 1],
 				 co[CO_DELAY] });
 	    } while (i != 0);
 	} else {
 	    do {
 		--i;
 		co = callouts[i];
-		callouts[i] = ({ co[CO_HANDLE], co[CO_FIRSTXARG],
-				 co[CO_DELAY] }) +
-			      co[CO_FIRSTXARG + 2];
+		callouts[i] = ((typeof(co[CO_FIRSTXARG]) == T_STRING) ?
+				({ co[CO_HANDLE],
+				   co[CO_FIRSTXARG],
+				   co[CO_DELAY] }) :
+				({ co[CO_HANDLE],
+				   co[CO_FIRSTXARG + 1],
+				   co[CO_DELAY],
+				   co[CO_FIRSTXARG] })) + co[CO_FIRSTXARG + 2];
 	    } while (i != 0);
 	}
     }
@@ -456,7 +522,6 @@ private mixed **process_callouts(object obj, mixed **callouts)
 static mixed status(varargs mixed obj, mixed index)
 {
     mixed status;
-    object driver;
 
     if (!this_object()) {
 	return nil;
@@ -473,10 +538,10 @@ static mixed status(varargs mixed obj, mixed index)
 
     case T_INT:
 	if (obj == -1) {
-	    return (index == nil) ? ::status(1) : ::status(1)[index];
+	    return (index == nil) ? ::status(1) : ::status(1)[(int) index];
 	} else {
 	    CHECKARG(index == nil, 1, "status");
-	    status = ::status()[obj];
+	    status = ::status()[(int) obj];
 	    if (obj == ST_STACKDEPTH && status >= 0) {
 		status++;
 	    }
@@ -485,8 +550,7 @@ static mixed status(varargs mixed obj, mixed index)
 
     case T_STRING:
 	/* get corresponding object */
-	driver = ::find_object(DRIVER);
-	obj = ::find_object(driver->normalize_path(obj, nil));
+	obj = ::find_object(normalize_path(obj));
 	if (!obj) {
 	    return nil;
 	}
@@ -499,7 +563,7 @@ static mixed status(varargs mixed obj, mixed index)
 	    break;
 
 	case T_INT:
-	    status = ::status(obj)[index];
+	    status = ::status(obj)[(int) index];
 	    if (index == O_CALLOUTS) {
 		status = process_callouts(obj, status);
 	    }
@@ -659,7 +723,9 @@ private mixed _F_call_limited(mixed arg1, string oowner, mixed *args)
 
 	ticks = ::status()[ST_TICKS];
 	rlimits (-1; -1) {
+# ifdef RSRC_TICKS_MEASUREMENT
 	    rsrcd->update_ticks(limits, ticks);
+# endif
 	    TLSVAR(tls, TLS_LIMIT) = limits[LIM_NEXT];
 
 	    return result;
@@ -712,7 +778,7 @@ static int call_out(string func, mixed delay, mixed args...)
 	/* direct callouts for kernel objects */
 	return ::call_out(func, delay, args...);
     }
-    return ::call_out("_F_callout", delay, func, owner, args);
+    return ::call_out("_F_callout", delay, func, "", args);
 }
 
 /*
@@ -722,7 +788,52 @@ static int call_out(string func, mixed delay, mixed args...)
 nomask void _F_callout(string func, string oowner, mixed *args)
 {
     if (!previous_program()) {
-	_F_call_limited(func, oowner, args);
+	_F_call_limited(func, (oowner && strlen(oowner) == 0) ? owner : oowner,
+			args);
+    }
+}
+
+/*
+ * NAME:	call_out_summand()
+ * DESCRIPTION:	start a summand callout
+ */
+static int call_out_summand(string func, mixed delay, float summand,
+			    mixed args...)
+{
+    int type;
+    string oname;
+
+    CHECKARG(func, 1, "call_out_summand");
+    type = typeof(delay);
+    CHECKARG(type == T_INT || type == T_FLOAT, 2, "call_out_summand");
+    if (!this_object()) {
+	return 0;
+    }
+    CHECKARG(function_object(func, this_object()) != AUTO || func == "create",
+	     1, "call_out_summand");
+    oname = object_name(this_object());
+    if (sscanf(oname, "%*s#-1") != 0) {
+	error("Callout in non-persistent object");
+    }
+
+    /*
+     * add callout
+     */
+    if (sscanf(oname, "/kernel/%*s") != 0) {
+	/* direct callouts for kernel objects */
+	return ::call_out_summand(func, delay, summand, args...);
+    }
+    return ::call_out_summand("_F_callout_summand", delay, summand, func, args);
+}
+
+/*
+ * NAME:	_F_callout_summand()
+ * DESCRIPTION:	summand callout gate
+ */
+nomask void _F_callout_summand(float summand, string func, mixed *args)
+{
+    if (!previous_program()) {
+	_F_call_limited(func, owner, ({ summand }) + args);
     }
 }
 
@@ -783,7 +894,7 @@ static string read_file(string path, varargs int offset, int size)
 	error("Permission denied");
     }
 
-    path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
@@ -800,7 +911,7 @@ static string read_file(string path, varargs int offset, int size)
 static int write_file(string path, string str, varargs int offset)
 {
     string fcreator;
-    object driver, rsrcd;
+    object rsrcd, driver;
     int size, result, *rsrc;
 
     CHECKARG(path, 1, "write_file");
@@ -809,8 +920,7 @@ static int write_file(string path, string str, varargs int offset)
 	error("Permission denied");
     }
 
-    driver = ::find_object(DRIVER);
-    path = driver->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (sscanf(path, "/kernel/%*s") != 0 ||
 	sscanf(path, "/include/kernel/%*s") != 0 ||
 	(creator != "System" &&
@@ -819,7 +929,7 @@ static int write_file(string path, string str, varargs int offset)
 	error("Access denied");
     }
 
-    fcreator = driver->creator(path);
+    fcreator = creator(path);
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(fcreator, "fileblocks");
     if (creator != "System" && rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] &&
@@ -827,6 +937,7 @@ static int write_file(string path, string str, varargs int offset)
 	error("File quota exceeded");
     }
 
+    driver = ::find_object(DRIVER);
     size = driver->file_size(path);
     try {
 	rlimits (-1; -1) {
@@ -848,7 +959,6 @@ static int write_file(string path, string str, varargs int offset)
  */
 static int remove_file(string path)
 {
-    object driver;
     int size, result;
 
     CHECKARG(path, 1, "remove_file");
@@ -856,8 +966,7 @@ static int remove_file(string path)
 	error("Permission denied");
     }
 
-    driver = ::find_object(DRIVER);
-    path = driver->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (sscanf(path, "/kernel/%*s") != 0 ||
 	sscanf(path, "/include/kernel/%*s") != 0 ||
 	(creator != "System" &&
@@ -866,13 +975,13 @@ static int remove_file(string path)
 	error("Access denied");
     }
 
-    size = driver->file_size(path);
+    size = ::find_object(DRIVER)->file_size(path);
     try {
 	rlimits (-1; -1) {
 	    result = ::remove_file(path);
 	    if (result != 0 && size != 0) {
-		::find_object(RSRCD)->rsrc_incr(driver->creator(path),
-						"fileblocks", -size);
+		::find_object(RSRCD)->rsrc_incr(creator(path), "fileblocks",
+						-size);
 	    }
 	}
     } catch (err) {
@@ -888,7 +997,7 @@ static int remove_file(string path)
 static int rename_file(string from, string to)
 {
     string oname, fcreator, tcreator;
-    object driver, accessd, rsrcd;
+    object accessd, rsrcd;
     int size, result, *rsrc;
 
     CHECKARG(from, 1, "rename_file");
@@ -898,9 +1007,8 @@ static int rename_file(string from, string to)
     }
 
     oname = object_name(this_object());
-    driver = ::find_object(DRIVER);
-    from = driver->normalize_path(from, oname + "/..", creator);
-    to = driver->normalize_path(to, oname + "/..", creator);
+    from = normalize_path(from, oname + "/..");
+    to = normalize_path(to, oname + "/..");
     accessd = ::find_object(ACCESSD);
     if (sscanf(from + "/", "/kernel/%*s") != 0 ||
 	sscanf(to, "/kernel/%*s") != 0 ||
@@ -912,9 +1020,9 @@ static int rename_file(string from, string to)
 	error("Access denied");
     }
 
-    fcreator = driver->creator(from);
-    tcreator = driver->creator(to);
-    size = driver->file_size(from, TRUE);
+    fcreator = creator(from);
+    tcreator = creator(to);
+    size = ::find_object(DRIVER)->file_size(from, TRUE);
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(tcreator, "fileblocks");
     if (size != 0 && fcreator != tcreator && creator != "System" &&
@@ -951,7 +1059,7 @@ static mixed **get_dir(string path)
 	error("Permission denied");
     }
 
-    path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
@@ -993,28 +1101,27 @@ static mixed **get_dir(string path)
  */
 static mixed *file_info(string path)
 {
-    object obj;
     mixed *info;
-    int i, sz;
+    int sz;
+    object obj;
 
     CHECKARG(path, 1, "file_info");
     if (!this_object()) {
 	error("Permission denied");
     }
 
-    obj = ::find_object(DRIVER);
-    path = obj->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
 	error("Access denied");
     }
 
-    info = ::get_dir(obj->escape_path(path));
+    info = ::get_dir(::find_object(DRIVER)->escape_path(path));
     if (sizeof(info[0]) == 0) {
 	return nil;	/* file does not exist */
     }
-    info = ({ info[1][i], info[2][i], nil });
+    info = ({ info[1][0], info[2][0], nil });
     if ((sz=strlen(path)) >= 2 && path[sz - 2 ..] == ".c" &&
 	(obj=::find_object(path[.. sz - 3]))) {
 	info[2] = (sscanf(path, "%*s/lib/") != 0) ? TRUE : obj;
@@ -1029,7 +1136,7 @@ static mixed *file_info(string path)
 static int make_dir(string path)
 {
     string fcreator;
-    object driver, rsrcd;
+    object rsrcd;
     int result, *rsrc;
 
     CHECKARG(path, 1, "make_dir");
@@ -1037,8 +1144,7 @@ static int make_dir(string path)
 	error("Permission denied");
     }
 
-    driver = ::find_object(DRIVER);
-    path = driver->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (sscanf(path, "/kernel/%*s") != 0 ||
 	sscanf(path, "/include/kernel/%*s") != 0 ||
 	(creator != "System" &&
@@ -1047,7 +1153,7 @@ static int make_dir(string path)
 	error("Access denied");
     }
 
-    fcreator = driver->creator(path + "/");
+    fcreator = creator(path + "/");
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(fcreator, "fileblocks");
     if (creator != "System" && rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] &&
@@ -1074,7 +1180,6 @@ static int make_dir(string path)
  */
 static int remove_dir(string path)
 {
-    object driver;
     int result;
 
     CHECKARG(path, 1, "remove_dir");
@@ -1082,8 +1187,7 @@ static int remove_dir(string path)
 	error("Permission denied");
     }
 
-    driver = ::find_object(DRIVER);
-    path = driver->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (sscanf(path, "/kernel/%*s") != 0 ||
 	sscanf(path, "/include/kernel/%*s") != 0 ||
 	(creator != "System" &&
@@ -1096,7 +1200,7 @@ static int remove_dir(string path)
 	rlimits (-1; -1) {
 	    result = ::remove_dir(path);
 	    if (result != 0) {
-		::find_object(RSRCD)->rsrc_incr(driver->creator(path + "/"),
+		::find_object(RSRCD)->rsrc_incr(creator(path + "/"),
 						"fileblocks", -1);
 	    }
 	}
@@ -1117,7 +1221,7 @@ static int restore_object(string path)
 	error("Permission denied");
     }
 
-    path = ::find_object(DRIVER)->normalize_path(path, nil, creator);
+    path = normalize_path(path);
     if (creator != "System" &&
 	!::find_object(ACCESSD)->access(object_name(this_object()), path,
 					READ_ACCESS)) {
@@ -1134,7 +1238,7 @@ static int restore_object(string path)
 static void save_object(string path)
 {
     string oname, fcreator;
-    object driver, rsrcd;
+    object rsrcd, driver;
     int size, *rsrc;
 
     CHECKARG(path, 1, "save_object");
@@ -1143,8 +1247,7 @@ static void save_object(string path)
     }
 
     oname = object_name(this_object());
-    driver = ::find_object(DRIVER);
-    path = driver->normalize_path(path, oname + "/..", creator);
+    path = normalize_path(path, oname + "/..");
     if ((sscanf(path, "/kernel/%*s") != 0 &&
 	 sscanf(oname, "/kernel/%*s") == 0) ||
 	sscanf(path, "/include/kernel/%*s") != 0 ||
@@ -1153,7 +1256,7 @@ static void save_object(string path)
 	error("Access denied");
     }
 
-    fcreator = driver->creator(path);
+    fcreator = creator(path);
     rsrcd = ::find_object(RSRCD);
     rsrc = rsrcd->rsrc_get(fcreator, "fileblocks");
     if (creator != "System" && rsrc[RSRC_USAGE] >= rsrc[RSRC_MAX] &&
@@ -1161,6 +1264,7 @@ static void save_object(string path)
 	error("File quota exceeded");
     }
 
+    driver = ::find_object(DRIVER);
     size = driver->file_size(path);
     try {
 	rlimits (-1; -1) {
@@ -1180,7 +1284,7 @@ static void save_object(string path)
  */
 static string editor(varargs string cmd)
 {
-    object rsrcd, driver;
+    object rsrcd;
     string result;
     mixed *info;
 
@@ -1195,7 +1299,6 @@ static string editor(varargs string cmd)
 	    if (!query_editor(this_object())) {
 		::find_object(USERD)->add_editor(this_object());
 	    }
-	    driver = ::find_object(DRIVER);
 
 	    TLSVAR(TLS(), TLS_ARGUMENT) = nil;
 	    result = (cmd) ? ::editor(cmd) : ::editor();
@@ -1205,8 +1308,9 @@ static string editor(varargs string cmd)
 		::find_object(USERD)->remove_editor(this_object());
 	    }
 	    if (info) {
-		rsrcd->rsrc_incr(driver->creator(info[0]), "fileblocks",
-				 driver->file_size(info[0]) - info[1]);
+		rsrcd->rsrc_incr(creator(info[0]), "fileblocks",
+				 ::find_object(DRIVER)->file_size(info[0]) -
+								  info[1]);
 	    }
 	}
     } catch (err) {

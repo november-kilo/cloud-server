@@ -3,6 +3,30 @@
 
 
 private object connection;	/* associated connection object */
+private int flow;		/* flow state */
+
+/*
+ * NAME:	flow()
+ * DESCRIPTION:	enable flow state
+ */
+static void flow()
+{
+    if (connection) {
+	connection->flow();
+	flow = TRUE;
+    }
+}
+
+/*
+ * NAME:	flow_mode()
+ * DESCRIPTION:	flow: set the mode
+ */
+static void flow_mode(int mode, varargs int length)
+{
+    if (connection) {
+	connection->flow_mode(mode, length);
+    }
+}
 
 /*
  * NAME:	query_conn()
@@ -20,7 +44,11 @@ nomask object query_conn()
 static void disconnect()
 {
     if (connection) {
-	connection->disconnect();
+	if (flow) {
+	    connection->flow_disconnect();
+	} else {
+	    connection->disconnect();
+	}
     }
 }
 
@@ -71,6 +99,7 @@ static void redirect(object LIB_USER user, string str)
     }
     conn = connection;
     connection = nil;
+    flow = FALSE;
     conn->set_user(user, str);
 }
 
@@ -78,10 +107,10 @@ static void redirect(object LIB_USER user, string str)
  * NAME:	set_mode()
  * DESCRIPTION:	set the connection mode
  */
-static void set_mode(int newmode)
+static void set_mode(int mode)
 {
     if (connection) {
-	connection->set_mode(newmode);
+	connection->set_mode(mode);
     }
 }
 
@@ -130,6 +159,20 @@ static int message(string str)
 }
 
 /*
+ * NAME:	flow_message()
+ * DESCRIPTION:	forward a message to the connection object
+ */
+static void flow_message(object message)
+{
+    if (!message) {
+	error("Bad argument 1 for function flow_message");
+    }
+    if (connection) {
+	connection->flow_message(message);
+    }
+}
+
+/*
  * NAME:	message_done()
  * DESCRIPTION:	placeholder function which does no buffering
  */
@@ -148,7 +191,11 @@ static void datagram_challenge(string str)
 	error("Bad argument 1 for function datagram_challenge");
     }
     if (connection) {
-	connection->datagram_challenge(str);
+	if (flow) {
+	    connection->flow_datagram_challenge(str);
+	} else {
+	    connection->datagram_challenge(str);
+	}
     }
 }
 
@@ -162,7 +209,11 @@ int datagram(string str)
 	error("Bad argument 1 for function datagram");
     }
     if (connection) {
-	return connection->datagram(str);
+	if (flow) {
+	    return connection->flow_datagram(str);
+	} else {
+	    return connection->datagram(str);
+	}
     }
     return FALSE;
 }

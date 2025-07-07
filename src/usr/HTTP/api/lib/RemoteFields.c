@@ -26,7 +26,13 @@ static HttpAuthentication *parseAuthenticate(string str)
  */
 static HttpProduct *parseProducts(string str)
 {
-    return HTTP_PRODUCTS->products(str);
+    mixed *values;
+
+    values = HTTP_PRODUCTS->products(str);
+    if (!values) {
+	error("Bad field");
+    }
+    return values;
 }
 
 /*
@@ -104,6 +110,7 @@ static void create(string blob)
 	case "host":
 	case "referer":
 	case "sec-websocket-key":
+	case "sec-websocket-version":
 	    if (!value || sscanf(value, "%*s ") != 0) {
 		error("Bad field");
 	    }

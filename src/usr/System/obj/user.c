@@ -68,44 +68,57 @@ static object find_object(string path) { return auto ::find_object(path); }
  * NAME:	clone_object()
  * DESCRIPTION:	clone_object wrapper
  */
-static object clone_object(string path, mixed args...) {
-	string owner;
-
-	owner = query_owner();
-	path = DRIVER->normalize_path(path, query_directory(), owner);
-	if (sscanf(path, "/kernel/%*s") != 0 || !access(owner, path, READ_ACCESS)) {
-		message(path + ": Permission denied.\n");
-		return nil;
-	}
-	return auto ::clone_object(path, args...);
+static object clone_object(string path, mixed args...)
+{
+    path = DRIVER->normalize_path(path, query_directory(), query_owner());
+    if (sscanf(path, "/kernel/%*s") != 0) {
+	message(path + ": Permission denied.\n");
+	return nil;
+    }
+    return auto::clone_object(path, args...);
 }
 
 /*
  * NAME:	new_object()
  * DESCRIPTION:	new_object wrapper
  */
-static object new_object(string path, mixed args...) {
-	string owner;
-
-	owner = query_owner();
-	path = DRIVER->normalize_path(path, query_directory(), owner);
-	if (sscanf(path, "/kernel/%*s") != 0 || !access(owner, path, READ_ACCESS)) {
-		message(path + ": Permission denied.\n");
-		return nil;
-	}
-	return auto ::new_object(path, args...);
+static object new_object(string path, mixed args...)
+{
+    path = DRIVER->normalize_path(path, query_directory(), query_owner());
+    if (sscanf(path, "/kernel/%*s") != 0) {
+	message(path + ": Permission denied.\n");
+	return nil;
+    }
+    return auto::new_object(path, args...);
 }
 
 /*
  * NAME:	compile_object()
  * DESCRIPTION:	compile an object
  */
-static object compile_object(string path, string source...) {
-	if (path && sscanf(path, "%*s/@@@/") != 0) {
-		message(path + ": Cannot compile leaf object.\n");
-		return nil;
+static object compile_object(string path, string source...)
+{
+    object obj;
+
+    path = DRIVER->normalize_path(path, query_directory(), query_owner());
+    if (sscanf(path, "%*s/@@@/") != 0) {
+	message(path + ": Cannot compile leaf object.\n");
+	return nil;
+    }
+    if (sscanf(path, "%*s/lib/") + sscanf(path, "%*s/obj/") +
+	sscanf(path, "%*s/sys/") > 1) {
+	message("Ambiguous object.\n");
+	return nil;
+    }
+    obj = wiztool::compile_object(path, source...);
+    if (obj) {
+	if (sscanf(path, "%*s/obj/") != 0) {
+	    return nil;
+	} else if (sscanf(path, "%*s/sys/") != 0) {
+	    call_other(obj, "???");
 	}
-	return wiztool::compile_object(path, source...);
+    }
+    return obj;
 }
 
 /*

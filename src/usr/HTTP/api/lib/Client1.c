@@ -28,6 +28,14 @@ static void create(object client, string host, int port, string responsePath,
 }
 
 /*
+ * default client inactivity timeout
+ */
+static int inactivityTimeout()
+{
+    return 120;
+}
+
+/*
  * connection established (client)
  */
 static void connected()
@@ -46,40 +54,57 @@ static void connectFailed(int errorcode)
 /*
  * receive response headers
  */
-static int receiveHeaders(string str)
+static void receiveHeaders(string str)
 {
     try {
 	receiveResponseHeaders(response, new_object(headersPath, str));
     } catch (...) {
-	return MODE_DISCONNECT;
+	disconnect();
     }
-    client->receiveResponse(response);
-    return MODE_NOCHANGE;
+    receiveResponse(response);
 }
 
 /*
  * finished handling a response
  */
-void doneResponse()
+static void _doneResponse(object prev)
 {
-    if (previous_object() == client) {
-	if (!persistent()) {
-	    setMode(MODE_DISCONNECT);
+    if (prev == client) {
+	if (persistent()) {
+	    idle();
+	} else {
+	    disconnect();
 	}
     }
 }
 
 /*
+ * flow: finished handling a response
+ */
+void doneResponse()
+{
+    call_out("_doneResponse", 0, previous_object());
+}
+
+/*
  * send a request
  */
-void sendRequest(HttpRequest request)
+static void _sendRequest(HttpRequest request, object prev)
 {
-    if (previous_object() == client) {
+    if (prev == client) {
 	::sendRequest(request);
 	sendMessage(new StringBuffer(request->transport()), FALSE,
 		    request->headerValue("Transfer-Encoding") ||
 		    request->headerValue("Content-Length"));
     }
+}
+
+/*
+ * flow: send a request
+ */
+void sendRequest(HttpRequest request)
+{
+    call_out("_sendRequest", 0, request, previous_object());
 }
 
 /*

@@ -69,7 +69,7 @@ nomask void _F_copy()
  */
 static object new_object(string path, mixed args...)
 {
-    string uid;
+    string uid, str, tail;
 
     if (path) {
 	path = DRIVER->normalize_path(path);
@@ -83,15 +83,24 @@ static object new_object(string path, mixed args...)
 	    break;
 
 	default:
-	    if (sscanf(path, "%*s/obj/") != 0 || sscanf(path, "%*s/sys/") != 0)
-	    {
+	    if (sscanf(path, "%*s/obj/") != 0 ||
+		sscanf(path, "%*s/sys/") != 0 ||
+		sscanf(path, "/kernel/%*s") != 0) {
 		error("Invalid path");
 	    }
 	    break;
 	}
-	if (sscanf(path, "%*s/lib/") != 0 && status(path, O_INDEX) != nil) {
-	    /* let upgrade server generate a leaf object */
-	    path = UPGRADE_SERVER->generate_leaf(path);
+	if (sscanf(path, "%s/lib/%s", str, tail) != 0 &&
+	    status(path, O_INDEX) != nil) {
+	    str += "/@@@/" + tail;
+	    if (!::find_object(str)) {
+		/*
+		 * let upgrade server generate a leaf object
+		 */
+		UPGRADE_SERVER->generate_leaf(str, "inherit \"" + path +
+						   "\";\n");
+	    }
+	    path = str;
 	}
     }
     ::tls_set(TLS_ARGUMENTS, args);
@@ -450,7 +459,7 @@ nomask void _F_timeoutContinuation(int token)
 
 /*
  * NAME:	call_out()
- * DESCRIPTION: prevent System auto functions from being called by callout
+ * DESCRIPTION:	prevent System auto functions from being called by callout
  */
 static int call_out(string func, mixed args...)
 {
@@ -461,11 +470,27 @@ static int call_out(string func, mixed args...)
 }
 
 /*
+ * NAME:	call_out_summand()
+ * DESCRIPTION:	prevent System auto functions from being called by callout
+ */
+static int call_out_summand(string func, mixed delay, float summand,
+			    mixed args...)
+{
+    if (function_object(func, this_object()) == SYSTEM_AUTO) {
+	error("Illegal callout");
+    }
+    return ::call_out_summand(func, delay, summand, args...);
+}
+
+/*
  * NAME:	call_out_other()
  * DESCRIPTION:	prevent System auto functions from being called by callout
  */
-static int call_out_other(object obj, string func, mixed args...)
+static int call_out_other(mixed obj, string func, mixed args...)
 {
+    if (typeof(obj) == T_STRING) {
+	obj = find_object(obj);
+    }
     if (function_object(func, obj) == SYSTEM_AUTO) {
 	error("Illegal callout");
     }

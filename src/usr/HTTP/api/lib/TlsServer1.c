@@ -20,14 +20,14 @@ static void create(object server, string certificate, string key,
 		   string tlsServerSessionPath)
 {
     server::create(server, requestPath, fieldsPath);
-    buffered::create(server, fieldsPath);
+    buffered::create(MODE_LINE);
     session = new_object(tlsServerSessionPath, certificate, key);
 }
 
 /*
  * accept HTTPS connection
  */
-static int tlsAccept(string str, varargs int reqCert, string hosts...)
+static void tlsAccept(string str, varargs int reqCert, string hosts...)
 {
     StringBuffer input, output;
     string warning, status;
@@ -39,26 +39,28 @@ static int tlsAccept(string str, varargs int reqCert, string hosts...)
     }
     if (!status) {
 	connected = TRUE;
-	setMode(MODE_LINE);
     }
     if (input) {
 	receiveBytes(input);
     }
-    return (status && status != "connecting") ? MODE_DISCONNECT : MODE_NOCHANGE;
+
+    if (status && status != "connecting") {
+	disconnect();
+    }
 }
 
 /*
  * process login message
  */
-static int receiveFirstMessage(string str)
+static void receiveFirstMessage(string str)
 {
-    return ::receiveFirstLine(str);
+    setMode(::receiveFirstLine(str));
 }
 
 /*
  * receive a message
  */
-static int tlsReceive(string str)
+static void tlsReceive(string str)
 {
     StringBuffer input, output;
     string warning, status;
@@ -69,12 +71,16 @@ static int tlsReceive(string str)
     }
     if (!status && !connected) {
 	connected = TRUE;
-	setMode(MODE_LINE);
     }
     if (input) {
 	receiveBytes(input);
+    } else {
+	startInput();
     }
-    return (status && status != "connecting") ? MODE_DISCONNECT : MODE_NOCHANGE;
+
+    if (status && status != "connecting") {
+	disconnect();
+    }
 }
 
 /*

@@ -72,6 +72,36 @@ static void close(int dest)
 }
 
 /*
+ * NAME:	_flow_mode()
+ * DESCRIPTION:	set the flow mode
+ */
+static void _flow_mode(int mode, int length)
+{
+    ::length = length;
+    ::flow_mode(([ ]), mode);
+}
+
+/*
+ * NAME:	flow_mode()
+ * DESCRIPTION:	flow: set the mode
+ */
+void flow_mode(int mode, int length)
+{
+    if (previous_program() == LIB_USER) {
+	call_out("_flow_mode", 0, mode, length);
+    }
+}
+
+/*
+ * NAME:	_disconnect()
+ * DESCRIPTION:	break the connection
+ */
+static void _disconnect()
+{
+    ::_disconnect(([ ]));
+}
+
+/*
  * NAME:	timeout()
  * DESCRIPTION:	connection timed out
  */
@@ -84,10 +114,10 @@ static void timeout()
  * NAME:	set_message_length()
  * DESCRIPTION:	set the size of the receive buffer
  */
-void set_message_length(int len)
+void set_message_length(int length)
 {
     if (previous_program() == LIB_USER) {
-	length = len;
+	::length = length;
     }
 }
 
@@ -165,6 +195,11 @@ private void receive_buffer(mapping tls)
 	    break;
 	}
     }
+
+    if (restart != 0) {
+	remove_call_out(restart);
+	restart = 0;
+    }
 }
 
 /*
@@ -175,10 +210,6 @@ static void receive_message(string str)
 {
     mapping tls;
 
-    if (restart != 0) {
-	remove_call_out(restart);
-	restart = 0;
-    }
     add_to_buffer(tls = ([ ]), str);
     receive_buffer(tls);
 }
@@ -190,45 +221,30 @@ static void receive_message(string str)
 void set_mode(int mode)
 {
     int oldmode;
-    object user;
 
     if (KERNEL()) {
 	oldmode = query_mode();
 	::set_mode(mode);
-	if (oldmode == MODE_BLOCK && mode != MODE_DISCONNECT &&
-	    mode != MODE_BLOCK && restart == 0) {
-	    if (strlen(buffer) != 0) {
-		switch (mode) {
-		case MODE_LINE:
-		case MODE_EDIT:
-		    if (!noline) {
-			break;
-		    }
-		    /* fall through */
-		default:
-		    if (!(user=query_user()) || !user->buffered_input()) {
-			return;
-		    }
-		    /* fall through */
-		case MODE_RAW:
+	if (oldmode == MODE_BLOCK && restart == 0 && strlen(buffer) != 0) {
+	    if (mode == MODE_UNBLOCK) {
+		mode = query_mode();
+	    }
+	    switch (mode) {
+	    case MODE_LINE:
+	    case MODE_EDIT:
+		if (!noline) {
 		    break;
 		}
-	    } else if (!(user=query_user()) || !user->buffered_input()) {
+		/* fall through */
+	    default:
 		return;
-	    }
 
+	    case MODE_RAW:
+		break;
+	    }
 	    restart = call_out("restart_input", 0);
 	}
     }
-}
-
-/*
- * NAME:	user_restart_input()
- * DESCRIPTION:	reprocess user input buffer
- */
-private void user_restart_input(mapping tls, object user)
-{
-    user->restart_input();
 }
 
 /*
@@ -237,20 +253,12 @@ private void user_restart_input(mapping tls, object user)
  */
 static void restart_input()
 {
-    int mode;
     mapping tls;
-    object user;
 
     restart = 0;
-    if ((mode=query_mode()) != MODE_BLOCK && mode != MODE_DISCONNECT) {
-	tls = ([ ]);
-	TLSVAR(tls, TLS_USER) = this_object();
-	user = query_user();
-	if (user) {
-	    user_restart_input(tls, user);
-	}
-	receive_buffer(tls);
-    }
+    tls = ([ ]);
+    TLSVAR(tls, TLS_USER) = this_object();
+    receive_buffer(tls);
 }
 
 /*
@@ -277,5 +285,5 @@ static void datagram_attach()
  */
 static void receive_datagram(string str)
 {
-    ::receive_datagram(([ ]), str);
+    set_mode(::receive_datagram(([ ]), str));
 }

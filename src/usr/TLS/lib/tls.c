@@ -85,11 +85,11 @@ static string *keyGen(string group)
 
     case TLS_X25519:
 	({ pubKey, privKey }) = encrypt("X25519 key");
-	return ({ asn::extend(pubKey, 32), privKey, nil });
+	return ({ asn::unsignedExtend(pubKey, 32), privKey, nil });
 
     case TLS_X448:
 	({ pubKey, privKey }) = encrypt("X448 key");
-	return ({ asn::extend(pubKey, 56), privKey, nil });
+	return ({ asn::unsignedExtend(pubKey, 56), privKey, nil });
 
     case TLS_FFDHE2048:
 	prime = ffdhe2048p();
@@ -364,7 +364,8 @@ static string verifyData(string secret, string algorithm)
 /*
  * check stack of certificates, translate OpenSSL error to TLS error
  */
-static void checkCertificates(string origin, string *certificates)
+static void checkCertificates(string origin, string *certificates,
+			      varargs int permitSelfSigned)
 {
     string tlsError;
 
@@ -377,13 +378,16 @@ static void checkCertificates(string origin, string *certificates)
 	case "CA signature digest algorithm too weak":
 	case "certificate rejected":
 	case "certificate not trusted":
+	case "No matching DANE TLSA records":
 	case "no matching DANE TLSA records":
 	case "EE certificate key too weak":
+	case "Email address mismatch":
 	case "email address mismatch":
 	case "format error in certificate's notBefore field":
 	case "format error in certificate's notAfter field":
 	case "format error in CRL's lastUpdate field":
 	case "format error in CRL's nextUpdate field":
+	case "Hostname mismatch":
 	case "hostname mismatch":
 	case "IP address mismatch":
 	    tlsError = "BAD_CERTIFICATE";
@@ -398,15 +402,22 @@ static void checkCertificates(string origin, string *certificates)
 	    tlsError = "CERTIFICATE_EXPIRED";
 	    break;
 
+	case "unsupported certificate purpose":
 	case "unsuitable certificate purpose":
 	    tlsError = "UNSUPPORTED_CERTIFICATE";
 	    break;
 
+	case "self signed certificate":
 	case "self-signed certificate":
+	case "self signed certificate in certificate chain":
+	case "self-signed certificate in certificate chain":
+	    if (permitSelfSigned) {
+		return;
+	    }
+	    /* fall through */
 	case "certificate chain too long":
 	case "invalid CA certificate":
 	case "path length constraint exceeded":
-	case "self-signed certificate in certificate chain":
 	case "unable to get issuer certificate":
 	case "unable to get local issuer certificate":
 	case "unable to get certificate CRL":
@@ -420,8 +431,10 @@ static void checkCertificates(string origin, string *certificates)
 	    tlsError = "DECRYPT_ERROR";
 	    break;
 
+	case "Invalid certificate verification context":
 	case "invalid certificate verification context":
 	case "out of memory":
+	case "Issuer certificate lookup error":
 	case "issuer certificate lookup error":
 	case "unspecified certificate verification error":
 	    tlsError = "INTERNAL_ERROR";
@@ -470,7 +483,7 @@ static string rsaSign(string message, X509Key key, string hash)
     if (strlen(m) > len) {
 	m = m[1 ..];
     } else {
-	m = asn::extend(m, len);
+	m = asn::unsignedExtend(m, len);
     }
     return m;
 }

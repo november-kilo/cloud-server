@@ -12,10 +12,13 @@ private inherit hex "/lib/util/hex";
 
 
 /* implemented at the top layer */
-static int message(string str);
-static void set_mode(int mode);
-static void set_message_length(int length);
+static void flow_message(object message);
+static void flow_mode(int mode, varargs int length);
 static void disconnect();
+
+static int inactivityTimeout();
+static void receiveHeaders(string str);
+static int receiveMessage(string str);
 
 private object relay;		/* object to relay to */
 private string trailersPath;	/* HttpFields object path */
@@ -24,7 +27,9 @@ private int inchunk;		/* expecting chunk? */
 private string transform;	/* compression or masking */
 private StringBuffer inbuf;	/* entity included in request/response */
 private int length;		/* length of entity to receive */
+private int active;		/* activity time */
 private StringBuffer outbuf;	/* output buffer */
+private int idle;		/* idle mode? */
 private int quiet;		/* quiet output? */
 private int persistent;		/* is connection persistent? */
 private int webSocket;		/* WebSocket enabled? */
@@ -34,24 +39,23 @@ private int webSocket;		/* WebSocket enabled? */
  */
 static void create(object relay, string trailersPath)
 {
+    int timeout;
+
     ::relay = relay;
     ::trailersPath = trailersPath;
+    active = time();
+    timeout = inactivityTimeout();
+    if (timeout != 0) {
+	call_out("inactive", timeout);
+    }
 }
 
 /*
  * set the receive mode
  */
-static void setMode(int mode)
+static void setMode(int mode, varargs int length)
 {
-    set_mode(mode);
-}
-
-/*
- * set the receive buffer size
- */
-static void setMessageLength(int length)
-{
-    set_message_length(length);
+    flow_mode(mode, length);
 }
 
 /*
@@ -93,6 +97,14 @@ static int receiveRequestHeader(HttpRequest request, HttpField header)
 }
 
 /*
+ * received HTTP request
+ */
+static void receiveRequest(int code, HttpRequest request)
+{
+    relay->receiveRequest(code, request);
+}
+
+/*
  * received response status line
  */
 static void receiveStatusLine(HttpResponse response)
@@ -123,6 +135,14 @@ static void receiveResponseHeader(HttpResponse response, HttpField header)
 	break;
     }
     ::receiveResponseHeader(response, header);
+}
+
+/*
+ * received HTTP response
+ */
+static void receiveResponse(HttpResponse response)
+{
+    relay->receiveResponse(response);
 }
 
 /*
@@ -194,33 +214,57 @@ private StringBuffer inflate(StringBuffer input)
 # endif
 
 /*
+ * be idle, but don't block input
+ */
+static void idle()
+{
+    idle = TRUE;
+    setMode(MODE_RAW, 1);
+}
+
+/*
  * prepare to receive an entity
+ */
+static void _expectEntity(int length, object prev)
+{
+    if (prev == relay && length != 0) {
+	inbuf = new StringBuffer;
+	setMode(MODE_RAW, ::length = length);
+    }
+}
+
+/*
+ * flow: prepare to receive an entity
  */
 void expectEntity(int length)
 {
-    if (previous_object() == relay && length != 0) {
-	setMode(MODE_RAW);
-	inbuf = new StringBuffer;
-	setMessageLength(::length = length);
-    }
+    call_out("_expectEntity", 0, length, previous_object());
 }
 
 /*
  * expect chunked data
  */
-void expectChunk(varargs string compression)
+static void _expectChunk(string compression, object prev)
 {
-    if (previous_object() == relay) {
-	setMode(MODE_LINE);
+    if (prev == relay) {
 	inchunk = TRUE;
 	transform = compression;
+	setMode(MODE_LINE);
     }
+}
+
+/*
+ * flow: expect chunked data
+ */
+void expectChunk(varargs string compression)
+{
+    call_out("_expectChunk", 0, compression, previous_object());
 }
 
 /*
  * receive the first line of a chunk
  */
-static int receiveChunkLine(string str)
+static void receiveChunkLine(string str)
 {
     string token, *params;
 
@@ -230,11 +274,10 @@ static int receiveChunkLine(string str)
 
     if (length != 0) {
 	inbuf = new StringBuffer;
-	setMessageLength(length);
-	return MODE_RAW;
+	setMode(MODE_RAW, length);
     } else {
 	frame = "";
-	return MODE_LINE;
+	setMode(MODE_LINE);
     }
 }
 
@@ -268,7 +311,6 @@ static void receiveWsChunk(StringBuffer chunk)
     if (transform) {
 	chunk = maskWsChunk(chunk, transform);
     }
-    setMode(MODE_BLOCK);
     inchunk = FALSE;
     relay->receiveWsChunk(chunk);
 }
@@ -281,20 +323,22 @@ static string receiveWsFrame(string str)
     mixed *result;
     int opcode, flags, len;
 
-    while (inchunk && (result=::receiveWsFrame(str))) {
+    if (inchunk && (result=::receiveWsFrame(str))) {
 	({ opcode, flags, len, transform, str }) = result;
 	relay->receiveWsFrame(opcode, flags, len);
 
 	if (len > strlen(str)) {
 	    /* incomplete */
-	    setMessageLength(::length = len - strlen(str));
 	    inbuf = new StringBuffer(str);
+	    setMode(MODE_RAW, ::length = len - strlen(str));
 	    return nil;
 	}
 
 	/* process a WebSocket chunk */
 	receiveWsChunk(new StringBuffer(str[.. len - 1]));
 	str = str[len ..];
+    } else {
+	setMode(MODE_RAW);
     }
 
     return str;
@@ -303,12 +347,11 @@ static string receiveWsFrame(string str)
 /*
  * expect a WebSocket frame
  */
-void expectWsFrame()
+static void _expectWsFrame(object prev)
 {
-    if (previous_object() == relay) {
+    if (prev == relay) {
 	string str;
 
-	setMode(MODE_RAW);
 	inchunk = TRUE;
 
 	if (!webSocket) {
@@ -319,21 +362,33 @@ void expectWsFrame()
 	    frame = nil;
 
 	    frame = receiveWsFrame(str);
+	    return;
 	}
+
+	setMode(MODE_RAW);
     }
 }
 
-static int receiveHeaders(string str);
-static int receiveMessage(string str);
+/*
+ * flow: expect a WebSocket frame
+ */
+void expectWsFrame()
+{
+    call_out("_expectWsFrame", 0, previous_object());
+}
 
 /*
  * receive (part of) message
  */
-static int receiveBytes(string str)
+static void receiveBytes(string str)
 {
     StringBuffer chunk;
 
-    if (webSocket) {
+    active = time();
+    if (idle) {
+	relay->receiveError("HTTP protocol error");
+	disconnect();
+    } else if (webSocket) {
 	try {
 	    if (frame) {
 		str = frame + str;
@@ -348,12 +403,13 @@ static int receiveBytes(string str)
 		    inbuf = nil;
 
 		    receiveWsChunk(chunk);
+		} else {
+		    setMode(MODE_UNBLOCK);
 		}
 	    }
-	    return MODE_NOCHANGE;
 	} catch (err) {
 	    relay->receiveError(err);
-	    return MODE_DISCONNECT;
+	    disconnect();
 	}
     } else if (frame) {
 	/*
@@ -361,28 +417,27 @@ static int receiveBytes(string str)
 	 */
 	if (strlen(str) != 0) {
 	    frame += str + "\n";
-	    return MODE_NOCHANGE;
-	}
-	str = frame;
-	frame = nil;
-
-	setMode(MODE_BLOCK);
-	if (!inchunk) {
-	    /*
-	     * headers
-	     */
-	    return receiveHeaders(str);
+	    setMode(MODE_LINE);
 	} else {
-	    /*
-	     * chunk trailers
-	     */
-	    try {
-		receiveChunk(nil, (strlen(str) != 0) ?
-				   new_object(trailersPath, str) : nil);
-		return MODE_NOCHANGE;
-	    } catch (err) {
-		relay->receiveError(err);
-		return MODE_DISCONNECT;
+	    str = frame;
+	    frame = nil;
+
+	    if (!inchunk) {
+		/*
+		 * headers
+		 */
+		receiveHeaders(str);
+	    } else {
+		/*
+		 * chunk trailers
+		 */
+		try {
+		    receiveChunk(nil, (strlen(str) != 0) ?
+				       new_object(trailersPath, str) : nil);
+		} catch (err) {
+		    relay->receiveError(err);
+		    disconnect();
+		}
 	    }
 	}
     } else if (inbuf) {
@@ -396,51 +451,49 @@ static int receiveBytes(string str)
 	    if (strlen(str) != 0) {
 		/* \r\n expected */
 		relay->receiveError("HTTP protocol error");
-		return MODE_DISCONNECT;
-	    }
+		disconnect();
+	    } else {
+		chunk = inbuf;
+		inbuf = nil;
 
-	    chunk = inbuf;
-	    inbuf = nil;
-
-	    setMode(MODE_BLOCK);
-	    try {
-		receiveChunk(chunk);
-	    } catch (err) {
-		relay->receiveError(err);
-		return MODE_DISCONNECT;
+		try {
+		    receiveChunk(chunk);
+		} catch (err) {
+		    relay->receiveError(err);
+		    disconnect();
+		}
 	    }
 	} else {
 	    inbuf->append(str);
 	    length -= strlen(str);
 	    if (length == 0) {
 		if (inchunk) {
-		    return MODE_LINE;	/* followed by \r\n */
+		    setMode(MODE_LINE);		/* followed by \r\n */
+		} else {
+		    chunk = inbuf;
+		    inbuf = nil;
+
+		    relay->receiveEntity(chunk);
 		}
-
-		chunk = inbuf;
-		inbuf = nil;
-
-		setMode(MODE_BLOCK);
-		relay->receiveEntity(chunk);
+	    } else {
+		setMode(MODE_UNBLOCK);
 	    }
 	}
-
-	return MODE_NOCHANGE;
     } else if (inchunk) {
 	/*
 	 * chunk line
 	 */
 	try {
-	    return receiveChunkLine(str);
+	    receiveChunkLine(str);
 	} catch (err) {
 	    relay->receiveError(err);
-	    return MODE_DISCONNECT;
+	    disconnect();
 	}
     } else {
 	/*
 	 * request/response
 	 */
-	return receiveMessage(str);
+	setMode(receiveMessage(str));
     }
 }
 
@@ -450,31 +503,23 @@ static int receiveBytes(string str)
  */
 static void messageChunk()
 {
-    string str;
-
-    if (!outbuf || !(str=outbuf->chunk())) {
+    if (!outbuf || outbuf->length() == 0) {
 	outbuf = nil;
 	if (!quiet) {
 	    relay->doneChunk();
 	}
     } else {
-	while (message(str)) {
-	    str = outbuf->chunk();
-	    if (!str) {
-		outbuf = nil;
-		break;
-	    }
-	}
+	flow_message(outbuf);
+	outbuf = new StringBuffer;
     }
 }
 
 /*
  * output remainder of message
  */
-static int messageDone()
+static void messageDone()
 {
     messageChunk();
-    return MODE_NOCHANGE;
 }
 
 /*
@@ -523,9 +568,9 @@ private StringBuffer chunked(StringBuffer buffer, varargs string *params,
 /*
  * send a chunk of data
  */
-void sendChunk(StringBuffer chunk, varargs string *params)
+static void _sendChunk(StringBuffer chunk, string *params, object prev)
 {
-    if (previous_object() == relay && chunk->length() != 0) {
+    if (prev == relay && chunk->length() != 0) {
 	if (params) {
 	    chunk = chunked(chunk, params);
 	}
@@ -534,21 +579,38 @@ void sendChunk(StringBuffer chunk, varargs string *params)
 }
 
 /*
+ * flow: send a chunk of data
+ */
+void sendChunk(StringBuffer chunk, varargs string *params)
+{
+    call_out("_sendChunk", 0, chunk, params, previous_object());
+}
+
+/*
  * send a length 0 chunk
  */
-void endChunk(varargs string *params, HttpFields trailers)
+static void _endChunk(string *params, HttpFields trailers, object prev)
 {
-    if (previous_object() == relay) {
+    if (prev == relay) {
 	sendMessage(chunked(nil, params, trailers));
     }
 }
 
 /*
+ * flow: send a length 0 chunk
+ */
+void endChunk(varargs string *params, HttpFields trailers)
+{
+    call_out("_endChunk", 0, params, trailers, previous_object());
+}
+
+/*
  * send a WebSocket chunk
  */
-void sendWsChunk(int opcode, int flags, varargs int mask, StringBuffer chunk)
+static void _sendWsChunk(int opcode, int flags, int mask, StringBuffer chunk,
+			 object prev)
 {
-    if (previous_object() == relay) {
+    if (prev == relay) {
 	StringBuffer buffer;
 	string str;
 
@@ -574,13 +636,29 @@ void sendWsChunk(int opcode, int flags, varargs int mask, StringBuffer chunk)
 }
 
 /*
+ * flow: send a WebSocket chunk
+ */
+void sendWsChunk(int opcode, int flags, varargs int mask, StringBuffer chunk)
+{
+    call_out("_sendWsChunk", 0, opcode, flags, mask, chunk, previous_object());
+}
+
+/*
  * break the connection
+ */
+static void _terminate(object prev)
+{
+    if (prev == relay) {
+	disconnect();
+    }
+}
+
+/*
+ * flow: break the connection
  */
 void terminate()
 {
-    if (previous_object() == this_object() || previous_object() == relay) {
-	disconnect();
-    }
+    call_out("_terminate", 0, previous_object());
 }
 
 /*
@@ -604,6 +682,7 @@ static void sendRequest(HttpRequest request)
     connection = request->headers()->get("connection");
     persistent = !(connection && connection->listContains("close"));
     ::sendRequest(request);
+    idle = FALSE;
     setMode(MODE_LINE);
 }
 
@@ -622,6 +701,22 @@ static void sendResponse(HttpResponse response)
 	persistent = FALSE;
     }
     ::sendResponse(response);
+}
+
+/*
+ * see if the timeout for inactivity was reached
+ */
+static void inactive()
+{
+    int inactive, timeout;
+
+    inactive = time() - active;
+    timeout = inactivityTimeout();
+    if (inactive >= timeout) {
+	disconnect();
+    } else {
+	call_out("inactive", timeout - inactive);
+    }
 }
 
 

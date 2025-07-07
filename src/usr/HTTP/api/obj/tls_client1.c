@@ -1,5 +1,4 @@
 # include <kernel/user.h>
-# include <String.h>
 # include "~TLS/tls.h"
 # include "HttpField.h"
 # include "HttpResponse.h"
@@ -38,6 +37,7 @@ static void create(object client, string address, int port,
 int login(string str)
 {
     if (previous_program() == LIB_CONN) {
+	flow();
 	call_limited("tlsConnect", host);
     }
     return MODE_NOCHANGE;
@@ -57,40 +57,39 @@ void connect_failed(int errorcode)
 /*
  * receive a message
  */
-int receive_message(string str)
+int flow_receive_message(string str, int mode)
 {
     if (previous_program() == LIB_CONN) {
-	return call_limited("tlsReceive", str);
+	call_out("tlsReceive", 0, str);
     }
+    return TRUE;
 }
 
 /*
  * connection terminated
  */
-void logout(int quit)
+static void _logout(int quit)
+{
+    tlsClose(quit);
+    destruct_object(this_object());
+}
+
+/*
+ * connection terminated
+ */
+void flow_logout(int quit)
 {
     if (previous_program() == LIB_CONN) {
-	call_limited("tlsClose", quit);
-	destruct_object(this_object());
+	call_out("_logout", 0, quit);
     }
 }
 
 /*
  * output remainder of message
  */
-int message_done()
+void flow_message_done()
 {
     if (previous_program() == LIB_CONN) {
-	return call_limited("messageDone");
-    }
-}
-
-/*
- * reprocess pending input
- */
-void restart_input()
-{
-    if (previous_program() == BINARY_CONN) {
-	call_limited("restartInput");
+	call_out("messageDone", 0);
     }
 }
