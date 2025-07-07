@@ -1,6 +1,10 @@
 #include <kfun.h>
 #include <Array.h>
 #include <Iterator.h>
+#include <Number.h>
+#include <String.h>
+#include "/usr/LPC/api/include/compiler.h"
+#include "/usr/LPC/api/include/Code.h"
 
 inherit terminal "/lib/util/terminal";
 inherit format "/lib/util/format";
@@ -140,6 +144,8 @@ void cmd_colors(string str) {
     }
 }
 
+void cmd_arrays(string str);
+
 void cmd_arrays(string str) {
     if (valid(previous_program())) {
         Array a;
@@ -147,5 +153,33 @@ void cmd_arrays(string str) {
         me->println(a->stringify());
         a->sort();
         me->println(a->stringify());
+    }
+}
+
+void cmd_cmp(string str) {
+    if (valid(previous_program())) {
+        Number a, b, c;
+        int x;
+        float f;
+
+        a = new Number(0.000000000000000001);
+        b = new Number(2.01);
+        c = b / a;
+        me->println("c = " + c->to_float());
+    }
+}
+
+void cmd_flt(string str) {
+    if (valid(previous_program())) {
+        int i;
+        float* tests = ({
+            0.0, 1.0, -1.0, 3.0, 3.14159, -2.5, 1e-10, 1e20
+        });
+        Rational r;
+        
+        for (i = 0; i < 8; i++) {
+            r = new Rational(tests[i]);
+            me->println(r->to_string());
+        }
     }
 }

@@ -6,6 +6,7 @@
 
 #include <Array.h>
 #include <Function.h>
+#include <Number.h>
 #include <Sort.h>
 
 inherit access API_ACCESS;
@@ -103,9 +104,12 @@ static void create()
     compile_object("/lib/KVstore");
     compile_object("/obj/kvnode");
 
+    compile_object(ARRAY_LIB);
     compile_object(FUNCTION_LIB);
     compile_object(MERGESORT_LIB);
-    compile_object(ARRAY_LIB);
+    compile_object(NUMBER_LIB);
+    compile_object(COMPLEX_LIB);
+    compile_object(RATIONAL_LIB);
 
     resources = ([ ]);
     restore_object("data/rsrc.dat");

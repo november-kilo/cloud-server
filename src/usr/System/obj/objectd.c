@@ -45,7 +45,7 @@ void add_included(int index, object dbobj, string path)
 {
     if (previous_object() == objectd) {
 	mapping map;
-
+	
 	sscanf(path, "/usr/%*s/%s", path);
 	map = included[path];
 	if (map) {
