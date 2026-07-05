@@ -30,7 +30,7 @@ static float float_from(mixed value) {
     float f;
     int has_to_float;
 
-    has_to_float = typeof(value) == T_OBJECT && (function_object("to_float", value) || value <- Number);
+    has_to_float = typeof(value) == T_OBJECT && (value <- Number || function_object("to_float", value));
     if (has_to_float) {
         return value->to_float();
     }
@@ -218,7 +218,7 @@ static Number operator + (mixed that) {
     return new Number(number + float_from(that));
 }
 
-static Number operator- (varargs mixed that) {
+static Number operator - (varargs mixed that) {
     if (that == nil) {
         return new Number(-number);
     }

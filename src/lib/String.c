@@ -1019,7 +1019,6 @@ static int operator>= (mixed str)
     return (compare(str) >= 0);
 }
 
-
 /*
  * return String with first character converted to title case
  */

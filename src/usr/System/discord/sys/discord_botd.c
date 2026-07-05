@@ -1,4 +1,5 @@
 #include <kernel/user.h>
+#include <no_export.h>
 
 inherit "~/lib/user";
 
@@ -15,7 +16,7 @@ object get_discord_bot(void) {
 }
 
 object select(string name) {
-    if (previous_object() == userd && name == "discord_bot") {
+    if (previous_object() == userd && name == DISCORD_BOT_LOGIN) {
         discord_bot = clone_object("~System/discord/obj/discord_bot");
         return discord_bot;
     }

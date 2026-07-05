@@ -44,7 +44,7 @@ static create() {
 	state = ([]);
 }
 
-private string show_prompt(void) {
+string show_prompt(void) {
 	if (local_wiztool && function_object("get_prompt", local_wiztool)) {
 		message(local_wiztool->get_prompt());
 	} else {
@@ -148,6 +148,71 @@ static void cmd_wiztool(object user, string cmd, string str) {
 	}
 	load_local_wiztool();
 	println("Done.");
+}
+
+#define JSON_ENCODER "/sys/jsonencode"
+private string encode_discord_message(object user, string str) {
+    mapping map;
+    map = ([
+		"type": "chat",
+        "sender": user->query_name(),
+        "message": str,
+        "timestamp": time()
+	]);
+    return "@@JSON@@" + JSON_ENCODER->encode(map);
+}
+
+/*
+ * NAME:	cmd_discord()
+ * DESCRIPTION: handle all discord commands
+ */
+static void cmd_discord(object user, string cmd, string str) {
+	string *args;
+	object bot;
+	string mudname;
+    
+    if (!str || str == "") {
+        user->message("Usage: discord <verify|status|unlink|say>\n");
+        return;
+    }
+    
+    args = explode(str, " ");
+	bot = "/usr/System/discord/sys/discord_botd"->get_discord_bot();
+
+	if (!bot) {
+		user->println("The discord bot is not connected.");
+		return;
+	}
+    
+	mudname = user->query_name();
+    switch (args[0]) {
+        case "verify":
+            if (sizeof(args) < 2) {
+                user->println("Usage: discord verify <code>");
+                return;
+            }
+			if (bot->is_linked(mudname)) {
+				user->println("You are already linked.");
+				break;
+			}
+			bot->do_verify(user, args[1]);
+            break;
+            
+        case "status":
+			bot->do_status(user);
+            break;
+            
+        case "unlink":
+			bot->do_unlink(user);
+            break;
+
+		case "say":
+			bot->send(encode_discord_message(user, str[3..]));
+			break;
+            
+        default:
+            user->println("Unknown discord command.");
+    }
 }
 
 /*
@@ -574,6 +639,8 @@ static int command(string str) {
 	case "reboot":
 	case "hotboot":
 
+	case "discord":
+
 	case "wiztool":
 		call_other(this_object(), "cmd_" + str, this_object(), str, arg);
 		break;
@@ -743,16 +810,22 @@ private void print_command_history(void) {
 }
 
 private void run_command_in_history(int index) {
+	int history_length;
+	
+	history_length = sizeof(command_history);
+
 	if (index == -1) {
-		index = sizeof(command_history);
-	}
-
-	if (index < 0 || index >= sizeof(command_history)) {
-		println("Invalid command history index: " + index);
-		return;
-	}
-
-	call_limited("command", command_history[index - 1]);
+        index = history_length;
+    }
+    
+    index--;
+    
+    if (index < 0 || index > history_length) {
+        println("Invalid command history index: " + (index + 1));
+        return;
+    }
+    
+    call_limited("command", command_history[index]);
 }
 
 /*

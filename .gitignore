@@ -8,8 +8,10 @@ src/include/type.h
 src/kernel/data/access.data
 src/kernel/data/*.pwd
 **/no_export.h
+extensions/misc/
 extensions/bin/*
 extensions/kfun/*.o
+metrics.db
 
 **/.idea/
 **/.vscode/

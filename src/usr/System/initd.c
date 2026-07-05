@@ -6,8 +6,11 @@
 
 #include <Array.h>
 #include <Function.h>
+#include <Math.h>
 #include <Number.h>
 #include <Sort.h>
+#include <Statistics.h>
+#include <Try.h>
 
 inherit access API_ACCESS;
 inherit rsrc API_RSRC;
@@ -18,6 +21,7 @@ inherit rsrc API_RSRC;
 
 
 mapping resources;	/* saved initial resources at cold boot */
+
 
 /*
  * NAME:	restore()
@@ -58,13 +62,21 @@ private void load(string path)
     call_other(compile_object(path), "???");
 }
 
+private void compile_libs(string *libs) {
+    int i, sz;
+
+    for (i = 0, sz = sizeof(libs); i < sz; i++) {
+        compile_object(libs[i]);
+    }
+}
+
 /*
  * NAME:	create()
  * DESCRIPTION:	initialize the system
  */
 static void create()
 {
-    string *owners, *domains;
+    string *owners, *domains, *libs;
     string domain;
     int i, sz;
 
@@ -82,6 +94,7 @@ static void create()
     load("sys/upgraded");
     load("sys/userd");
     load("discord/sys/discord_botd");
+    load("sys/monitord");
 
     /* clonables */
     compile_object("obj/user");
@@ -104,12 +117,14 @@ static void create()
     compile_object("/lib/KVstore");
     compile_object("/obj/kvnode");
 
-    compile_object(ARRAY_LIB);
-    compile_object(FUNCTION_LIB);
-    compile_object(MERGESORT_LIB);
-    compile_object(NUMBER_LIB);
-    compile_object(COMPLEX_LIB);
-    compile_object(RATIONAL_LIB);
+    libs = ({
+        ARRAY_LIB, FUNCTION_LIB, MERGESORT_LIB,
+        NUMBER_LIB, COMPLEX_LIB, RATIONAL_LIB,
+        DISTGEN_LIB, GROUPING_REDUCER_LIB,
+        GROUPING_BY_REDUCER_LIB, KEY_EXTRACTOR_LIB,
+        WHO_MAPPER_LIB, RESULT_LIB, TRY_LIB
+    });
+    compile_libs(libs);
 
     resources = ([ ]);
     restore_object("data/rsrc.dat");
@@ -134,6 +149,18 @@ static void create()
 	if (file_info("/usr/" + domain + "/initd.c")) {
 	    load("/usr/" + domain + "/initd");
 	}
+    }
+
+    owners = ({ });
+    owners += get_dir("/usr/[a-z]*")[0];
+    for (i = 0; i < sizeof(owners); i++) {
+        string owner, path;
+        owner = owners[i];
+        path = "/usr/" + owner + "/initd";
+        if (file_info(path + ".c")) {
+            DRIVER->message("\t- Initializing programmer: " + owner + "\n");
+            load(path);
+        }
     }
 }
 
@@ -179,6 +206,8 @@ void set_connection_manager(string type, int port, object manager)
 void set_connection_manager_by_port(string type, int port, object manager)
 {
     int *ports, i;
+
+    DRIVER->message(type + ", " + ((string)port) + "\n");
 
     switch (type) {
     case "binary":

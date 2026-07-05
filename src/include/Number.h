@@ -4,7 +4,7 @@
 #include <float.h>
 #include <type.h>
 
-#define TOLERANCE 1e-7
+#define TOLERANCE 1e-10
 #define MAX_ITERATIONS 250
 
 #define THIS_GT_THAT 1

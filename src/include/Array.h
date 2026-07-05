@@ -14,4 +14,10 @@
 #define ARRAY_LIB "/lib/array/Array"
 #define Array object ARRAY_LIB
 
+#define GROUPING_REDUCER_LIB "/lib/array/GroupingReducer"
+#define GroupingReducer object GROUPING_REDUCER_LIB
+
+#define GROUPING_BY_REDUCER_LIB "/lib/array/GroupingByReducer"
+#define GroupingByReducer object GROUPING_BY_REDUCER_LIB
+
 #endif

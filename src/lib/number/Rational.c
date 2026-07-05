@@ -65,13 +65,19 @@ void float_from(float f) {
 
     original_float = f;
 
-    if (f == 1.) {
+    if (f == 1.0) {
         numerator = 1;
         denominator = 1;
         return;
     }
 
-    if (f == 0.) {
+    if (f == -1.0) {
+        numerator = -1;
+        denominator = 1;
+        return;
+    }
+
+    if (f == 0.0) {
         numerator = 0;
         denominator = 1;
         return;
